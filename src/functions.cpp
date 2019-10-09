@@ -217,7 +217,7 @@ mat get_BBP_BR_analytically_cpp_inline(uword i, mat transfers, const vec& income
   std::cout<< 1<<endl;
   vec transfers_in=trans(sum(transfers,0));
   vec transfers_out=sum(transfers,1);
-  bool foo=BBP_update_BR_analytically_cpp_fast7_smarter(i,transfers,transfers_in,transfers_out,income,altruism,capacities);
+  BBP_update_BR_analytically_cpp_fast7_smarter(i,transfers,transfers_in,transfers_out,income,altruism,capacities);
   return(transfers.row(i-1));
 }
 

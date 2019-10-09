@@ -1,9 +1,7 @@
-#library(netsim2)
-#this was forked from BBP_functions on 04-09-2019
-#library(Rfast)
 library(stats) #for MLE
 library(igraph)
-
+library(foreach)
+library(doParallel)
 
 simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=TRUE) {
   oldseed <- .Random.seed
@@ -27,24 +25,27 @@ simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,in
   } else {
     finalMatrix <- foreach(i=1:reps,
                            .combine=rbind,
-                           .export=c("forestness","noiseseed","intermediation","support_fast2","recip","equilibrate_and_plot","compute_moments","graph_from_adjacency_matrix","average.path.length") ,
-                           .packages=c("netsim3","Rfast")) %dopar% {
-                             set.seed(noiseseed+i)
-                             error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-                             error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
-                             error <- lower_tri.assign(error,lower_tri(t(error)))
-                             altruism <- 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)))
-                             diag(altruism)<-1
-                             if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
+                           #.export=c("forestness","intermediation","support_fast2","recip","equilibrate_and_plot","compute_moments") ,
+                           .export=c("n","noiseseed"),
+                           .packages=c("nSGMM","Rfast", "igraph")) %dopar% {
+                             #set.seed(noiseseed+i)
+                             #error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
+                             #error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
+                             #error <- lower_tri.assign(error,lower_tri(t(error)))
+                             #altruism <- 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)))
+                             #diag(altruism)<-1
+                             #if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
                              
                              #equilibrate_and_plot(altruism=altruism,income=income,modmode=21,computeR = TRUE,computeCPP = FALSE)
-                             eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21)
-                             ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
+                             #eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,plotthis = TRUE)
+                             #ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
+                             ret<-1
                              return(ret)
                              #finalMatrix<-rbind(finalMatrix,ret)
                            }
   }
-  .Random.seed<-oldseed 
+  .Random.seed<-oldseed
+  rnorm(1) #this should update the seed?
   return(finalMatrix)
 }
 
@@ -181,7 +182,7 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
   if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
   return(transfers)
 }
-equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=5,computeR=FALSE,computeCPP=TRUE) {
+equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=21,computeR=FALSE,computeCPP=TRUE) {
   if(mean(upper_tri(altruism)>0.999)>0.5) cat("a")
   #transfers<-equilibrate(altruism,income,capacity)
   #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)

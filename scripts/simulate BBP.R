@@ -1,10 +1,11 @@
 rm(list=ls())
 library(Rcpp)
-#source('R/BBP_functions_GMM.R')
-#source('R/gridsearch.R')
 library(foreach)
 library(doParallel)
-#library(gmm)
+library(nSGMM)
+#setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
+#source('R/BBP_functions_GMM.R')
+
  colsums<-colSums
  colmeans<-colMeans
  rowsums<-rowSums
@@ -15,15 +16,12 @@ library(doParallel)
  rowMads<-function(x) {rowmeans(abs(sweep(x,1,rowmeans(x))))}
  upper_tri.assign<-function(x,y) {x[upper.tri(x)]<-y;return(x)}
  lower_tri.assign<-function(x,y) {x[lower.tri(x)]<-y;return(x)}
-#library(Rfast)
 
  
-#stop_profiler()
-#transfers<-eq$transfers
-#coords<-eq$coords
+cores=detectCores()
+cl <- makeCluster(cores[1]-1) #not to overload your computer
+registerDoParallel(cl)
 
-
-cat("Step1: Simulation (random altruism network and sequential best responses to find the NE)\n")
 seed<-1#round(runif(1)*100)
 set.seed(seed)
 ############# Set Simulation Parameters and Draw Random Altruism Network#############
@@ -56,20 +54,19 @@ diag(kinship)<-1
   for(i in 1:10) {
     set.seed(i)
     simulate_BBP(n=nrow(kinship),delta0=runif(1)-0.5,delta1=runif(1)-0.5,delta2=runif(1)-0.5,sigma=runif(1),distance,kinship,capacity=1,income,reps=1000,parallel=TRUE)
+    print(i)
   }
-  cdcdcdcdc
-  par(mfrow=c(1,1))
+#  cdcdcdcdc
+ # par(mfrow=c(1,1))
   
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=9,income=income,modmode=21,plotthis = TRUE)
+  #eq<-equilibrate_and_plot(altruism=altruism,capacity=9,income=income,modmode=21,plotthis = TRUE)
 
   
   
 
 # 
 # #a<-simulate_BBP(nrow(kinship),0.2,-2,-2,2,distance,kinship,99,income,reps=200,modmode=21)
-# cores=detectCores()
-# cl <- makeCluster(cores[1]-1) #not to overload your computer
-# registerDoParallel(cl)
+
 # 
 # 
 # tictoc::tic()
