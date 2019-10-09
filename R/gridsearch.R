@@ -1,7 +1,5 @@
 colMadss<-function(x) {colMeans(abs(sweep(x,2,colMeans(x))))}
 library(scales)
-par(mfrow=c(2,2))
-cols <- "blue"
 dimensionwiseGridSearch<-function (fun,...,
                                    stepsize=10, #into how many intervals is each parametre split
                                   # stepoverlap=1, #determines how many minima are kept per round
@@ -81,7 +79,7 @@ zoomingGridSearch<-function (fun,...,lower,upper,
     if(plotit) {
       plot(rbind(nldf[,1:2],newlevels[,1:2]),col = alpha("white", 0.0), pch=16) 
       points(nldf[,1:2],col = alpha("yellow", 0.4), pch=16) 
-      points(newlevels[,1:2],col = alpha(cols, 0.1), pch=16) 
+      points(newlevels[,1:2],col = alpha("blue", 0.1), pch=16) 
       #points(t(c(9.87654321,1.23456789)),col = alpha("red", 1), pch=16,cex=3) 
       nldf<-rbind(newlevels)
     }
@@ -145,7 +143,7 @@ gridSearch<-function (fun, levels, ...,
     list(minfun = results[i], minlevels = t(matrix(unlist(levels[i]),nrow=length(levels[[1]]))))
   }
 }
-f<-function(x,prec=Inf){cat(x,".\n");1.9*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+(x[4]-0.123456789)^2 + (x[3]-0.123456789)^2+rnorm(1)/(prec)}
+#f<-function(x,prec=Inf){cat(x,".\n");1.9*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+(x[4]-0.123456789)^2 + (x[3]-0.123456789)^2+rnorm(1)/(prec)}
 #gridSearch(f, levels=list(c(1,2),c(2,3),c(9.8765,1.2345)))
 #optim(c(0,0,0,0),f, lower=rep(-50,4),upper=rep(50,4),prec=Inf)
 
