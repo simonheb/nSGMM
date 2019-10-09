@@ -2,58 +2,58 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 utlity_cppvec <- function(consumption, altruism) {
-    .Call(`_netsim3_utlity_cppvec`, consumption, altruism)
+    .Call(`_nSGMM_utlity_cppvec`, consumption, altruism)
 }
 
 mynegutility_cpp <- function(mytransfers, i, transfers, altruism, income) {
-    .Call(`_netsim3_mynegutility_cpp`, mytransfers, i, transfers, altruism, income)
+    .Call(`_nSGMM_mynegutility_cpp`, mytransfers, i, transfers, altruism, income)
 }
 
 mynegutility_cpp_consumption <- function(mytransfers, i, transfers, altruism, consumption) {
-    .Call(`_netsim3_mynegutility_cpp_consumption`, mytransfers, i, transfers, altruism, consumption)
+    .Call(`_nSGMM_mynegutility_cpp_consumption`, mytransfers, i, transfers, altruism, consumption)
 }
 
 get_BBP_BR_analytically_cpp_inline <- function(i, transfers, income, altruism, capacities) {
-    .Call(`_netsim3_get_BBP_BR_analytically_cpp_inline`, i, transfers, income, altruism, capacities)
+    .Call(`_nSGMM_get_BBP_BR_analytically_cpp_inline`, i, transfers, income, altruism, capacities)
 }
 
 BBP_in_equilibrium_YaT_cpp <- function(transfers, income, altruism, capacities, tolerance) {
-    .Call(`_netsim3_BBP_in_equilibrium_YaT_cpp`, transfers, income, altruism, capacities, tolerance)
+    .Call(`_nSGMM_BBP_in_equilibrium_YaT_cpp`, transfers, income, altruism, capacities, tolerance)
 }
 
 meannanrm <- function(x, dim) {
-    .Call(`_netsim3_meannanrm`, x, dim)
+    .Call(`_nSGMM_meannanrm`, x, dim)
 }
 
 consumption_weights_cpp <- function(alphas, transfers, t_conmat) {
-    .Call(`_netsim3_consumption_weights_cpp`, alphas, transfers, t_conmat)
+    .Call(`_nSGMM_consumption_weights_cpp`, alphas, transfers, t_conmat)
 }
 
 BBP_c_from_atY_cpp <- function(alphas, transferstructure, incomes, t_components_matrix, t_components_csize, t_conmat) {
-    .Call(`_netsim3_BBP_c_from_atY_cpp`, alphas, transferstructure, incomes, t_components_matrix, t_components_csize, t_conmat)
+    .Call(`_nSGMM_BBP_c_from_atY_cpp`, alphas, transferstructure, incomes, t_components_matrix, t_components_csize, t_conmat)
 }
 
 component_counts <- function(transferstructure) {
-    .Call(`_netsim3_component_counts`, transferstructure)
+    .Call(`_nSGMM_component_counts`, transferstructure)
 }
 
 Ccomponents <- function(transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat) {
-    .Call(`_netsim3_Ccomponents`, transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat)
+    .Call(`_nSGMM_Ccomponents`, transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat)
 }
 
 BBP_T_from_tYc_cpp <- function(transferstructure, incomes, consumptions, Tr, depth = 0L) {
-    .Call(`_netsim3_BBP_T_from_tYc_cpp`, transferstructure, incomes, consumptions, Tr, depth)
+    .Call(`_nSGMM_BBP_T_from_tYc_cpp`, transferstructure, incomes, consumptions, Tr, depth)
 }
 
 BBP_T_from_atY_plain_cpp <- function(alphas, transferstructure, incomes) {
-    .Call(`_netsim3_BBP_T_from_atY_plain_cpp`, alphas, transferstructure, incomes)
+    .Call(`_nSGMM_BBP_T_from_atY_plain_cpp`, alphas, transferstructure, incomes)
 }
 
 equilibrate_cpp_fast5 <- function(altruism, income, modmode = 5L) {
-    .Call(`_netsim3_equilibrate_cpp_fast5`, altruism, income, modmode)
+    .Call(`_nSGMM_equilibrate_cpp_fast5`, altruism, income, modmode)
 }
 
 equilibrate_cpp_fast7_smarter <- function(altruism, income, capacity, modmode = 5L) {
-    .Call(`_netsim3_equilibrate_cpp_fast7_smarter`, altruism, income, capacity, modmode)
+    .Call(`_nSGMM_equilibrate_cpp_fast7_smarter`, altruism, income, capacity, modmode)
 }
 

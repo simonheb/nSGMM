@@ -1,12 +1,12 @@
 rm(list=ls())
 library(Rcpp)
-source('../SGMM/BBP_functions_GMM.R')
+source('R/BBP_functions_GMM.R')
 library(foreach)
-#library(netsim2)
-Rcpp::sourceCpp('../netsim3/src/functions.cpp',verbose=TRUE)
+library(nSGMM)
+#Rcpp::sourceCpp('../netsim3/src/functions.cpp',verbose=TRUE)
 library(doParallel)
 library(gmm)
-source('D:/Dropbox/Gambia/working folder/Marcel Allocation/netsim2/R/gridsearch.R')
+source('R/gridsearch.R')
  colsums<-colSums
  colmeans<-colMeans
  rowsums<-rowSums
