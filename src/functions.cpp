@@ -591,3 +591,22 @@ mat equilibrate_cpp_fast7_smarter(const mat& altruism, const vec& income, const 
   return transfers ;
 }
 
+
+// [[Rcpp::export]]
+mat simulate_BBP_cpp(int n, double delta0,double delta1,double delta2,double sigma, mat& distance, mat& kinship, mat& capacity,vec& income,int reps) {
+  mat finalMatrix = zeros(reps,8);
+  for (int i=0; i<reps;i++) {
+    //set.seed(noiseseed+i)
+    mat error = randn(n, n)*sigma;
+    error = symmatu(error);
+//std::cout << all(all(error==error.t()))<< endl;
+    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)));
+    altruism.diag().ones();
+    //std::cout << all(all(altruism==altruism.t()))<< "x" << endl;
+    mat eqtrans=ceil(equilibrate_cpp_fast7_smarter(altruism,income,capacity));
+    
+    Rcpp::Function f("compute_moments");
+    finalMatrix.row(i)= Rcpp::as<arma::rowvec>(f(eqtrans,kinship,distance));
+  }
+  return(finalMatrix);
+}

@@ -57,3 +57,7 @@ equilibrate_cpp_fast7_smarter <- function(altruism, income, capacity, modmode = 
     .Call(`_nSGMM_equilibrate_cpp_fast7_smarter`, altruism, income, capacity, modmode)
 }
 
+simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps)
+}
+

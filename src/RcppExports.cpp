@@ -201,6 +201,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// simulate_BBP_cpp
+mat simulate_BBP_cpp(int n, double delta0, double delta1, double delta2, double sigma, mat& distance, mat& kinship, mat& capacity, vec& income, int reps);
+RcppExport SEXP _nSGMM_simulate_BBP_cpp(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP delta2SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type delta0(delta0SEXP);
+    Rcpp::traits::input_parameter< double >::type delta1(delta1SEXP);
+    Rcpp::traits::input_parameter< double >::type delta2(delta2SEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< mat& >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< mat& >::type kinship(kinshipSEXP);
+    Rcpp::traits::input_parameter< mat& >::type capacity(capacitySEXP);
+    Rcpp::traits::input_parameter< vec& >::type income(incomeSEXP);
+    Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_utlity_cppvec", (DL_FUNC) &_nSGMM_utlity_cppvec, 2},
@@ -217,6 +237,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_BBP_T_from_atY_plain_cpp", (DL_FUNC) &_nSGMM_BBP_T_from_atY_plain_cpp, 3},
     {"_nSGMM_equilibrate_cpp_fast5", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast5, 3},
     {"_nSGMM_equilibrate_cpp_fast7_smarter", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast7_smarter, 4},
+    {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 10},
     {NULL, NULL, 0}
 };
 

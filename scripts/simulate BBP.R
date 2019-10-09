@@ -31,6 +31,7 @@ delta0_DGP<- .2
 delta1_DGP<- -.2
 delta2_DGP<- -.2
 sigma_DGP<-.1
+capacity_DGP<-1
 # #I create the altruism network as a combination of other (random) networks
 lon<-rnorm(n)
 lat<-rnorm(n)
@@ -51,10 +52,11 @@ diag(kinship)<-1
   #initil incomes are random uniform
     
   income = runif(n)*10
-  for(i in 1:10) {
+  for(i in 1:20) {
     set.seed(i)
-    simulate_BBP(n=nrow(kinship),delta0=runif(1)-0.5,delta1=runif(1)-0.5,delta2=runif(1)-0.5,sigma=runif(1),distance,kinship,capacity=1,income,reps=1000,parallel=TRUE)
-    print(i)
+    a<-simulate_BBP_cpp(nrow(kinship),delta0_DGP,delta1_DGP,delta2_DGP,sigma_DGP,distance,kinship,matrix(1,nrow(altruism),ncol(altruism))*capacity_DGP,income,1000)
+    b<-simulate_BBP(n=nrow(kinship),delta0=delta0_DGP,delta1=delta1_DGP,delta2=delta2_DGP,sigma=sigma_DGP,distance,kinship,capacity=capacity_DGP,income,reps=1000,parallel=FALSE)
+    browser()
   }
 #  cdcdcdcdc
  # par(mfrow=c(1,1))
