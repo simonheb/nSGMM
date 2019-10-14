@@ -3,7 +3,7 @@ library(igraph)
 library(foreach)
 library(doParallel)
 
-simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=TRUE) {
+simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=FALSE,computeR=FALSE) {
   oldseed <- .Random.seed
   #cat("repet:",reps,"\n")
   if (!parallel) {
@@ -18,14 +18,14 @@ simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,in
       altruism <- 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)))
       diag(altruism)<-1
       if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
-      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity)
+      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,computeR=computeR,computeCPP=!computeR)
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
       finalMatrix<-rbind(finalMatrix,ret)
     }
   } else {
     finalMatrix <- foreach(i=1:reps,
                            .combine=rbind,
-                           .export=c("forestness","intermediation","support_fast2","recip","equilibrate_and_plot","compute_moments","n","noiseseed"),
+                           .export=c("forestness","intermediation","support_fast2","recip","equilibrate_and_plot","compute_moments"),
                            .packages=c("nSGMM","Rfast", "igraph")
     ) %dopar% {
       set.seed(noiseseed+i)
@@ -36,10 +36,9 @@ simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,in
       diag(altruism)<-1
       if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
       
-      equilibrate_and_plot(altruism=altruism,income=income,modmode=21,computeR = TRUE,computeCPP = FALSE)
-      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,plotthis = TRUE)
+      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,computeR=computeR,computeCPP=!computeR)
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
-      finalMatrix<-rbind(finalMatrix,ret)
+      return(ret)
     }
   }
   .Random.seed<-oldseed
@@ -50,7 +49,7 @@ simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,in
 
 compute_moments<-function(btransfers,kinship,distance) {
   g<-igraph::graph_from_adjacency_matrix(btransfers)
-  pathlenghts<-igraph::average.path.length(g,directed=FALSE)
+  pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)
   fb2<-forestness(btransfers)
   ib<-intermediation(btransfers)
   sa<-support_fast2(btransfers)
@@ -61,8 +60,8 @@ compute_moments<-function(btransfers,kinship,distance) {
 }
 g <- function(th,transfers,kinship,distance,income,prec,parallel=TRUE) {#,prec=15) {
   cat(".")
-  simx<-simulate_BBP(nrow(kinship),th[1],th[2],th[3],th[4],
-                     distance,kinship,99,income,reps=(prec/3+0.3)^5*20+10,modmode=21,noiseseed = round(runif(1)*100)*1000,parallel=parallel)
+  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],th[3],th[4],
+                     distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=round(prec/3+0.3)^5*20+10,1)
   keep<-(colMads(simx)!=0)
   
   if (all(keep==FALSE)){ #this is a hack so that there is minimal variation guaranteed.
@@ -123,13 +122,13 @@ equilibrate_analytically <- function(altruism,income,capacity,starttransfers=NUL
       #test if BRs are sufficiently stable over the round
       #cat("\n")
     }
-    cat("update by ", sum(abs(previoustransfers-transfers)))
+    #cat("update by ", sum(abs(previoustransfers-transfers)))
     #if (updates<6) (print(which((previoustransfers)!=(transfers),T)))
     
-    if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
+    #if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
     if (updates==0) {break}
   }
-  if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
+  if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} #else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
   return(transfers)
 }
 #this is required for the optimizer, finding the best response. returns the (negative) utility for individual i
@@ -171,16 +170,17 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
       #test if BRs are sufficiently stable over the round
       #cat("\n")
     }
-    cat("update by ", sum(abs(previoustransfers-transfers)))
+    #cat("update by ", sum(abs(previoustransfers-transfers)))
     #if (updates<6) (print(which((previoustransfers)!=(transfers),T)))
     
-    if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
+    #if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
     if (updates==0) {break}
   }
-  if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
+  if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} #else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
   return(transfers)
 }
 equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=21,computeR=FALSE,computeCPP=TRUE) {
+  n<-nrow(altruism)
   if(mean(upper_tri(altruism)>0.999)>0.5) cat("a")
   #transfers<-equilibrate(altruism,income,capacity)
   #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
@@ -188,7 +188,7 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
   if (computeCPP) {
     #transfers<-equilibrate_cpp_fast5(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
     #transfersv<-equilibrate_cpp_fast5_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
-    transfers<-equilibrate_cpp_fast7_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
+    transfers<-equilibrate_cpp_fast8_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
     #transfers<-equilibrate_cpp_fast6(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
     #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
   }

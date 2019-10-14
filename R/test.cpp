@@ -1,0 +1,9 @@
+// [[Rcpp::depends(RcppParallel)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <iostream>
+#include <tictoc.h>
+#include <BBP_functions.h>
+#include <network_functions.h>
+#include <RcppParallel.h>
+#include <random>

@@ -33,14 +33,6 @@ BBP_c_from_atY_cpp <- function(alphas, transferstructure, incomes, t_components_
     .Call(`_nSGMM_BBP_c_from_atY_cpp`, alphas, transferstructure, incomes, t_components_matrix, t_components_csize, t_conmat)
 }
 
-component_counts <- function(transferstructure) {
-    .Call(`_nSGMM_component_counts`, transferstructure)
-}
-
-Ccomponents <- function(transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat) {
-    .Call(`_nSGMM_Ccomponents`, transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat)
-}
-
 BBP_T_from_tYc_cpp <- function(transferstructure, incomes, consumptions, Tr, depth = 0L) {
     .Call(`_nSGMM_BBP_T_from_tYc_cpp`, transferstructure, incomes, consumptions, Tr, depth)
 }
@@ -49,15 +41,51 @@ BBP_T_from_atY_plain_cpp <- function(alphas, transferstructure, incomes) {
     .Call(`_nSGMM_BBP_T_from_atY_plain_cpp`, alphas, transferstructure, incomes)
 }
 
-equilibrate_cpp_fast5 <- function(altruism, income, modmode = 5L) {
-    .Call(`_nSGMM_equilibrate_cpp_fast5`, altruism, income, modmode)
+equilibrate_cpp_fast8_smarter <- function(altruism, income, capacity, modmode = 5L) {
+    .Call(`_nSGMM_equilibrate_cpp_fast8_smarter`, altruism, income, capacity, modmode)
 }
 
-equilibrate_cpp_fast7_smarter <- function(altruism, income, capacity, modmode = 5L) {
-    .Call(`_nSGMM_equilibrate_cpp_fast7_smarter`, altruism, income, capacity, modmode)
+component_counts <- function(transferstructure) {
+    .Call(`_nSGMM_component_counts`, transferstructure)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps) {
-    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps)
+Ccomponents <- function(transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat) {
+    .Call(`_nSGMM_Ccomponents`, transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat)
+}
+
+zeroOneBFS <- function(m, src) {
+    .Call(`_nSGMM_zeroOneBFS`, m, src)
+}
+
+BFS_dist_all <- function(graph) {
+    .Call(`_nSGMM_BFS_dist_all`, graph)
+}
+
+dijkstra <- function(graph, src) {
+    .Call(`_nSGMM_dijkstra`, graph, src)
+}
+
+dijkstra_all <- function(graph) {
+    .Call(`_nSGMM_dijkstra_all`, graph)
+}
+
+compute_moments_cpp <- function(btransfers, kinship, distance) {
+    .Call(`_nSGMM_compute_moments_cpp`, btransfers, kinship, distance)
+}
+
+random_normal_seed <- function(n, mean, sd, seed) {
+    .Call(`_nSGMM_random_normal_seed`, n, mean, sd, seed)
+}
+
+symmetrix_normal_error_matrix <- function(n, mean, sd, seed) {
+    .Call(`_nSGMM_symmetrix_normal_error_matrix`, n, mean, sd, seed)
+}
+
+simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed)
+}
+
+simulate_BBP_cpp_parallel <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed)
 }
 
