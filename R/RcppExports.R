@@ -41,8 +41,16 @@ BBP_T_from_atY_plain_cpp <- function(alphas, transferstructure, incomes) {
     .Call(`_nSGMM_BBP_T_from_atY_plain_cpp`, alphas, transferstructure, incomes)
 }
 
-equilibrate_cpp_fast8_smarter <- function(altruism, income, capacity, modmode = 5L) {
-    .Call(`_nSGMM_equilibrate_cpp_fast8_smarter`, altruism, income, capacity, modmode)
+equilibrate_cpp_fast8_debug <- function(altruism, income, capacity, verbose, r, NE, maxrounds = 500L) {
+    .Call(`_nSGMM_equilibrate_cpp_fast8_debug`, altruism, income, capacity, verbose, r, NE, maxrounds)
+}
+
+equilibrate_cpp_fast8_smarter <- function(altruism, income, capacity, maxrounds = 500L) {
+    .Call(`_nSGMM_equilibrate_cpp_fast8_smarter`, altruism, income, capacity, maxrounds)
+}
+
+recip_cpp <- function(adj, radj) {
+    .Call(`_nSGMM_recip_cpp`, adj, radj)
 }
 
 component_counts <- function(transferstructure) {
@@ -81,11 +89,15 @@ symmetrix_normal_error_matrix <- function(n, mean, sd, seed) {
     .Call(`_nSGMM_symmetrix_normal_error_matrix`, n, mean, sd, seed)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L) {
-    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed)
+seedfromindex <- function(index) {
+    .Call(`_nSGMM_seedfromindex`, index)
 }
 
-simulate_BBP_cpp_parallel <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L) {
-    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed)
+simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp_parallel <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 

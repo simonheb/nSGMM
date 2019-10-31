@@ -1,44 +1,222 @@
 colMadss<-function(x) {colMeans(abs(sweep(x,2,colMeans(x))))}
 library(scales)
-dimensionwiseGridSearch<-function (fun,...,
-                                   stepsize=10, #into how many intervals is each parametre split
-                                  # stepoverlap=1, #determines how many minima are kept per round
-                                   #stepexpand=1,#how big is the interval around each kept minimum that is going to be re-used after
-                                   stepdepth=10,#how many rounds are needed?
-                                   plotit=FALSE,lower,upper,
-                                  stepexpand=1.5,
-                                  pruneratio=0.5
-                                  ) {
-  if (stepsize<4) message("stepsizes smaller than 4 are discouraged")
-  if (1-pruneratio<=1/stepsize) message("prunerations that will only leave a single point are discouraged")
-  #loop depth times 
-  global_lower<-lower
-  global_upper<-upper
-  for (i in 1:stepdepth){
-    cat("round:", i, "\n")
-    #loop over parameters
-    for (p in 1:length(lower)){
-      current<- rowMeans(cbind(lower,upper))
-      steps<- (upper[p]-lower[p])*((0:(stepsize-1))/(stepsize-1)*stepexpand-(stepexpand-1)/2 ) +lower[p]
-      steps<-unique(pmin(pmax(steps,global_lower[p]),global_upper[p]))
-      x<-NULL
-      y<-NULL
-      for(s in steps) {
-        x<-c(x,s)
-        x_all<-current
-        x_all[p]<-s
-        y<-c(y,fun(x_all,prec=i^3,...))
+library(mlrMBO)
+colSd <- function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=sd, na.rm=na.rm)
+plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
+  x<- (0:steps)/steps*(maxoffset-minoffset)+minoffset
+  print(x)
+  xs<-lapply(x,function(x,theta,par){theta[par] = theta[par] +x;theta},theta=theta,par=param)
+  plot(x,lapply(xs,fun,...))
+}
+
+
+
+random_walk_cooling<-function(fun,#the function to be minimized
+                              theta,#staring value
+                              ...,#other options to be passed to fun
+                              stepsize=1,#initial stepsize for candidate search 
+                              reheatineval=100,#after how many iterations do we consider going back to an old optimum?
+                              warmuplength=5,#for how many periods are switching probabilities overproportional to the relative imporvement
+                              iter=1000,#how many iterations?
+                              momentum=0,#momentum direction (usually not specified)
+                              momentumdecay=0.5,#speed at which momentum decays
+                              trace=NULL, #initial return value
+                              maxiter=0, #where did we start? 
+                              tempresetiter=NULL, #when did we reset temperature?
+                              minstep=0.01, #mimum stepsize
+                              upper,  lower, #limits (important!)
+                              precschedule,#a function that returns a integer that is passed as prec to fun
+                              true_theta=NULL,#for plotting
+                              bestpast=NULL#the value a restet will use
+                              ) {
+  if(iter==0) {
+    plot_trace(trace,true_theta)
+    
+    cat("\n")
+    f1<-fun(bestpast$theta,prec=4*precschedule(iter,maxiter),...)
+    f2<-fun(theta,prec=4*precschedule(iter,maxiter),...)
+    if (f2>f1) {
+      cat("returning something I found along the way",bestpast$iter,"\n")
+      return(list(theta=bestpast$theta,
+                  trace=trace,
+                  value=f1,
+                  bestpast=bestpast))
+    }
+    return(list(theta=theta,
+                trace=tail(trace,maxiter-bestpast$iter),
+                value=f2,
+                bestpast=bestpast))
+  }
+  maxiter=max(iter,maxiter)
+  if (is.null(tempresetiter)) tempresetiter=maxiter
+  momentum<-momentum*momentumdecay
+  step<-rnorm(length(theta))*stepsize+momentum
+  #print(cbind(momentum,step))
+  newtheta<-theta+step
+  theta<-pmax(pmin(theta,upper),lower)
+  newtheta<-pmax(pmin(newtheta,upper),lower)
+  #step<-newtheta-theta
+  
+  
+  old<-max(0.000001,fun(theta,prec=precschedule(iter,maxiter),...))
+  if (old==Inf & maxiter==iter) {browser();stop("starting at a point that evaluates to Inf is unlikely to yield a good result")}
+  new<-max(0.000001,fun(newtheta,prec=precschedule(iter,maxiter),...))
+  if(old==Inf & new==Inf) {old<-new<-999999999} #because sometimes both are Inf
+  if(runif(1)<(min(old/new,1)^((tempresetiter-iter)/warmuplength))) {
+    theta<-newtheta
+    current<-new
+    stepsize<-2 * #blow up stepsize to be more probing, 
+     pmax(stepsize+
+         iter/tempresetiter #add some extra searching early on
+            ,minstep)
+    if (maxiter-iter>2) stepsize<-pmin(stepsize,upper-lower) #prevent explosion, e.g. because prolonged warmup
+    momentum<-momentum+step
+    cat("|")
+    if (new<old)  {
+      if (!is.null(bestpast))
+        bestpast_fit<-bestpast$fit
+      else 
+        bestpast_fit<-Inf
+      if (new<bestpast_fit) {
+        bestpast=list(theta=newtheta,iter=iter,fit=new)
+      } else { #hope is, this would happen rarely 
+        cat("o")
+        bestpast$fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...))
       }
-      if (plotit) plot(x,y,main=p)
-      keepers<-which(y<=quantile(y,1-pruneratio))
-      oldspan<-(upper[p]-lower[p])
-      cat("parameter",p,". reduction to", (max(x[keepers])-min(x[keepers]))/oldspan,"\n")
-      lower[p]<-ifelse(min(x[keepers])>lower[p],min(x[keepers]), lower[p]-oldspan*stepexpand) #if the max is at the border, expand to that side, otherwise, zoom in
-      upper[p]<-ifelse(max(x[keepers])<upper[p],max(x[keepers]), upper[p]+oldspan*stepexpand) #if the max is at the border, expand to that side, otherwise, zoom in
+    }
+  } else {
+    stepsize<-stepsize/2
+    cat(".")
+    current<-old
+  }
+  trace=rbind(trace,c(theta,current))
+  if(iter%%120==0) {
+    theta<-partialoptim(fun,theta,prec=precschedule(iter,maxiter),lower=lower,upper=upper,steps=5,...)
+  }
+  if(iter%%reheatineval==0) {
+    #reset the chain
+    if (!is.null(bestpast)) {
+      if (bestpast$iter>iter & iter > 50) {
+        bestpast_fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...))
+        if (runif(1)<current/bestpast_fit) {
+            cat("[",iter-bestpast$iter,")]") 
+            tempresetiter<-iter+warmuplength
+            theta<-bestpast$theta
+            stepsize<-head(colSd(trace[ceiling(0.9*nrow(trace)):nrow(trace),]),length(theta))
+        }
+      }
     }
   }
-  return(cbind(lower,upper))
+  if((iter-1)%%100==0) {
+    cat("\n[iter",iter,":g(",round(theta,2),")=",old,"; pastbest@",maxiter-bestpast$iter,"]\n")
+  }
+  return(random_walk_cooling(fun,theta,...,stepsize=stepsize,iter=iter-1,tempresetiter=tempresetiter,momentum=momentum,minstep=minstep,momentumdecay=momentumdecay,trace=trace,maxiter=maxiter,reheatineval=reheatineval,warmuplength=warmuplength,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule,bestpast=bestpast))
+}
 
+
+partialoptim<-function(fun,#the function to be minimized
+                       theta,#staring value
+                              ...,#other options to be passed to fun
+                       prec=1000,#how many iterations?
+                       upper,  lower, #limits (important!)
+                       steps=8
+                       ) {
+  curr<-fun(theta,prec=prec,...)
+  if (length(lower)==1) lower = rep(lower,length(theta))
+  if (length(upper)==1) upper = rep(upper,length(theta))
+  cat("{",round(curr,3))
+  for (par in sample(1:length(theta),length(theta))) {
+    xs_lower<- c( (1-((1:steps)/steps)^2)*(theta[par]-lower[par])+lower[par])
+    xs_upper<- c( ((1:steps)/steps)^2*(upper[par]-theta[par])+theta[par])
+    xs<-sort(unique(c(xs_lower,xs_upper)))
+    cat(">")
+    for (x in xs) {
+      tsugg<-theta
+      tsugg[par]<-x
+      cand<-fun(tsugg,prec=prec,...)
+      if(cand<curr){
+        theta<-tsugg
+        curr<-cand
+        cat("x")
+      } 
+    }
+  }
+  cat(round(curr,3),"}")
+  return(theta)
+}
+
+random_walk_cooling_old<-function(fun,theta,...,stepsize=1,iter=10,momentum=0,momentumdecay=0.5,trace=NULL,minstep=0.01,maxiter=0,upper,lower,precschedule,true_theta=NULL) {
+  if(iter==0) {
+    f2<-fun(theta,prec=4*precschedule(iter,maxiter),...)
+    
+    return(list(theta=theta,trace=trace,value=f2))
+  }
+  maxiter=max(iter,maxiter)
+  momentum<-momentum*momentumdecay
+  step<-rnorm(length(theta))*stepsize+momentum
+  
+  newtheta<-theta+step
+  theta<-pmax(pmin(theta,upper),lower)
+  newtheta<-pmax(pmin(newtheta,upper),lower)
+  #print(theta)
+  #browser()
+  old<-max(0.000001,fun(theta,prec=precschedule(iter,maxiter),...))
+  new<-max(0.000001,fun(newtheta,prec=precschedule(iter,maxiter),...))
+  
+  if(runif(1)<(min(old/new,1)^(maxiter-iter))) {
+    theta<-newtheta
+    stepsize<-2 * #blow up stepsize to be more probing, 
+      pmax( stepsize+
+              iter/maxiter #add some extra searching early on
+            ,minstep)
+    momentum<-momentum+step
+    cat("\n")
+  } else {
+    stepsize<-stepsize/2
+    cat(".")
+  }
+  
+  trace=rbind(trace,theta)
+  
+  if(iter%%20==0) {
+    par(mfrow=c(5,1))
+    
+    plot(tail(trace[,1],ceiling(nrow(trace)*0.9)),type="l");abline(h=true_theta[1])
+    plot(tail(trace[,2],ceiling(nrow(trace)*0.9)),type="l");abline(h=true_theta[2])
+    plot(tail(trace[,3],ceiling(nrow(trace)*0.9)),type="l");abline(h=true_theta[3])
+    plot(tail(trace[,4],ceiling(nrow(trace)*0.9)),type="l");abline(h=true_theta[4])
+    plot(tail(trace[,5],ceiling(nrow(trace)*0.9)),type="l");abline(h=true_theta[5])
+    par(mfrow=c(1,1))
+  }
+  
+  return(random_walk_cooling_old(fun,theta,...,stepsize=stepsize,iter=iter-1,momentum=momentum,minstep=minstep,momentumdecay=momentumdecay,trace=trace,maxiter=maxiter,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule))
+}
+plot_trace<-function(trace,true_theta) {
+  
+  par(mfrow=c(6,1))
+  hideshare<-0.1
+  ttrace<-trace
+  ttrace[1:ceiling(hideshare*nrow(trace)),1]<-NA
+  ttrace[1:ceiling(hideshare*nrow(trace)),2]<-NA
+  ttrace[1:ceiling(hideshare*nrow(trace)),3]<-NA
+  ttrace[1:ceiling(hideshare*nrow(trace)),4]<-NA
+  ttrace[1:ceiling(hideshare*nrow(trace)),5]<-NA
+  ttrace[1:ceiling(0.5*nrow(trace)),6]<-NA
+  ttrace[1,]<-0
+  ttrace[2,1]<-true_theta[1]
+  ttrace[2,2]<-true_theta[2]
+  ttrace[2,3]<-true_theta[3]
+  ttrace[2,4]<-true_theta[4]
+  ttrace[2,5]<-true_theta[5]
+  
+  plot(ttrace[,1],type="l",ylab="1");abline(h=true_theta[1],col="green")
+  plot(ttrace[,2],type="l",ylab="2");abline(h=true_theta[2],col="green")
+  plot(ttrace[,3],type="l",ylab="3");abline(h=true_theta[3],col="green")
+  plot(ttrace[,4],type="l",ylab="sigma");abline(h=true_theta[4],col="green")
+  plot(ttrace[,5],type="l",ylab="cap");abline(h=true_theta[5],col="green")
+  plot(ttrace[,6],type="l",ylab="fit");abline(h=true_theta[6],col="green")
+  dev.flush(level = 1L)
+  par(mfrow=c(1,1))
 }
 
 zoomingGridSearch<-function (fun,...,lower,upper,
@@ -68,14 +246,14 @@ zoomingGridSearch<-function (fun,...,lower,upper,
       valid_combinations<-all_parameter_combinations[colMeans(t(all_parameter_combinations)>upper | t(all_parameter_combinations)<lower)==0,]
       newlevels<-rbind(newlevels,valid_combinations)
     }
-
+    
     #this shouldnt be needed, but apparently it is due to numeric imprescision
     for (c in 1:ncol(newlevels)) {
       newlevels[,c]<-plyr::round_any(newlevels[,c],(2*p_span[,c]+max(p_midpoints[,c])-min(p_midpoints[,c]))/(2*stepsize))
     } 
     
     
-
+    
     if(plotit) {
       plot(rbind(nldf[,1:2],newlevels[,1:2]),col = alpha("white", 0.0), pch=16) 
       points(nldf[,1:2],col = alpha("yellow", 0.4), pch=16) 
@@ -83,7 +261,7 @@ zoomingGridSearch<-function (fun,...,lower,upper,
       #points(t(c(9.87654321,1.23456789)),col = alpha("red", 1), pch=16,cex=3) 
       nldf<-rbind(newlevels)
     }
-
+    
     if(prunepoints) {
       
       newlevels<-plyr::count(newlevels)
@@ -92,7 +270,7 @@ zoomingGridSearch<-function (fun,...,lower,upper,
       message(paste0("reducing ", nrow(newlevels)))
       
       newlevels<-newlevels[which(newlevels$freq>=quantile(newlevels$freq,pruneratio)),1:(ncol(newlevels)-1)]
-
+      
       message(paste0("to ",nrow(newlevels)))
     }
     if(plotit) {
@@ -113,7 +291,7 @@ zoomingGridSearch<-function (fun,...,lower,upper,
       points(p_midpoints[,1:2],col = alpha("red", 0.8), pch=19) 
       dev.flush()
     }
-
+    
     p_span<-pmax(p_span/(stepsize)*stepexpand,
                  colMadss(p_midpoints)*stepexpand)
     
@@ -128,7 +306,7 @@ zoomingGridSearch<-function (fun,...,lower,upper,
   return(p_midpoints[1,])
 }
 gridSearch<-function (fun, levels, ..., 
-          printDetail = TRUE,nmin=1) 
+                      printDetail = TRUE,nmin=1) 
 {
   message(paste0("evaluating:",length(levels)))
   results <- lapply(levels, fun, ...)
@@ -143,11 +321,15 @@ gridSearch<-function (fun, levels, ...,
     list(minfun = results[i], minlevels = t(matrix(unlist(levels[i]),nrow=length(levels[[1]]))))
   }
 }
-#f<-function(x,prec=Inf){cat(x,".\n");1.9*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+(x[4]-0.123456789)^2 + (x[3]-0.123456789)^2+rnorm(1)/(prec)}
-#gridSearch(f, levels=list(c(1,2),c(2,3),c(9.8765,1.2345)))
-#optim(c(0,0,0,0),f, lower=rep(-50,4),upper=rep(50,4),prec=Inf)
+f4<-function(x,prec=Inf){  1.5*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+(x[4]-0.123456789)^2 + x[5]^2+ (x[3]-0.123456789)^2+rnorm(1)/(prec)}
+# f2<-function(x,prec=Inf){  1.5*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+rnorm(1)/(prec)}
+# f1<-function(x,prec=10){  x^2+rnorm(1)/(prec)}
+iter=1000
+#seed=round(runif(1)*1000)
+#set.seed(seed)
 
-#good expeirience with stepexpand=2/3*stepsize
-#zoomingGridSearch(f, lower=rep(-50,4),upper=rep(50,4),stepdepth=20,stepsize=3,stepoverlap=8,stepexpand=1.3,plotit=TRUE,prunepoints = TRUE,pruneratio=0.75)
-#a<-dimensionwiseGridSearch(f, lower=rep(-50,4),upper=rep(50,4),stepdepth=10,stepsize=12,plotit=TRUE,pruneratio=0.66,stepexpand=1.5)
-#print(rowMeans(a))
+#aaa<-random_walk_cooling(f4,c(1,1,1,1,1),iter=iter,minstep = 0.01, precschedule=function(iter,maxiter){1+{maxiter-iter}^2},upper=10,lower=-10,
+#                                                  true_theta = c(0.987654321,rep(0.123456789,3),0))
+#x<-(c(rowSums(abs(sweep(aaa$trace,2,aaa$trace[nrow(iter),]) )),0))
+#plot(x[20:iter])
+#print(aaa$theta)
