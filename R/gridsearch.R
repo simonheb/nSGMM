@@ -9,8 +9,6 @@ plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
   plot(x,lapply(xs,fun,...))
 }
 
-
-
 random_walk_cooling<-function(fun,#the function to be minimized
                               theta,#staring value
                               ...,#other options to be passed to fun
