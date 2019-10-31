@@ -21,13 +21,15 @@ double intermediation_cpp(const mat& adj,const mat& radj) {
   if (giving_or_receiving_.n_elem==0) return(0);
   return(((float)giving_and_receiving_.n_elem)/((float)giving_or_receiving_.n_elem));
 }
+// [[Rcpp::export]]
 double recip_cpp(const mat& adj, const mat& radj) {
   return(accu(radj)/accu(adj));
 }
 
 double support_fast2_cpp(const mat& m,const mat& undir) {
-  mat twopaths = undir*undir;
   uvec linksifsupported = find(undir>0);
+  if (linksifsupported.n_elem==0) return(0);
+  mat twopaths = undir*undir;
   return(mean(vectorise(clamp(twopaths.elem(linksifsupported),0,1))));
 }
 
@@ -223,13 +225,13 @@ mat dijkstra_all(mat graph)
 
 // [[Rcpp::export]] 
 vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance) {
-
+  
   mat m_undir=max(btransfers,trans(btransfers));
   mat m_recip=btransfers%trans(btransfers);
   mat pl=BFS_dist_all(m_undir);
   pl=pl.replace(0,datum::nan);
   pl=pl.replace(datum::inf,btransfers.n_rows);
-  double pathlenghts=mean(pl.elem(find_finite(pl)));
+  double pathlenghts=mean(pl.elem(find_finite(pl)))/btransfers.n_rows;
   double fb2=forestness_cpp(btransfers);
   double ib=intermediation_cpp(btransfers,m_recip);
   double sa=support_fast2_cpp(btransfers,m_undir);

@@ -3,6 +3,7 @@
 using namespace arma;
 #include <tictoc.h>
 
+
 mat tictoc_timers=zeros(100,2);
 int tictoc_current=0;
 auto start=std::chrono::system_clock::now();

@@ -792,15 +792,14 @@ mat equilibrate_cpp_fast7_smarter(const mat& altruism, const vec& income, const 
   //  else {std::cout << "F:Stopped after "<< r <<" rounds. Found a/the nash equilibium" << updates << endl;}
   return transfers ;
 }*/
-
 // [[Rcpp::export]]
-mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity,int modmode=5) {
+mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const mat& capacity,bool verbose, int& r, bool& NE, int maxrounds=500) {
   mat transfers = zeros(income.n_elem,income.n_elem);
   vec net_transfers_in  = zeros(income.n_elem);
   vec net_transfers_out = zeros(income.n_elem);
   int updates; 
-  int r;
-  for (r=0;r<30000;r++) {
+//std::cout << "(" << altruism(1,2) <<  ")";
+  for (r=0;r<maxrounds;r++) {
     updates=0;
     uvec updating = linspace<uvec>(1, income.n_elem,income.n_elem);
     uword updatingmax = income.n_elem;
@@ -820,16 +819,27 @@ mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const 
       if (next_updateingmax==0) break;
       updatingmax = next_updateingmax;
     }
-    //if ((r%20==0)|(updates==0)|(1==1)) {std::cout << "c:Round" << r <<"... (" <<updates <<" nodes updated their transactions)" << endl;}
+//  if (verbose & ((r%20==0)|(updates==0)|(1==1))) {std::cout << "c:Round" << r <<"... (" <<updates <<" nodes updated their transactions)" << endl;}
     if (updates==0) {break;}
   }
+  
+  //std::cout << "r:" <<r;
   transfers=max(transfers-trans(transfers),zeros(income.n_elem,income.n_elem));
+  //if (verbose) std::cout << endl << r<<endl;
+  //if (verbose & r>200) std::cout << "********";
+  NE=true;
   if (updates>0) {
-    std::cout<< "c:Best responses did not converge to a NE, probably you need to increase the rounds" << endl;
+    NE=false;
+    //std::cout<< "c:Best responses did not converge to a NE (yet)" << endl;
     return transfers;
   } 
-  //std::cout << "r="<<r << endl;
-  //  else {std::cout << "F:Stopped after "<< r <<" rounds. Found a/the nash equilibium" << updates << endl;}
   return transfers ;
 }
 
+
+// [[Rcpp::export]]
+mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity, int maxrounds=500) {
+  int r;
+  bool NE;
+  return(equilibrate_cpp_fast8_debug(altruism, income, capacity,false,r,NE));
+}
