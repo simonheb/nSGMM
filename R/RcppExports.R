@@ -77,8 +77,8 @@ dijkstra_all <- function(graph) {
     .Call(`_nSGMM_dijkstra_all`, graph)
 }
 
-compute_moments_cpp <- function(btransfers, kinship, distance) {
-    .Call(`_nSGMM_compute_moments_cpp`, btransfers, kinship, distance)
+compute_moments_cpp <- function(btransfers, kinship, distance, income, theta) {
+    .Call(`_nSGMM_compute_moments_cpp`, btransfers, kinship, distance, income, theta)
 }
 
 random_normal_seed <- function(n, mean, sd, seed) {
@@ -93,11 +93,19 @@ seedfromindex <- function(index) {
     .Call(`_nSGMM_seedfromindex`, index)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
-    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_cpp_parallel <- function(n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
-    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, delta2, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp_link_level <- function(n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp_link_level`, n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp_parallel_link_level <- function(n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed = 0L, rounds = 500L) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel_link_level`, n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed, rounds)
 }
 

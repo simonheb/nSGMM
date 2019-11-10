@@ -1,55 +1,38 @@
+library(Rfast)
 library(stats) #for MLE
 library(igraph)
 library(foreach)
 library(tictoc)
 library(doParallel)
 
-simulate_BBP<-function(n,delta0,delta1,delta2,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=FALSE,computeR=FALSE,plotthis=FALSE) {
+simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=FALSE,computeR=FALSE,plotthis=FALSE) {
   oldseed <- .Random.seed
   #cat("repet:",reps,"\n")
   if (!parallel) {
     finalMatrix<-NULL
     
     for (i in 1:reps) {
-      #cat(".",delta0,delta1,delta2,sigma,"\n")
+      #cat(".",delta0,delta1,sigma,"\n")
       set.seed(noiseseed+i)
       error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
       error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
       error <- lower_tri.assign(error,lower_tri(t(error)))
-      altruism <- 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)))
+      altruism <- 1/(1+exp(-(delta0+delta1*kinship+error)))
       diag(altruism)<-1
       if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
-      browser()
       eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
-      ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
+      ret<-compute_moments(1*(eq$transfers>0),kinship,distance,income,theta=c(delta0,delta1,sigma))
       finalMatrix<-rbind(finalMatrix,ret)
     }
-  } else {
-    finalMatrix <- foreach(i=1:reps,
-                           .combine=rbind,
-                           .export=c("forestness","intermediation","support_fast2","recip","equilibrate_and_plot","compute_moments"),
-                           .packages=c("nSGMM","Rfast", "igraph")
-    ) %dopar% {
-      set.seed(noiseseed+i)
-      error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-      error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
-      error <- lower_tri.assign(error,lower_tri(t(error)))
-      altruism <- 1/(1+exp(-(delta0+delta1*kinship+delta2*distance+error)))
-      diag(altruism)<-1
-      if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
-      
-      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,computeR=computeR,computeCPP=!computeR)
-      ret<-compute_moments(1*(eq$transfers>0),kinship,distance)
-      return(ret)
-    }
   }
+  
   .Random.seed<-oldseed
   rnorm(1) #this should update the seed?
   return(finalMatrix)
 }
 
 
-compute_moments<-function(btransfers,kinship,distance) {
+compute_moments<-function(btransfers,kinship,distance,income,theta) {
   g<-igraph::graph_from_adjacency_matrix(btransfers)
   pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
   fb2<-forestness(btransfers)
@@ -58,50 +41,101 @@ compute_moments<-function(btransfers,kinship,distance) {
   ra<-recip(btransfers)
   c1<-cor(c(btransfers),c(kinship))
   c2<-cor(c(btransfers),c(distance))
-  return(cbind(mean(btransfers),fb2,ib,sa,ra,pathlenghts,c1,c2))
+  density_<-mean(btransfers)
+  con <- matrix(income,nrow=nrow(btransfers),ncol=nrow(btransfers))
+  #offdiag<-!diag(nrow(transfers))
+  c3<- cor(c(con/t(con)),c(btransfers))
+  equated_rest<-log(con/t(con)-theta[1]-theta[2]*kinship)
+  sqresidual_proxy<-mean(equated_rest[btransfers==1]^2)
+  return(cbind(density_,#density
+               fb2,#forestness
+               ib,#intermeidation
+               sa,#support
+               ra,#reciprocity
+               pathlenghts,#pathlenghts
+               c1,#correatlion between kin and transfers
+               c2,#correlation between distance and transfers
+               c3,#correlation between income ratios and transfers
+               sqresidual_proxy
+               ))
 }
 gg<<-0
-g<-function(th,transfers,kinship,distance,...,prec){
-  #n<-nrow(kinship)
-  #foo= 0
-  #qt=,c(0.05,0.1,0.6,0.8,0.9))
-  #cat("\n",qt,"\n")
-  #if (all(qt[1:3]>c(0.2, 0.3,0.95))) {
-   # cat("BAD!!\n")
-    #foo = 1
-  #} 
-  
-  #cat("prec:",prec,",")
+g<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
   #cat("g(",th,")=")
-  #cat("th:",th,"\n")
-  #browser()
-  start_time <- Sys.time()
-  ret<-c(moment_distance(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxiter=200,prec=prec))
-  pace<-prec/as.numeric((Sys.time() - start_time), units = "secs")
-  #cat(ret, "\n")
-  #if (pace<10) browser()
+  ret<-c(moment_distance(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
   if (length(ret)==0) { return(Inf)}
+  #cat(ret,"\n")
   return(ret)
 }
-moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxiter=500,verbose=FALSE,vcv=NULL,
-                            keep=as.logical(c(1,1,1,1,0,1,1,1))
-                            ) {
-  x<-compute_moments(1*(transfers>0),kinship,distance)
-
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],th[3],exp(th[4]),
-                                  distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxiter)
-  
+g_i<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
+  #cat("g(",th,")=")
+  ret<-link_level_dist(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec)
+  if (length(ret)==0) { return(Inf)}
+  #cat(ret,"\n")
+  return(ret)
+}
+g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
+  #cat("gn(",th,")=")
+  ret<-c(moment_distance_new(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
+  if (length(ret)==0) { return(Inf)}
+  #cat(ret,"\n")
+  return(ret)
+}
+moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
+                            keep=as.logical(c(1,1,0,1,0,1,1,0,1))
+) {
+  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
+  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
+                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
-  diff<-diff[,keep]
   if (is.null(vcv)) {
     vcv<-var(diff)
     diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
+    cat("approximating VCV via simulations\n")
   }
-  ret<-tryCatch({colmeans(diff)%*%solve(vcv)%*%colmeans(diff)},error=function(cond) {return(Inf)})
+  diff<-diff[,keep]
+  vcv<-vcv[keep,keep]
+  
+  ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
   # simulate_BBP(nrow(kinship),th[1],th[2],th[3],th[4], distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=1,plotthis=TRUE,computeR=TRUE)
+  if (ret==Inf) browser()
   return(ret)
 }
-
+link_level_dist <- function(th,transfers,kinship,distance,income,prec,vcv,noiseseed=1,maxrounds=500,verbose=FALSE)
+ {
+  #simx<-simulate_BBP_cpp_link_level(nrow(kinship),th[1],th[2],exp(th[3]),
+   #                                          distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),1*(transfers>0),income,reps=prec,noiseseed,maxrounds)
+  simx<-simulate_BBP_cpp_parallel_link_level(nrow(kinship),th[1],th[2],exp(th[3]),
+                                            distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),1*(transfers>0),income,reps=prec,noiseseed,maxrounds)
+  return(colmeans(simx)%*%vcv)
+}
+moment_distance_new <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
+                                keep=as.logical(c(1,1,0,1,0,1,1,0,1))
+) {
+  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta_th)
+  
+  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
+                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
+  #simulate_BBP(nrow(kinship),th[1],th[2],th[3],exp(th[4]),
+  #                         distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
+  diff<-sweep(simx,2,x)
+  if (is.null(vcv)) {
+    vcv<-var(diff)
+    diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
+    cat("approximating VCV via simulations\n")
+  }  
+  diff<-diff[,keep]
+  vcv<-vcv[keep,keep]
+  W<-solve(vcv)
+  ret<-NULL
+  for (i in 1:nrow(diff)) {
+    ret<-c(ret,diff[i,]%*%W%*%diff[i,])
+  }
+  return(mean(ret))
+}
+lognormal<-function(n,mean,sd) {
+  exp(rnorm(n)*sd+mean) - exp(mean+sd^2/2)
+}
 
 
 #utlity function (vector valued)
@@ -633,3 +667,18 @@ multiplicity<-function(g) {
   return(sum(pathcount>1)/sum(pathcount>0))
 }
 
+# ###########
+# fit:
+#   density     forest      support     pathlengths correlation1
+# [1] 0.03721000 0.84610393 0.05619804 0.21139954 0.15015951
+# true:
+# [1] 0.03637222 0.83635829 0.02018914 0.24995272 0.15071341
+# 
+# real moments:
+# [1] 0.03777778 0.85294118 0.08823529 0.16421456 0.14973230
+# 
+# 
+# 
+# fb2         ib         sa ra pathlenghts        c1           c2
+# [1,] 0.03777778 0.8529412 0.06666667 0.08823529  0   0.1642146 0.1497323 -0.001912973
+# Browse[1]> x[keep]
