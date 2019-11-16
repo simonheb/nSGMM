@@ -7,7 +7,6 @@ library(mlrMBO)
 
 setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
-source('R/gridsearch.R')
 
 colsums<-colSums
 colmeans<-colMeans
@@ -27,19 +26,21 @@ set.seed(seed)
 #population size 
 n<-30
 a<-NULL
-delta0_DGP<- -1.4
-delta1_DGP<- 1.0
-#delta2_DGP<- 3.5
-sigma_DGP<-0.7
-capacity_DGP<-1.4
+delta0_DGP<- -1.8
+delta1_DGP<- 1
+
+sigma_DGP<-1.3
+capacity_DGP<-1.6
+true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP)
 
 foo<-NULL
 
 for (i in 1:5) {
+  source('R/gridsearch.R')
   cat(i,"=========================================================")
-  cat(i,"=========================================================")
-  cat(i,"=========================================================")
-  set.seed(9554+i)
+  cat(i,"=========================================================\n")
+  rseed<-i+1
+  set.seed(rseed)
   # #I create the altruism network as a combination of other (random) networks
   lon<-rnorm(n)
   lat<-rnorm(n)
@@ -58,100 +59,87 @@ for (i in 1:5) {
   
   diag(altruism)<-1
   
-  income = runif(n)^2*10
+  income = exp(rnorm(n)+1)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=capacity_DGP,income=income,modmode=21,plotthis = TRUE)
+  observed_transfers<-1*(eq$transfers>0)
+  if (mean(observed_transfers[kinship==1])==1|mean(observed_transfers[kinship==0])==0) cat("XXXXXXXXXXXXXXx")
+  
+  print(t(compute_moments_cpp(observed_transfers,kinship,distance,income,true_th)))
   
   
   
+  plot(graph_from_adjacency_matrix(observed_transfers))
   #########emprical vcv####
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),delta0_DGP,delta1_DGP,sigma_DGP,
-                                  distance,kinship,matrix(capacity_DGP,nrow(kinship),nrow(kinship)),income,1000,1,1000)
+  simx<-simulate_BBP_cpp(nrow(kinship),delta0_DGP,delta1_DGP,sigma_DGP,
+                                  distance,kinship,matrix(capacity_DGP,nrow(kinship),nrow(kinship)),income,c(delta0_DGP,delta1_DGP,sigma_DGP),1000,1,1000)
 
+  
   diff<-sweep(simx,2,colmeans(simx))
   emprical_vcv<-var(diff)
   
   diag(emprical_vcv)[which(diag(emprical_vcv)==0)]<-0.00000001 #replace 0 diagonal elements
 
   
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=capacity_DGP,income=income,modmode=21,plotthis = TRUE)
-  
+
   
   Sys.sleep(1)
   
-  observed_transfers<-1*(eq$transfers>0)
   
-  true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP)
-  ptm <- proc.time()
-  
-  
-  th<-true_th#+rnorm(5)
-bgbgbgb
-  print(trueg<-g(th,kinship=kinship,
-                 income=income,
-                 transfers=observed_transfers,
-                 distance=distance,noiseseed=1,prec=1000,verbose=TRUE,vcv=emprical_vcv))
-  print(true_indiv<-g_i(th,kinship=kinship,
-                 income=income,
-                 transfers=observed_transfers,
-                 distance=distance,noiseseed=1,prec=1000,verbose=TRUE,vcv=c(3,1)))
-  print(truegnew<-g_new(th,kinship=kinship,
-           income=income,
-           transfers=observed_transfers,
-           distance=distance,noiseseed=1,prec=1000,verbose=TRUE,vcv=emprical_vcv))
 
+    
+  th<-true_th
   
   
-  ptm <- proc.time()
-  run_1000_new<-readRDS("tmp")
-  vfdvfdv
-  run_1000_new<-random_walk_cooling(g,c(0,0,-1,1),iter=1000,minstep = 0.2,
-                                   precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
-                                   lower=c(-5,-5,-5,0.01),upper=c(5,5,1,20),
-                                   true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=emprical_vcv,
-                                   kinship=kinship,
-                                   income=income,
-                                   transfers=observed_transfers,
-                                   distance=distance,momentumdecay = 0.5)
-  a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,7,(proc.time() - ptm)[3],trueg,truegnew,true_indiv))
-  #saveRDS(run_1000_new,"tmp")
-  ptm <- proc.time()
-  run_1000_new<-random_walk_cooling(g_new,c(0,0,-1,1),iter=1000,minstep = 0.2,# this is to test what g_new can do 
+  ptm <- Sys.time()
+  run_1000_new<-random_walk_cooling(g,c(0,0,-1,1),iter=1000,minstep = 0.2, #use only second new moment
                                     precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
-                                    lower=c(-5,-5,-5,0.01),upper=c(5,5,1,20),
+                                    lower=c(-5,-5,-5,0.01),upper=c(4,4,2,20),
                                     true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=emprical_vcv,
-                                    kinship=kinship,
+                                    kinship=kinship, keep=as.logical(c(1,1,0,1,0,1,1,0,0,1)),
                                     income=income,
-                                    transfers=observed_transfers,superverbose=TRUE,
+                                    transfers=observed_transfers,
                                     distance=distance,momentumdecay = 0.5)
-  a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,77,(proc.time() - ptm)[3],trueg,truegnew,true_indiv))
-  ptm <- proc.time()
-  run_1000_new<-random_walk_cooling(g_i,c(0,0,-1,1),iter=1000,minstep = 0.2,# this is to test what g_new can do 
-                                    precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
-                                    lower=c(-5,-5,-5,0.01),upper=c(5,5,1,20),
-                                    true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=c(3,1),
-                                    kinship=kinship,
-                                    income=income,
-                                    transfers=observed_transfers,superverbose=TRUE,
-                                    distance=distance,momentumdecay = 0.5)
-  a<-rbind(a,c(run_1000_02$theta,run_1000_02$value,87,(proc.time() - ptm)[3],trueg,truegnew,true_indiv))
+  a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,72,as.numeric((Sys.time() - ptm),unit="mins"),run_1000_new$true_g,rseed))
+  zwei<-run_1000_new
   
+  ptm <- Sys.time()
+  run_1000_new<-random_walk_cooling(g,c(0,0,-1,1),iter=1000,minstep = 0.2, #use both new moments
+                                    precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
+                                    lower=c(-5,-5,-5,0.01),upper=c(4,4,2,20),
+                                    true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=emprical_vcv,
+                                    kinship=kinship, keep=as.logical(c(1,1,1,1,0,0,1,0,1,1)),
+                                    income=income,
+                                    transfers=observed_transfers,
+                                    distance=distance,momentumdecay = 0.5)
+  a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,71,as.numeric((Sys.time() - ptm),unit="mins"),run_1000_new$true_g,rseed))
+  eins<-run_1000_new
+  
+  
+  
+  
+
+  if (as.numeric(format(Sys.time(),"%H")) %in% c(19:24,0:4)) {
+    ptm <- Sys.time()
+    run_1000_new<-random_walk_cooling(g_new,c(0,0,-1,1),iter=1000,minstep = 0.2,# this is to test what g_new can do 
+                                      precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
+                                      lower=c(-5,-5,-5,0.01),upper=c(4,4,2,20),
+                                      true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=emprical_vcv,
+                                      kinship=kinship,
+                                      income=income,
+                                      transfers=observed_transfers,superverbose=TRUE,
+                                      distance=distance,momentumdecay = 0.5)
+    a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,76,as.numeric((Sys.time() - ptm),unit="mins"),run_1000_new$true_g,rseed))
+  }
 }
 colmedian<-function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=median, na.rm=na.rm)
 
-zzv <- 
-g(bottom99$theta,kinship=kinship,
-  income=income,
-  transfers=observed_transfers,
-  distance=distance,noiseseed=3998,prec=500,verbose=TRUE)
-g( c( -0.99, 2.46, -3, 0.89, 19.79 ),kinship=kinship,
-   income=income,
-   transfers=observed_transfers,
-   distance=distance,noiseseed=3998,prec=500,verbose=TRUE)
+
 g( c( -0.99-0.1, 2.46-0.1, -3+0.1, 0.89-0.1, 19.79-0.1 ),kinship=kinship,
    income=income,
    transfers=observed_transfers,
    distance=distance,noiseseed=3998,prec=500,verbose=TRUE)
 
-true_th
+
 
 plot_partial(g,theta= c( -0.99, 2.46, -3, 0.89, 19.79 ),
    kinship=kinship,
@@ -159,17 +147,16 @@ plot_partial(g,theta= c( -0.99, 2.46, -3, 0.89, 19.79 ),
   transfers=observed_transfers,
   distance=distance,noiseseed=1,prec=500,param=5,minoffset=-19.6,maxoffset=0,steps=8)
 
-drawfortheta<-function(theta,kinship,income,capacity) {
+drawfortheta<-function(theta,kinship,income) {
   n<-length(income)
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
   error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
   error <- lower_tri.assign(error,lower_tri(t(error)))
   altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
   diag(altruism)<-1
-  income = runif(n)^2*10
   
   #########emprical vcv####
   eq<-equilibrate_and_plot(altruism=altruism,capacity=th[4],income=income,modmode=21,plotthis = TRUE)
-  
+  plot(graph_from_adjacency_matrix((eq$transfers>0)*1))
 }
 

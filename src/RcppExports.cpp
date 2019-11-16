@@ -318,8 +318,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simulate_BBP_cpp
-mat simulate_BBP_cpp(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
+mat simulate_BBP_cpp(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, vec theta, int reps, int seed, int rounds);
+RcppExport SEXP _nSGMM_simulate_BBP_cpp(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP thetaSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -331,16 +331,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< mat >::type kinship(kinshipSEXP);
     Rcpp::traits::input_parameter< mat >::type capacity(capacitySEXP);
     Rcpp::traits::input_parameter< vec >::type income(incomeSEXP);
+    Rcpp::traits::input_parameter< vec >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
+    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds));
     return rcpp_result_gen;
 END_RCPP
 }
 // simulate_BBP_cpp_parallel
-Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0, double delta1, double sigma, const mat& distance, const mat& kinship, const mat& capacity, const vec& income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_parallel(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
+Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0, double delta1, double sigma, const mat& distance, const mat& kinship, const mat& capacity, const vec& income, const vec& theta, int reps, int seed, int rounds);
+RcppExport SEXP _nSGMM_simulate_BBP_cpp_parallel(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP thetaSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -352,54 +353,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const mat& >::type kinship(kinshipSEXP);
     Rcpp::traits::input_parameter< const mat& >::type capacity(capacitySEXP);
     Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
+    Rcpp::traits::input_parameter< const vec& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_parallel(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
-    return rcpp_result_gen;
-END_RCPP
-}
-// simulate_BBP_cpp_link_level
-mat simulate_BBP_cpp_link_level(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, mat data_transfers, vec income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_link_level(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP data_transfersSEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type delta0(delta0SEXP);
-    Rcpp::traits::input_parameter< double >::type delta1(delta1SEXP);
-    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< mat >::type distance(distanceSEXP);
-    Rcpp::traits::input_parameter< mat >::type kinship(kinshipSEXP);
-    Rcpp::traits::input_parameter< mat >::type capacity(capacitySEXP);
-    Rcpp::traits::input_parameter< mat >::type data_transfers(data_transfersSEXP);
-    Rcpp::traits::input_parameter< vec >::type income(incomeSEXP);
-    Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_link_level(n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed, rounds));
-    return rcpp_result_gen;
-END_RCPP
-}
-// simulate_BBP_cpp_parallel_link_level
-Rcpp::NumericMatrix simulate_BBP_cpp_parallel_link_level(int n, double delta0, double delta1, double sigma, const mat& distance, const mat& kinship, const mat& capacity, const mat& data_transfers, const vec& income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_parallel_link_level(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP data_transfersSEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type delta0(delta0SEXP);
-    Rcpp::traits::input_parameter< double >::type delta1(delta1SEXP);
-    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< const mat& >::type distance(distanceSEXP);
-    Rcpp::traits::input_parameter< const mat& >::type kinship(kinshipSEXP);
-    Rcpp::traits::input_parameter< const mat& >::type capacity(capacitySEXP);
-    Rcpp::traits::input_parameter< const mat& >::type data_transfers(data_transfersSEXP);
-    Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
-    Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_parallel_link_level(n, delta0, delta1, sigma, distance, kinship, capacity, data_transfers, income, reps, seed, rounds));
+    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_parallel(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -428,10 +386,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_random_normal_seed", (DL_FUNC) &_nSGMM_random_normal_seed, 4},
     {"_nSGMM_symmetrix_normal_error_matrix", (DL_FUNC) &_nSGMM_symmetrix_normal_error_matrix, 4},
     {"_nSGMM_seedfromindex", (DL_FUNC) &_nSGMM_seedfromindex, 1},
-    {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 11},
-    {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 11},
-    {"_nSGMM_simulate_BBP_cpp_link_level", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_link_level, 12},
-    {"_nSGMM_simulate_BBP_cpp_parallel_link_level", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel_link_level, 12},
+    {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 12},
+    {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 12},
     {NULL, NULL, 0}
 };
 

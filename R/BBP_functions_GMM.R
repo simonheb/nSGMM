@@ -34,19 +34,28 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
 
 compute_moments<-function(btransfers,kinship,distance,income,theta) {
   g<-igraph::graph_from_adjacency_matrix(btransfers)
+  undir<-btransfers+t(btransfers)
   pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
   fb2<-forestness(btransfers)
   ib<-intermediation(btransfers)
   sa<-support_fast2(btransfers)
   ra<-recip(btransfers)
-  c1<-cor(c(btransfers),c(kinship))
-  c2<-cor(c(btransfers),c(distance))
+  c1<-cor(c(undir),c(kinship))
+  c2<-cor(c(undir),c(distance))
   density_<-mean(btransfers)
-  con <- matrix(income,nrow=nrow(btransfers),ncol=nrow(btransfers))
-  #offdiag<-!diag(nrow(transfers))
-  c3<- cor(c(con/t(con)),c(btransfers))
-  equated_rest<-log(con/t(con)-theta[1]-theta[2]*kinship)
-  sqresidual_proxy<-mean(equated_rest[btransfers==1]^2)
+  inc <- matrix(income,nrow=nrow(btransfers),ncol=nrow(btransfers))
+  
+  equated_rest<- btransfers-log(inc/t(inc))-theta[1]-theta[2]*kinship
+  offdiag<-!(diag(nrow(btransfers)))
+  
+  dat=data.frame(a=c(log(inc/t(inc))[offdiag]),b=sign(log(inc/t(inc)))[offdiag],c=c(kinship[offdiag]))  
+  dat$aa<-dat$a*dat$a
+  dat$ab<-dat$a*dat$b
+  dat$ac<-dat$a*dat$c
+  dat$bc<-dat$b*dat$c
+  r3<-summary(lm(btransfers[offdiag] ~ ., dat))$sigma
+  
+  sqresidual_proxy<-mean(equated_rest[inc>t(inc)]^2)
   return(cbind(density_,#density
                fb2,#forestness
                ib,#intermeidation
@@ -55,7 +64,7 @@ compute_moments<-function(btransfers,kinship,distance,income,theta) {
                pathlenghts,#pathlenghts
                c1,#correatlion between kin and transfers
                c2,#correlation between distance and transfers
-               c3,#correlation between income ratios and transfers
+               r3,#correlation between income ratios and transfers
                sqresidual_proxy
                ))
 }
@@ -82,11 +91,18 @@ g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
   return(ret)
 }
 moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
-                            keep=as.logical(c(1,1,0,1,0,1,1,0,1))
+                            keep=as.logical(c(1,1,0,1,0,1,1,0,1,1))
 ) {
-  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
+  inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
+  offdiag<-!(diag(nrow(kinship)))
+  
+  
+  #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
+  x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
+  
+  
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
+                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
   if (is.null(vcv)) {
     vcv<-var(diff)
@@ -97,25 +113,20 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   vcv<-vcv[keep,keep]
   
   ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
-  # simulate_BBP(nrow(kinship),th[1],th[2],th[3],th[4], distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=1,plotthis=TRUE,computeR=TRUE)
+  if (is.null(ret)) browser()
+  if (is.na(ret)) browser()
   if (ret==Inf) browser()
   return(ret)
 }
-link_level_dist <- function(th,transfers,kinship,distance,income,prec,vcv,noiseseed=1,maxrounds=500,verbose=FALSE)
- {
-  #simx<-simulate_BBP_cpp_link_level(nrow(kinship),th[1],th[2],exp(th[3]),
-   #                                          distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),1*(transfers>0),income,reps=prec,noiseseed,maxrounds)
-  simx<-simulate_BBP_cpp_parallel_link_level(nrow(kinship),th[1],th[2],exp(th[3]),
-                                            distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),1*(transfers>0),income,reps=prec,noiseseed,maxrounds)
-  return(colmeans(simx)%*%vcv)
-}
+
 moment_distance_new <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
-                                keep=as.logical(c(1,1,0,1,0,1,1,0,1))
+                                keep=as.logical(c(1,1,0,1,0,1,1,0,1,1))
 ) {
-  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta_th)
+  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
+  
   
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
+                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
   #simulate_BBP(nrow(kinship),th[1],th[2],th[3],exp(th[4]),
   #                         distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
@@ -177,13 +188,9 @@ equilibrate_analytically <- function(altruism,income,capacity,starttransfers=NUL
       transfers[i,] <- BR
       #net out transfers
       transfers<-pmax(transfers-t(transfers),0)
-      #test if BRs are sufficiently stable over the round
-      #cat("\n")
+      
     }
-    #cat("update by ", sum(abs(previoustransfers-transfers)))
-    #if (updates<6) (print(which((previoustransfers)!=(transfers),T)))
     
-    #if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
     if (updates==0) {break}
   }
   if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} #else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
@@ -199,16 +206,7 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
   }
   
   for (r in 0:2000) {
-    #if (r%%20==5) {    #lets try if the structure is already final, in which case we can find the ne algebraically
-    # eq_candidate<-BBP_TC_from_atY(alphas=altruism,transferstructure = 1*(transfers>0),incomes=income,equilibrium_check = TRUE)
-    #if (eq_candidate$equilibrium){
-    # transfers<-eq_candidate$transfers
-    #cat("solved exactly\n")
-    #se=TRUE        
-    #} else {
-    # cat("not solved\n")
-    #}
-    #}
+    
     updates<-0
     previoustransfers<-transfers
     #cat("R:")
@@ -226,10 +224,7 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
       #net out transfers
       transfers<-pmax(transfers-t(transfers),0)
       #test if BRs are sufficiently stable over the round
-      #cat("\n")
     }
-    #cat("update by ", sum(abs(previoustransfers-transfers)))
-    #if (updates<6) (print(which((previoustransfers)!=(transfers),T)))
     
     if (r%%20==0|updates==0|TRUE) {cat("Round",r,"... (",updates," nodes updated their transactions)\n")}
     if (updates==0) {break}
@@ -240,20 +235,12 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
 equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=21,computeR=FALSE,computeCPP=TRUE) {
   n<-nrow(altruism)
   if(mean(upper_tri(altruism)>0.999)>0.5) cat("a")
-  #transfers<-equilibrate(altruism,income,capacity)
-  #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
-  #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
   if (computeCPP) {
-    #transfers<-equilibrate_cpp_fast5(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
-    #transfersv<-equilibrate_cpp_fast5_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
     transfers<-equilibrate_cpp_fast8_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity)
-    #transfers<-equilibrate_cpp_fast6(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
-    #transfers<-equilibrate_cpp(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,modmode)
   }
   
   if (computeR) {
     transfers_R<-equilibrate(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity)
-    #transfers_R2<-equilibrate_analytically(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity)
     #browser()
     if (!computeCPP){
       transfers <- transfers_R

@@ -225,6 +225,12 @@ mat dijkstra_all(mat graph)
 
 // [[Rcpp::export]] 
 vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance,const vec& income,const vec& theta) {
+  vec values=btransfers.elem(find(btransfers>0));
+  if (values.n_elem>0) {
+    if (values.min()<1 | values.max()>1) {
+      Rcpp::Rcout << "your matrix is not binary";
+    }
+  }
   
   mat m_undir=max(btransfers,trans(btransfers));
   mat m_recip=btransfers%trans(btransfers);
@@ -236,20 +242,46 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   double ib=intermediation_cpp(btransfers,m_recip);
   double sa=support_fast2_cpp(btransfers,m_undir);
   double ra=recip_cpp(btransfers,m_recip);
-  mat c1=cor(vectorise(btransfers),vectorise(kinship));
-  mat c2=cor(vectorise(btransfers),vectorise(distance));
+  mat c1=cor(vectorise(m_undir),vectorise(kinship));
+  mat c2=cor(vectorise(m_undir),vectorise(distance));
   double density=mean(vectorise(btransfers));
-  mat con = (1/trans(income))*income;
-//#offdiag<-!diag(nrow(transfers))
-  mat c3 = cor(vectorise(con),vectorise(btransfers));
   
-  mat equated_rest=log(con-theta(0)-theta(1)*kinship);
-  double sqresidual_proxy=mean(pow(equated_rest(find(btransfers)),2));
+  mat con = (1/income)*trans(income);
+  mat logcon = log(trans(con));
+  
+  uvec offdiag=find(eye(kinship.n_rows,kinship.n_rows)==0);
+  mat dat(offdiag.n_elem,7);
+  dat.col(0)=vectorise(logcon(offdiag));
+  dat.col(1)=sign(dat.col(0));
+  dat.col(2)=vectorise(kinship(offdiag));
+  dat.col(3)=dat.col(0)%dat.col(0);
+  dat.col(4)=dat.col(0)%dat.col(1);
+  dat.col(5)=dat.col(0)%dat.col(2);
+  dat.col(6)=dat.col(1)%dat.col(2);
+
+  int n = dat.n_rows, k = dat.n_cols;
+  
+  vec coef = solve(dat, btransfers(find(eye(kinship.n_rows,kinship.n_rows)==0))); 
+  vec resid = btransfers(find(eye(kinship.n_rows,kinship.n_rows)==0)) - dat*coef; 
+  
+  double sig2 = as_scalar(trans(resid)*resid/(n-k));
+  
+  mat equated_rest=btransfers-logcon-theta(0)-theta(1)*kinship;
+  vec sqyared_rest=pow(equated_rest(find(logcon>0)),2);
+  
+  
+  
+  double sqresidual_proxy;
+  if (sqyared_rest.n_elem>0) {
+    sqresidual_proxy=mean(sqyared_rest);
+  } else {
+    sqresidual_proxy=999;
+  }
   vec ret = {density,                   fb2,
              ib,                        sa,
              ra,                        pathlenghts,
              c1(0),                     c2(0),
-             c3(0),
+             sqrt(sig2),
              sqresidual_proxy};
   return(ret.replace(datum::nan,0));
 }
