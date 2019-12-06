@@ -231,6 +231,7 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
       Rcpp::Rcout << "your matrix is not binary";
     }
   }
+  uvec offdiag=find(eye(kinship.n_rows,kinship.n_rows)==0);
   
   mat m_undir=max(btransfers,trans(btransfers));
   mat m_recip=btransfers%trans(btransfers);
@@ -242,14 +243,18 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   double ib=intermediation_cpp(btransfers,m_recip);
   double sa=support_fast2_cpp(btransfers,m_undir);
   double ra=recip_cpp(btransfers,m_recip);
-  mat c1=cor(vectorise(m_undir),vectorise(kinship));
-  mat c2=cor(vectorise(m_undir),vectorise(distance));
-  double density=mean(vectorise(btransfers));
+  mat c1=cor(vectorise(m_undir(offdiag)),vectorise(kinship(offdiag)));
+  mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
+  double density=mean(vectorise(btransfers(offdiag)));
   
   mat con = (1/income)*trans(income);
   mat logcon = log(trans(con));
-  
-  uvec offdiag=find(eye(kinship.n_rows,kinship.n_rows)==0);
+  double c3;
+  if (density==0) {
+    c3=0;
+  }else{
+    c3=mean(abs(logcon(find(m_undir))));
+  }
   mat dat(offdiag.n_elem,7);
   dat.col(0)=vectorise(logcon(offdiag));
   dat.col(1)=sign(dat.col(0));
@@ -261,27 +266,43 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
 
   int n = dat.n_rows, k = dat.n_cols;
   
-  vec coef = solve(dat, btransfers(find(eye(kinship.n_rows,kinship.n_rows)==0))); 
-  vec resid = btransfers(find(eye(kinship.n_rows,kinship.n_rows)==0)) - dat*coef; 
+  vec coef = solve(dat, btransfers(offdiag)); 
+  vec resid = btransfers(offdiag) - dat*coef; 
   
   double sig2 = as_scalar(trans(resid)*resid/(n-k));
+  
+  
+  mat dat2(offdiag.n_elem,2);
+  dat2.col(0)=abs(vectorise(logcon(offdiag)));
+  dat2.col(1)=vectorise(kinship(offdiag));
+  int n2 = dat2.n_rows, k2 = dat2.n_cols;
+  
+  vec coef2 = solve(dat2, m_undir(offdiag)); 
+  vec resid2 = m_undir(offdiag) - dat2*coef2; 
+  
+  double sig22 = as_scalar(trans(resid2)*resid2/(n2-k2));
+  
   
   mat equated_rest=btransfers-logcon-theta(0)-theta(1)*kinship;
   vec sqyared_rest=pow(equated_rest(find(logcon>0)),2);
   
   
+  vec sqyared_rest3=pow(equated_rest(offdiag),2);
   
-  double sqresidual_proxy;
-  if (sqyared_rest.n_elem>0) {
-    sqresidual_proxy=mean(sqyared_rest);
-  } else {
-    sqresidual_proxy=999;
-  }
+  
+  //double sqresidual_proxy;
+  
+//if (sqyared_rest.n_elem>0) {
+double  sqresidual_proxy=mean(sqyared_rest);
+double  sqresidual_proxy3=mean(sqyared_rest3);
+//} else {
+    //sqresidual_proxy=999;
+//  }
   vec ret = {density,                   fb2,
              ib,                        sa,
              ra,                        pathlenghts,
              c1(0),                     c2(0),
-             sqrt(sig2),
-             sqresidual_proxy};
+             sig2,
+             sig22,c3,sqresidual_proxy3};
   return(ret.replace(datum::nan,0));
 }

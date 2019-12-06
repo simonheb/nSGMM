@@ -3,8 +3,10 @@ library(stats) #for MLE
 library(igraph)
 library(foreach)
 library(tictoc)
-library(doParallel)
-
+  library(doParallel)
+  logistic<-function(x) {
+    1/(1+exp(-x))
+  }
 simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=FALSE,computeR=FALSE,plotthis=FALSE) {
   oldseed <- .Random.seed
   #cat("repet:",reps,"\n")
@@ -32,7 +34,26 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
 }
 
 
+drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
+  n<-length(income)
+  error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
+  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
+  error <- lower_tri.assign(error,lower_tri(t(error)))
+  altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
+  diag(altruism)<-1
+  if(any(is.nan(altruism))) browser()
+  #########emprical vcv####
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=theta[4],income=income,modmode=21,plotthis = modelplot)
+  gg<-graph_from_adjacency_matrix((eq$transfers>0)*1)
+#  E(gg)$label<-E(gg)$weight
+  plot(gg,...,main="simulated")
+  print(round(compute_moments_cpp((eq$transfers>0)*1,kinship=kinship,income=income,theta=theta,distance=distance),3))
+  return((eq$transfers>0)*1)
+}
+
+
 compute_moments<-function(btransfers,kinship,distance,income,theta) {
+  offdiag<-!(diag(nrow(btransfers)))
   g<-igraph::graph_from_adjacency_matrix(btransfers)
   undir<-btransfers+t(btransfers)
   pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
@@ -40,33 +61,46 @@ compute_moments<-function(btransfers,kinship,distance,income,theta) {
   ib<-intermediation(btransfers)
   sa<-support_fast2(btransfers)
   ra<-recip(btransfers)
-  c1<-cor(c(undir),c(kinship))
-  c2<-cor(c(undir),c(distance))
-  density_<-mean(btransfers)
+  c1<-cor(c(undir[offdiag]),c(kinship[offdiag]))
+  c2<-cor(c(undir[offdiag]),c(distance[offdiag]))
+  density_<-mean(btransfers[offdiag])
   inc <- matrix(income,nrow=nrow(btransfers),ncol=nrow(btransfers))
   
-  equated_rest<- btransfers-log(inc/t(inc))-theta[1]-theta[2]*kinship
-  offdiag<-!(diag(nrow(btransfers)))
   
   dat=data.frame(a=c(log(inc/t(inc))[offdiag]),b=sign(log(inc/t(inc)))[offdiag],c=c(kinship[offdiag]))  
   dat$aa<-dat$a*dat$a
   dat$ab<-dat$a*dat$b
   dat$ac<-dat$a*dat$c
   dat$bc<-dat$b*dat$c
-  r3<-summary(lm(btransfers[offdiag] ~ ., dat))$sigma
+  r3<-summary(lm(btransfers[offdiag] ~ ., dat))$sigma^2
   
-  sqresidual_proxy<-mean(equated_rest[inc>t(inc)]^2)
-  return(cbind(density_,#density
-               fb2,#forestness
-               ib,#intermeidation
-               sa,#support
-               ra,#reciprocity
-               pathlenghts,#pathlenghts
-               c1,#correatlion between kin and transfers
-               c2,#correlation between distance and transfers
-               r3,#correlation between income ratios and transfers
-               sqresidual_proxy
-               ))
+  da2t=data.frame(a=abs(c(log(inc/t(inc))[offdiag])),b=c(kinship[offdiag]))  
+
+  r4<-summary(lm(undir[offdiag] ~ ., da2t))$sigma^2
+  
+  c3<-mean(abs(log(inc/t(inc)))[undir==1])
+  #sharetransferstoricher<- mean((inc<t(inc))[btransfers>0])
+  equated_rest<- btransfers-log(inc/t(inc))-theta[1]-theta[2]*kinship #the extend to which income and kin explain transfers
+  sqresidual_proxy<-mean(equated_rest[inc>t(inc)]^2) #only for those where income can explain trnsfers
+  #equated_rest2<- btransfers-log(inc/t(inc)+1)-theta[1]-theta[2]*kinship #the extend to which income and kin explain transfers
+  #sqresidual_proxy2<-mean(equated_rest2[offdiag]^2) #only for those where income can explain trnsfers
+  sqresidual_proxy3<-mean(equated_rest[offdiag]^2) #only for those where income can explain trnsfers
+  warning("THIS SHOULD ONLY BE USED IN DEBUG MODE")
+  return(cbind(density_,#density                                            X X     alpha                                            
+               fb2,#forestness                                              X X     kappa                                
+               ib,#intermeidation                                             X     ?????
+               sa,#support                                                  X X     kappa                                        
+               ra,#reciprocity                                                                                                
+               pathlenghts,#pathlenghts                                     X       ????    
+               c1,#correatlion between kin and transfers                    X X     beta                      
+               c2,#correlation between distance and transfers                                                
+               r3,#residual o incometranfers regressed on all                 X     sigma                                 
+               r4,#                                           
+               c3,           #                                              X       alpha                               
+               sqresidual_proxy3#                                           X       sigma    
+               #               sharetransferstoricher
+               )) #1,1,0,1,0,1,1,0,0,0,1,1
+  
 }
 gg<<-0
 g<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
@@ -90,28 +124,27 @@ g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
   #cat(ret,"\n")
   return(ret)
 }
-moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
-                            keep=as.logical(c(1,1,0,1,0,1,1,0,1,1))
-) {
+moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep) {
   inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
   offdiag<-!(diag(nrow(kinship)))
   
   
   #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
-  x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
-  
-  
+  x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th), error=function(cond) {return(NA)})
+  if (any(is.na(x))) browser()
+
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
+                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
   if (is.null(vcv)) {
     vcv<-var(diff)
     diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
     cat("approximating VCV via simulations\n")
   }
+  if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
-  
+
   ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
@@ -120,15 +153,13 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
 }
 
 moment_distance_new <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
-                                keep=as.logical(c(1,1,0,1,0,1,1,0,1,1))
+                                keep
 ) {
   x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
   
   
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(th[4],nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
-  #simulate_BBP(nrow(kinship),th[1],th[2],th[3],exp(th[4]),
-  #                         distance,kinship,matrix(th[5],nrow(kinship),nrow(kinship)),income,reps=prec,noiseseed,maxrounds)
+                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
   if (is.null(vcv)) {
     vcv<-var(diff)

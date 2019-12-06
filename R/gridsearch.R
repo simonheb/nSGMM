@@ -25,14 +25,13 @@ random_walk_cooling<-function(fun,#the function to be minimized
                               upper,  lower, #limits (important!)
                               precschedule,#a function that returns a integer that is passed as prec to fun
                               true_theta=NULL,#for plotting
-                              roundstopartial=100,
+                              roundstopartial=200,
                               superverbose=FALSE,
                               current=NULL,currentvalueage=10,
                               lastplottet=Sys.time()-60,
                               bestpast=NULL,
                               true_g=NULL#the value a restet will use
 ) {
-  if (is.null(true_theta)) true_theta<-theta
   if(iter==0) {
     
     cat("\n")
@@ -40,12 +39,14 @@ random_walk_cooling<-function(fun,#the function to be minimized
     f2<-fun(theta,prec=4*precschedule(iter,maxiter),...)
     if (f2>f1) {
       cat("returning something I found along the way",bestpast$iter,"\n")
+      print(bestpast$theta)
       return(list(theta=bestpast$theta,
                   trace=trace,
                   value=f1,
                   bestpast=bestpast,
                   true_g=true_g))
     }
+    print(theta)
     return(list(theta=theta,
                 trace=tail(trace,maxiter-bestpast$iter),
                 value=f2,
@@ -56,10 +57,14 @@ random_walk_cooling<-function(fun,#the function to be minimized
   maxiter=max(iter,maxiter)
   if (is.null(tempresetiter)) tempresetiter=maxiter
   if (is.null(stepsize)) stepsize <-(upper-lower)/100
-  if (is.null(true_g)) true_g<-fun(th=true_theta,prec=4*precschedule(1,maxiter),...)
-  
+  if (!any(is.null(true_theta)) & is.null(true_g)) {
+    true_g<- fun(th=true_theta,prec=4*precschedule(1,maxiter),...) 
+  }  else {
+    true_g<- -1
+  } 
+    
   if(iter%%roundstopartial==50) { #every 100 rounds solve for the partial min
-    theta<-partialoptim(fun,theta,prec=precschedule(iter,maxiter),lower=lower,upper=upper,steps=5,maxrounds=200,...)
+    theta<-partialoptim(fun,theta,prec=precschedule(iter,maxiter),lower=lower,upper=upper,steps=4,maxrounds=precschedule(iter,maxiter)/4,...)
     currentvalueage<-Inf #make sure this gets re-computed.
   }
   
@@ -87,6 +92,12 @@ random_walk_cooling<-function(fun,#the function to be minimized
   new<-max(0.000001,fun(newtheta,prec=precschedule(iter,maxiter),...,noiseseed=iter))
   if(old==Inf & new==Inf) {old<-new<-999999999} #because sometimes both are Inf
   if(runif(1)<(min(old/new,1)^((tempresetiter-iter)/warmuplength))) {
+    ##sometimes this runs into oblivion again, whenever this happens, get it back home
+    if (iter<600 & new>60*max(bestpast$fit,new) | iter<300 & new>20*max(bestpast$fit,new) | new>200*max(bestpast$fit,new)) { #can only be true if bestpas!=NULL
+      newtheta<-bestpast$theta
+      new<-bestpast$fit
+      cat("*")
+    }
     effectivestep<-newtheta-theta
     theta<-newtheta
     current<-new
@@ -98,13 +109,13 @@ random_walk_cooling<-function(fun,#the function to be minimized
     if (maxiter-iter>2) stepsize<-pmin(stepsize,(upper-lower)/10) #prevent explosion, e.g. because prolonged warmup
     momentum<-momentum+effectivestep
     cat("|")
-    if (new<old)  { #if the new value is better than old
+    if (new<old | is.null(bestpast))  { #if the new value is better than old
       if (!is.null(bestpast))
         bestpast_fit<-bestpast$fit
       else 
         bestpast_fit<-Inf
       if (new<bestpast_fit) {
-        bestpast=list(theta=newtheta,iter=iter,fit=new)
+        bestpast<-list(theta=newtheta,iter=iter,fit=new)
       } else { #hope is, this would happen rarely  #better than old, but worse than the pastbest, maybe the pastbest was too optimist, so let's re-evaluate it so that we won't be stuck with a lucky draw
         cat("o")
         bestpast$fit<-max(0.000001,mean(c(bestpast$fit,fun(bestpast$theta,prec=precschedule(iter,maxiter),...,noiseseed=iter))))
@@ -122,9 +133,9 @@ random_walk_cooling<-function(fun,#the function to be minimized
     #reset the chain
     if (!is.null(bestpast)) {
       if (bestpast$iter>iter & iter > 50) {
-        bestpast_fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...))
-        if (runif(1)<current/bestpast_fit) {
-          cat("[",iter-bestpast$iter,")]") 
+        bestpast$fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...)) #first, update
+        if (runif(1)*2<min(1,current/bestpast$fit)) { #if the past is better and with luck, reset.
+          cat("[",iter-bestpast$iter,"]") 
           tempresetiter<-iter+warmuplength
           theta<-bestpast$theta
           stepsize<-head(colSd(trace[ceiling(0.9*nrow(trace)):nrow(trace),]),length(theta))
@@ -133,9 +144,13 @@ random_walk_cooling<-function(fun,#the function to be minimized
     }
   }
   if((iter-1)%%200==0|iter<=1|as.numeric(Sys.time()-lastplottet,units="mins")>1+(maxiter-iter)/100) {
-    plot_trace(trace,c(true_theta,true_g),bestpast,maxiter)
+    if (is.null(true_theta)) {
+      plot_trace(trace,c(theta,true_g),bestpast,maxiter)
+    } else {
+      plot_trace(trace,c(true_theta,true_g),bestpast,maxiter)
+    } 
     lastplottet<-Sys.time()
-    cat("\n[iter",iter,":g(",round(theta,3),")=",current,"; pastbest@",maxiter-bestpast$iter,", was",bestpast$fit," ]\n")
+    cat("\n[iter",iter,":c(",paste0(round(theta,3),collapse=","),")=",current,"; pastbest@",maxiter-bestpast$iter,", was",bestpast$fit," ]\n")
     
   }
   return(random_walk_cooling(fun,theta,...,stepsize=stepsize,iter=iter-1,tempresetiter=tempresetiter,momentum=momentum,minstep=minstep,momentumdecay=momentumdecay,trace=trace,maxiter=maxiter,reheatineval=reheatineval,warmuplength=warmuplength,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule,bestpast=bestpast,current=current,currentvalueage=currentvalueage,lastplottet=lastplottet,true_g=true_g))
@@ -154,14 +169,14 @@ partialoptim<-function(fun,#the function to be minimized
   if (length(upper)==1) upper = rep(upper,length(theta))
   cat("{",round(curr,3))
   loopingpars<-sample(1:length(theta),length(theta))
-  backups<-3
+  backups<-2
   needstobackup<-FALSE
   working<-TRUE
   par_i<-1
   while(working) {
     par<-loopingpars[par_i]
-    xs_lower<- c( (1-((1:steps)/steps)^3)*(theta[par]-lower[par])+lower[par])
-    xs_upper<- c( ((1:steps)/steps)^3*(upper[par]-theta[par])+theta[par])
+    xs_lower<- c( (1-((1:steps)/steps)^2)*(theta[par]-lower[par])+lower[par])
+    xs_upper<- c( ((1:steps)/steps)^2*(upper[par]-theta[par])+theta[par])
     xs<-unique(c(xs_lower,xs_upper))
   #  print(xs)    
     updated<-FALSE
@@ -207,19 +222,18 @@ plot_trace<-function(trace,true_theta,bestpast,maxiter) {
     par(mfrow=c(ncol(trace),1))
     hideshare<-0.1
     ttrace<-trace
-    ttrace[1:ceiling(hideshare*nrow(trace)), 1:(ncol(trace)-1)]<-NA
-    ttrace[1:ceiling((1-(1-hideshare)^3)*nrow(trace)),ncol(trace)]<-NA
+    ttrace[1:ceiling(hideshare*nrow(trace)), 1:(ncol(trace))]<-NA
+    #ttrace[1:ceiling((1-(1-hideshare)^3)*nrow(trace)),ncol(trace)]<-NA
     #ttrace[1,1:(ncol(trace)-1)]<-0
     #for (i in 1:(ncol(trace)-1)) {
     #  ttrace[2,i]<-true_theta[i]
     #}
     optloc<-maxiter-bestpast$iter#which.min2(ttrace[,ncol(trace)]);
     ttrace[ttrace[,ncol(trace)]>max(true_theta[5]*2,7*min(ttrace[,ncol(trace)],na.rm=TRUE)),ncol(trace)]<-NA
-    
-    plot(ttrace[,1],type="l",ylab="1",     ylim=c( min(0,true_theta[1],tail(ttrace[,1],1))-1,max(0,true_theta[1],tail(ttrace[,1],1))+1));         abline(h=true_theta[1],col="green");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
-    plot(ttrace[,2],type="l",ylab="2",     ylim=c( min(0,true_theta[2],tail(ttrace[,2],1))-1,max(0,true_theta[2],tail(ttrace[,2],1))+1));         abline(h=true_theta[2],col="green");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
-    plot(ttrace[,3],type="l",ylab="sigma", ylim=c( min(0,true_theta[3],tail(ttrace[,3],1))-1,max(0,true_theta[3],tail(ttrace[,3],1))+1));         abline(h=true_theta[3],col="green");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
-    plot(ttrace[,4],type="l",ylab="cap",   ylim=c( min(0,true_theta[4],tail(ttrace[,4],1))-1,max(0,true_theta[4],tail(ttrace[,4],1))+1));         abline(h=true_theta[4],col="green");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
+    plot(ttrace[,1],type="l",ylab="1",     ylim=c( min(0,true_theta[1],tail(ttrace[,1],1),trace[optloc,1])-1,max(0,true_theta[1],tail(ttrace[,1],1),trace[optloc,1])+1)); abline(h=bestpast$theta[1],col="green");abline(h=true_theta[1],col="orange");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
+    plot(ttrace[,2],type="l",ylab="2",     ylim=c( min(0,true_theta[2],tail(ttrace[,2],1),trace[optloc,2])-1,max(0,true_theta[2],tail(ttrace[,2],1),trace[optloc,2])+1)); abline(h=bestpast$theta[2],col="green");abline(h=true_theta[2],col="orange");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
+    plot(ttrace[,3],type="l",ylab="sigma", ylim=c( min(0,true_theta[3],tail(ttrace[,3],1),trace[optloc,3])-1,max(0,true_theta[3],tail(ttrace[,3],1),trace[optloc,3])+1)); abline(h=bestpast$theta[3],col="green");abline(h=true_theta[3],col="orange");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
+    plot(ttrace[,4],type="l",ylab="cap",   ylim=c( min(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])-1,max(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])+1)); abline(h=bestpast$theta[4],col="green");abline(h=true_theta[4],col="orange");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
     plot(ttrace[,5],type="l",ylab="fit",   ylim=c(0, max(true_theta[5]*2,5*min(ttrace[,5],na.rm=TRUE))));abline(h=true_theta[5],col="green");    abline(h=min(ttrace[,ncol(trace)],na.rm=TRUE),col="orange");     abline(v=optloc,col="blue");
     
     

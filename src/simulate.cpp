@@ -41,7 +41,7 @@ int seedfromindex(int index) {
 mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,vec theta,int reps,int seed,int rounds) {
   if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-  mat finalMatrix = zeros(reps,10);
+  mat finalMatrix = zeros(reps,12);
   vec converged(reps);
   vec roundsc(reps);
   
@@ -52,14 +52,16 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     altruism.diag().ones();
     int rounds_;
     bool converged_;
+    tic(1);
     mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true, rounds_,converged_,rounds);
+    tic(2);    
     eqtrans2.elem( find(eqtrans2) ).ones();
-    
+    tic(3);    
     vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
-
+    toc();
     
     
-    for(int mom=0;mom<10;mom++)
+    for(int mom=0;mom<12;mom++)
       finalMatrix(i,mom) = moments(mom);
     roundsc(i) = rounds_;
     converged(i) = converged_;
@@ -68,6 +70,7 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     std::cout << "(" << floor(mean(converged)*100) <<"%c)" ;
     finalMatrix.zeros();
   }
+  tictoc(3);
   return(finalMatrix);
 }
 
@@ -107,7 +110,7 @@ struct simulate_BBP_worker : public RcppParallel::Worker
       eqtrans2.elem( find(eqtrans2) ).ones();
       
       vec moments=compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
-      for(int mom=0;mom<10;mom++)
+      for(int mom=0;mom<12;mom++)
         output(i,mom) = moments(mom);
       convergance(i,0) = converged_;
       
@@ -124,7 +127,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
     
   
   // allocate the output matrix
-  Rcpp::NumericMatrix output(reps,10);
+  Rcpp::NumericMatrix output(reps,12);
   Rcpp::NumericMatrix convergance(reps,1);
   
 
@@ -140,7 +143,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
     Rcpp::Rcout  << "(" << floor(mean(convergance)*100) <<"%)";
   }
   if (mean(convergance)<0.50) {
-    Rcpp::NumericMatrix z(reps,10);
+    Rcpp::NumericMatrix z(reps,12);
     return z;
   }
   
