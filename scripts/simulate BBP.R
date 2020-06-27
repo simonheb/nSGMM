@@ -29,7 +29,7 @@ n<-30
   delta0_DGP<- -4.4447
   delta1_DGP<- 1.9133
 sigma_DGP<-exp(0.4055)
-capacity_DGP<-0.9151
+capacity_DGP<-1
 #theta_start<- c(-4.4447, 1.9133, 0.4055, 0.9151) #mean of first and second estimates
 
 true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP)
@@ -187,33 +187,9 @@ for (i in 14:24) {
   
   
   
- 
-# 
-#   if (as.numeric(format(Sys.time(),"%H")) %in% c(19:24,0:4)) {
-#     ptm <- Sys.time()
-#     run_1000_new<-random_walk_cooling(g_new,c(0,0,-1,1),iter=1000,minstep = 0.2,# this is to test what g_new can do 
-#                                       precschedule=function(iter,maxiter){ceiling(((maxiter-iter)/maxiter)^2*1000+50)},
-#                                       lower=c(-5,-5,-5,0.01),upper=c(4,4,2,20), 
-#                                       true_theta=c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP),vcv=emprical_vcv,
-#                                       kinship=kinship,  keep=as.logical(c(1,1,1,1,0,0,1,0,1,0,0,0)),
-#                                       income=income,
-#                                       transfers=observed_transfers,superverbose=TRUE,
-#                                       distance=distance,momentumdecay = 0.5)
-#     a<-rbind(a,c(run_1000_new$theta,run_1000_new$value,76,as.numeric((Sys.time() - ptm),unit="mins"),run_1000_new$true_g,rseed,
-#                  g( run_1000_new$theta,kinship=kinship,  keep=as.logical(c(1,1,1,1,0,0,1,0,1,0,0,0)),
-#                     income=income,
-#                     transfers=observed_transfers,
-#                     distance=distance,noiseseed=3998,prec=1000,verbose=TRUE)))
-#   }
-}
+  
 colmedian<-function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=median, na.rm=na.rm)
 
 
 
 saveRDS(a,"a")
-
-#plot_partial(g,theta= c( -0.99, 2.46, -3, 0.89, 19.79 ),
-#   kinship=kinship,
-#  income=income,
-#  transfers=observed_transfers,
-#  distance=distance,noiseseed=1,prec=500,param=5,minoffset=-19.6,maxoffset=0,steps=8)

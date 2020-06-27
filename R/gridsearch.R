@@ -54,6 +54,9 @@ random_walk_cooling<-function(fun,#the function to be minimized
                 true_g=true_g))
   }
   
+  theta<-pmin(theta,upper)
+  theta<-pmax(theta,lower)
+  
   maxiter=max(iter,maxiter)
   if (is.null(tempresetiter)) tempresetiter=maxiter
   if (is.null(stepsize)) stepsize <-(upper-lower)/100
@@ -133,7 +136,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
     #reset the chain
     if (!is.null(bestpast)) {
       if (bestpast$iter>iter & iter > 50) {
-        bestpast$fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...)) #first, update
+        bestpast$fit<-max(0.000001,fun(bestpast$theta,prec=precschedule(iter,maxiter),...,noiseseed=iter)) #first, update
         if (runif(1)*2<min(1,current/bestpast$fit)) { #if the past is better and with luck, reset.
           cat("[",iter-bestpast$iter,"]") 
           tempresetiter<-iter+warmuplength
@@ -150,7 +153,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
       plot_trace(trace,c(true_theta,true_g),bestpast,maxiter)
     } 
     lastplottet<-Sys.time()
-    cat("\n[iter",iter,":c(",paste0(round(theta,3),collapse=","),")=",current,"; pastbest@",maxiter-bestpast$iter,", was",bestpast$fit," ]\n")
+    cat("\n[iter",iter,":c(",paste0(round(theta,3),collapse=","),")=",current,"; pastbest@",maxiter-bestpast$iter,", was",bestpast$fit,"with theta=c(",paste0(round(bestpast$theta,3),collapse=","),")]\n")
     
   }
   return(random_walk_cooling(fun,theta,...,stepsize=stepsize,iter=iter-1,tempresetiter=tempresetiter,momentum=momentum,minstep=minstep,momentumdecay=momentumdecay,trace=trace,maxiter=maxiter,reheatineval=reheatineval,warmuplength=warmuplength,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule,bestpast=bestpast,current=current,currentvalueage=currentvalueage,lastplottet=lastplottet,true_g=true_g))
@@ -175,29 +178,31 @@ partialoptim<-function(fun,#the function to be minimized
   par_i<-1
   while(working) {
     par<-loopingpars[par_i]
-    xs_lower<- c( (1-((1:steps)/steps)^2)*(theta[par]-lower[par])+lower[par])
-    xs_upper<- c( ((1:steps)/steps)^2*(upper[par]-theta[par])+theta[par])
-    xs<-unique(c(xs_lower,xs_upper))
-  #  print(xs)    
-    updated<-FALSE
-    for (x in xs) {
-      tsugg<-theta
-      tsugg[par]<-x
-      cand<-fun(tsugg,prec=prec,...)
-      if(cand<curr){
-        theta<-tsugg
-        curr<-cand
-        updated<-TRUE
-      } 
-    }
-    if (updated) {
-      needstobackup<-TRUE
-      cat("x")
-      par_i<-par_i+1
+    if(lower[par]==upper[par]) {
+      cat("c")
     } else {
-      cat(">")
-      par_i<-par_i+1
+      xs_lower<- c( (1-((1:steps)/steps)^2)*(theta[par]-lower[par])+lower[par])
+      xs_upper<- c( ((1:steps)/steps)^2*(upper[par]-theta[par])+theta[par])
+      xs<-unique(c(xs_lower,xs_upper))
+      updated<-FALSE
+      for (x in xs) {
+        tsugg<-theta
+        tsugg[par]<-x
+        cand<-fun(tsugg,prec=prec,...)
+        if(cand<curr){
+          theta<-tsugg
+          curr<-cand
+          updated<-TRUE
+        } 
+      }
+      if (updated) {
+        needstobackup<-TRUE
+        cat("x")
+      } else {
+        cat(">")
+      }
     }
+    par_i<-par_i+1
     if (par_i>length(loopingpars)) {
       if (backups>0 & needstobackup) {
         needstobackup<-FALSE
@@ -222,12 +227,9 @@ plot_trace<-function(trace,true_theta,bestpast,maxiter) {
     par(mfrow=c(ncol(trace),1))
     hideshare<-0.1
     ttrace<-trace
-    ttrace[1:ceiling(hideshare*nrow(trace)), 1:(ncol(trace))]<-NA
-    #ttrace[1:ceiling((1-(1-hideshare)^3)*nrow(trace)),ncol(trace)]<-NA
-    #ttrace[1,1:(ncol(trace)-1)]<-0
-    #for (i in 1:(ncol(trace)-1)) {
-    #  ttrace[2,i]<-true_theta[i]
-    #}
+    if (nrow(trace)>100) 
+      ttrace[1:ceiling(hideshare*nrow(trace)), 1:(ncol(trace))]<-NA
+    
     optloc<-maxiter-bestpast$iter#which.min2(ttrace[,ncol(trace)]);
     ttrace[ttrace[,ncol(trace)]>max(true_theta[5]*2,7*min(ttrace[,ncol(trace)],na.rm=TRUE)),ncol(trace)]<-NA
     plot(ttrace[,1],type="l",ylab="1",     ylim=c( min(0,true_theta[1],tail(ttrace[,1],1),trace[optloc,1])-1,max(0,true_theta[1],tail(ttrace[,1],1),trace[optloc,1])+1)); abline(h=bestpast$theta[1],col="green");abline(h=true_theta[1],col="orange");abline(v=optloc,col="blue");  abline(h = 0, lty = 2,col="gray")
@@ -245,93 +247,93 @@ plot_trace<-function(trace,true_theta,bestpast,maxiter) {
     }
     ,finally={})
 }
-
-zoomingGridSearch<-function (fun,...,lower,upper,
-                             stepsize=10, #into how many intervals is each parametre split
-                             stepoverlap=1, #determines how many minima are kept per round
-                             stepexpand=1,#how big is the interval around each kept minimum that is going to be re-used after
-                             stepdepth=10,
-                             pruneratio=0.5,prunepoints=FALSE,
-                             plotit=FALSE) {
-  if (any(upper<lower)) browser()
-  points = NULL
-  nldf<-matrix(c(0,0,0,0),nrow=1)
-  p_midpoints = matrix((lower+upper)/2,nrow=1)
-  p_span = upper-p_midpoints
-  for (step in 1:stepdepth) {
-    newlevels<-NULL
-    #first rasterize midpoints in order to reduce complexity
-    #rounding to avoid calculating similar points twice:
-    for (c in 1:ncol(p_midpoints)) {
-      p_midpoints[,c]<-plyr::round_any(p_midpoints[,c],(2*p_span[,c]+max(p_midpoints[,c])-min(p_midpoints[,c]))/(2*stepsize))
-    } 
-    
-    for(rows in 1:nrow(p_midpoints)) {
-      steps_of_each_parameter<-matrix(((-1*stepsize):(1*stepsize))/(stepsize),ncol=1)%*%matrix(p_span,nrow=1) #I draw 5 times as many, they will be reduced below by the rasterization anyways
-      all_possible_combinations_of_deviations<-expand.grid(as.list(as.data.frame(steps_of_each_parameter)))
-      all_parameter_combinations<-sweep(all_possible_combinations_of_deviations, 2, p_midpoints[rows,], "+")
-      valid_combinations<-all_parameter_combinations[colMeans(t(all_parameter_combinations)>upper | t(all_parameter_combinations)<lower)==0,]
-      newlevels<-rbind(newlevels,valid_combinations)
-    }
-    
-    #this shouldnt be needed, but apparently it is due to numeric imprescision
-    for (c in 1:ncol(newlevels)) {
-      newlevels[,c]<-plyr::round_any(newlevels[,c],(2*p_span[,c]+max(p_midpoints[,c])-min(p_midpoints[,c]))/(2*stepsize))
-    } 
-    
-    
-    
-    if(plotit) {
-      plot(rbind(nldf[,1:2],newlevels[,1:2]),col = alpha("white", 0.0), pch=16) 
-      points(nldf[,1:2],col = alpha("yellow", 0.4), pch=16) 
-      points(newlevels[,1:2],col = alpha("blue", 0.1), pch=16) 
-      #points(t(c(9.87654321,1.23456789)),col = alpha("red", 1), pch=16,cex=3) 
-      nldf<-rbind(newlevels)
-    }
-    
-    if(prunepoints) {
-      
-      newlevels<-plyr::count(newlevels)
-      print(table(newlevels$freq))
-      cat("cutoff",quantile(newlevels$freq,pruneratio), "\n")
-      message(paste0("reducing ", nrow(newlevels)))
-      
-      newlevels<-newlevels[which(newlevels$freq>=quantile(newlevels$freq,pruneratio)),1:(ncol(newlevels)-1)]
-      
-      message(paste0("to ",nrow(newlevels)))
-    }
-    if(plotit) {
-      points(newlevels[,1:2],col = alpha("green", 0.8), pch=19) 
-      nldf<-rbind(newlevels)
-    }
-    newlevels<-unique(as.list(as.data.frame(t(newlevels))))
-    for(i in 1:700) {
-      if (i%%100==0) cat(i)
-      if (i%%100<3) next 
-      if (i%%100==99) cat("|")
-      cat("-")
-      
-    }
-    #cat(paste(c(rbind(1:7*100, paste(c(replicate(97, "-"),"|"), collapse = ""))),collapse=""))
-    p_midpoints = unique(gridSearch(fun,levels=newlevels,prec=step,...,nmin=stepoverlap)$minlevels)
-    if(plotit) {
-      points(p_midpoints[,1:2],col = alpha("red", 0.8), pch=19) 
-      dev.flush()
-    }
-    
-    p_span<-pmax(p_span/(stepsize)*stepexpand,
-                 colMadss(p_midpoints)*stepexpand)
-    
-    
-    cat("found")
-    print(p_midpoints)
-    #cat("new span\n")
-    #print(p_span)
-    points<-rbind(points,p_midpoints)
-  }
-  if(plotit) plot(points[5:step,1],t="l")
-  return(p_midpoints[1,])
-}
+# 
+# zoomingGridSearch<-function (fun,...,lower,upper,
+#                              stepsize=10, #into how many intervals is each parametre split
+#                              stepoverlap=1, #determines how many minima are kept per round
+#                              stepexpand=1,#how big is the interval around each kept minimum that is going to be re-used after
+#                              stepdepth=10,
+#                              pruneratio=0.5,prunepoints=FALSE,
+#                              plotit=FALSE) {
+#   if (any(upper<lower)) browser()
+#   points = NULL
+#   nldf<-matrix(c(0,0,0,0),nrow=1)
+#   p_midpoints = matrix((lower+upper)/2,nrow=1)
+#   p_span = upper-p_midpoints
+#   for (step in 1:stepdepth) {
+#     newlevels<-NULL
+#     #first rasterize midpoints in order to reduce complexity
+#     #rounding to avoid calculating similar points twice:
+#     for (c in 1:ncol(p_midpoints)) {
+#       p_midpoints[,c]<-plyr::round_any(p_midpoints[,c],(2*p_span[,c]+max(p_midpoints[,c])-min(p_midpoints[,c]))/(2*stepsize))
+#     } 
+#     
+#     for(rows in 1:nrow(p_midpoints)) {
+#       steps_of_each_parameter<-matrix(((-1*stepsize):(1*stepsize))/(stepsize),ncol=1)%*%matrix(p_span,nrow=1) #I draw 5 times as many, they will be reduced below by the rasterization anyways
+#       all_possible_combinations_of_deviations<-expand.grid(as.list(as.data.frame(steps_of_each_parameter)))
+#       all_parameter_combinations<-sweep(all_possible_combinations_of_deviations, 2, p_midpoints[rows,], "+")
+#       valid_combinations<-all_parameter_combinations[colMeans(t(all_parameter_combinations)>upper | t(all_parameter_combinations)<lower)==0,]
+#       newlevels<-rbind(newlevels,valid_combinations)
+#     }
+#     
+#     #this shouldnt be needed, but apparently it is due to numeric imprescision
+#     for (c in 1:ncol(newlevels)) {
+#       newlevels[,c]<-plyr::round_any(newlevels[,c],(2*p_span[,c]+max(p_midpoints[,c])-min(p_midpoints[,c]))/(2*stepsize))
+#     } 
+#     
+#     
+#     
+#     if(plotit) {
+#       plot(rbind(nldf[,1:2],newlevels[,1:2]),col = alpha("white", 0.0), pch=16) 
+#       points(nldf[,1:2],col = alpha("yellow", 0.4), pch=16) 
+#       points(newlevels[,1:2],col = alpha("blue", 0.1), pch=16) 
+#       #points(t(c(9.87654321,1.23456789)),col = alpha("red", 1), pch=16,cex=3) 
+#       nldf<-rbind(newlevels)
+#     }
+#     
+#     if(prunepoints) {
+#       
+#       newlevels<-plyr::count(newlevels)
+#       print(table(newlevels$freq))
+#       cat("cutoff",quantile(newlevels$freq,pruneratio), "\n")
+#       message(paste0("reducing ", nrow(newlevels)))
+#       
+#       newlevels<-newlevels[which(newlevels$freq>=quantile(newlevels$freq,pruneratio)),1:(ncol(newlevels)-1)]
+#       
+#       message(paste0("to ",nrow(newlevels)))
+#     }
+#     if(plotit) {
+#       points(newlevels[,1:2],col = alpha("green", 0.8), pch=19) 
+#       nldf<-rbind(newlevels)
+#     }
+#     newlevels<-unique(as.list(as.data.frame(t(newlevels))))
+#     for(i in 1:700) {
+#       if (i%%100==0) cat(i)
+#       if (i%%100<3) next 
+#       if (i%%100==99) cat("|")
+#       cat("-")
+#       
+#     }
+#     #cat(paste(c(rbind(1:7*100, paste(c(replicate(97, "-"),"|"), collapse = ""))),collapse=""))
+#     p_midpoints = unique(gridSearch(fun,levels=newlevels,prec=step,...,nmin=stepoverlap)$minlevels)
+#     if(plotit) {
+#       points(p_midpoints[,1:2],col = alpha("red", 0.8), pch=19) 
+#       dev.flush()
+#     }
+#     
+#     p_span<-pmax(p_span/(stepsize)*stepexpand,
+#                  colMadss(p_midpoints)*stepexpand)
+#     
+#     
+#     cat("found")
+#     print(p_midpoints)
+#     #cat("new span\n")
+#     #print(p_span)
+#     points<-rbind(points,p_midpoints)
+#   }
+#   if(plotit) plot(points[5:step,1],t="l")
+#   return(p_midpoints[1,])
+# }
 
 #f4<-function(x,prec=Inf,noiseseed){  1.5*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+(x[4]-0.123456789)^2 + x[5]^2+ (x[3]-0.123456789)^2+rnorm(1)/(prec)}
 # f2<-function(x,prec=Inf){  1.5*(x[1]-0.987654321)*(x[2]-0.123456789)+(x[1]-0.987654321)^2+(x[2]-0.123456789)^2+rnorm(1)/(prec)}

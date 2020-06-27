@@ -43,11 +43,11 @@ drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=theta[4],income=income,modmode=21,plotthis = modelplot)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=-log(theta[4]),income=income,modmode=21,plotthis = modelplot)
   gg<-graph_from_adjacency_matrix((eq$transfers>0)*1)
 #  E(gg)$label<-E(gg)$weight
   plot(gg,...,main="simulated")
-  print(round(compute_moments_cpp((eq$transfers>0)*1,kinship=kinship,income=income,theta=theta,distance=distance),3))
+  #print(t(round(compute_moments_cpp((eq$transfers>0)*1,kinship=kinship,income=income,theta=theta,distance=distance),3)))
   return((eq$transfers>0)*1)
 }
 
@@ -57,7 +57,7 @@ compute_moments<-function(btransfers,kinship,distance,income,theta) {
   g<-igraph::graph_from_adjacency_matrix(btransfers)
   undir<-btransfers+t(btransfers)
   pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
-  fb2<-forestness(btransfers)
+  fb2<-forestness(undir)
   ib<-intermediation(btransfers)
   sa<-support_fast2(btransfers)
   ra<-recip(btransfers)
@@ -110,19 +110,34 @@ g<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
   #cat(ret,"\n")
   return(ret)
 }
-g_i<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
-  #cat("g(",th,")=")
-  ret<-link_level_dist(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec)
-  if (length(ret)==0) { return(Inf)}
-  #cat(ret,"\n")
-  return(ret)
-}
+
 g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
   #cat("gn(",th,")=")
   ret<-c(moment_distance_new(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
   if (length(ret)==0) { return(Inf)}
   #cat(ret,"\n")
   return(ret)
+}
+g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=500,noiseseed=1){
+  x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
+  
+  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
+                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
+  diff<-sweep(simx,2,colmeans(simx))
+  x<-x-colmeans(simx)
+ 
+  x<-x[keep]
+  diff<-diff[,keep]
+  vcv<-vcv[keep,keep]
+
+  W<-solve(vcv)
+  ret<-NULL
+  for (i in 1:nrow(diff)) {
+    ret<-c(ret,diff[i,]%*%W%*%diff[i,])
+  }
+  rx<-x%*%W%*%x
+
+  return(mean(c(rx)<ret))
 }
 moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep) {
   inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
@@ -132,7 +147,7 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
   x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th), error=function(cond) {return(NA)})
   if (any(is.na(x))) browser()
-
+  
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
                                   distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
@@ -144,7 +159,7 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
-
+  
   ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
@@ -629,7 +644,11 @@ BBP_T_from_tYc_old <- function(transferstructure,incomes,consumptions,Tr=NULL,de
 
 
 forestness<-function(adj) {
-  return((nrow(adj)-component_counts(adj)) / sum(adj))
+  if (any(adj!=t(adj))) {
+    warning("could it be that you're not passing a symmetric matrix to forestness?")
+    browser()
+  }
+  return(2*(nrow(adj)-component_counts(adj)) / sum(adj))
 }
 intermediation<-function(adj) {
   radj<-adj*t(adj)

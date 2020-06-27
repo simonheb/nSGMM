@@ -80,7 +80,7 @@ double Ccomponents(const mat& transferstructure,uvec & t_components_csize,uvec &
 } 
 
 double forestness_cpp(const mat& adj) {
-  return((adj.n_rows-component_counts(adj)) / accu(adj));
+  return(2*(adj.n_rows-component_counts(adj)) / accu(adj));
 }
 
 
@@ -239,10 +239,10 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   pl=pl.replace(0,datum::nan);
   pl=pl.replace(datum::inf,btransfers.n_rows);
   double pathlenghts=mean(pl.elem(find_finite(pl)))/btransfers.n_rows;
-  double fb2=forestness_cpp(btransfers);
+  double fb2=forestness_cpp(m_undir);
   double ib=intermediation_cpp(btransfers,m_recip);
   double sa=support_fast2_cpp(btransfers,m_undir);
-  double ra=recip_cpp(btransfers,m_recip);
+  double ra=recip_cpp(m_undir,m_recip);
   mat c1=cor(vectorise(m_undir(offdiag)),vectorise(kinship(offdiag)));
   mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
   double density=mean(vectorise(btransfers(offdiag)));
