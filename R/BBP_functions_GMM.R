@@ -45,10 +45,23 @@ drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
   #########emprical vcv####
   eq<-equilibrate_and_plot(altruism=altruism,capacity=-log(theta[4]),income=income,modmode=21,plotthis = modelplot)
   gg<-graph_from_adjacency_matrix((eq$transfers>0)*1)
-#  E(gg)$label<-E(gg)$weight
   plot(gg,...,main="simulated")
-  #print(t(round(compute_moments_cpp((eq$transfers>0)*1,kinship=kinship,income=income,theta=theta,distance=distance),3)))
   return((eq$transfers>0)*1)
+}
+gini_from_theta<-function(theta,kinship,income,distance,...,flataltruism=FALSE) {
+  n<-length(income)
+  error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
+  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
+  error <- lower_tri.assign(error,lower_tri(t(error)))
+  altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
+  if (flataltruism) {
+    altruism[!diag(nrow(kinship))] <- mean(altruism[!diag(nrow(kinship))])
+  }
+  diag(altruism)<-1
+  if(any(is.nan(altruism))) browser()
+  #########emprical vcv####
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=-log(theta[4]),income=income,modmode=21,plotthis = FALSE)
+  return(Rfast::ginis(as.matrix(income+colSums(eq$transfers)-rowSums(eq$transfers))))
 }
 
 
