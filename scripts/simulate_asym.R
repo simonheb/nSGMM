@@ -20,23 +20,23 @@ upper_tri.assign<-function(x,y) {x[upper.tri(x)]<-y;return(x)}
 lower_tri.assign<-function(x,y) {x[lower.tri(x)]<-y;return(x)}
 
 
-seed<-2#round(runif(1)*100)
+seed<-3#round(runif(1)*100)
 set.seed(seed)
 ############# Set Simulation Parameters and Draw Random Altruism Network#############
 #population size 
-n<-30 
+n<-20
 
   delta0_DGP<- -4.4447
   delta1_DGP<- 1.9133
 sigma_DGP<-exp(0.4055)
-capacity_DGP<-1
+capacity_DGP<-9999
 
 true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP)
 
 foo<-NULL
 
-for (i in 14:24) {
-  source('R/gridsearch.R')
+ i<-1
+
   cat(i,"=========================================================")
   cat(i,"=========================================================\n")
   rseed<-i
@@ -51,18 +51,17 @@ for (i in 14:24) {
   kinship <- matrix(rbinom(n*n,1,0.5),nrow=n)
   kinship <- lower_tri.assign(kinship,lower_tri(t(kinship))) #make symmetric
   diag(kinship)<-1
-  
+  set.seed(as.numeric(Sys.time()))
   error <- matrix(rnorm(n*2,sd=sigma_DGP),nrow=n,ncol=n) 
-  error <- upper_tri.assign(error,rnorm(n*(n-1)/2))#make symmetric
-  error <- lower_tri.assign(error,lower_tri(t(error)))
   altruism <- 1/(1+exp(-(delta0_DGP+delta1_DGP*kinship+error)))
-  
   diag(altruism)<-1
   
-  income = exp(rnorm(n)+1)
+  income = exp(rnorm(n)+1)**2
 
-  
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=capacity_DGP,income=income,modmode=21,plotthis = TRUE)
+  set.seed(2)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=capacity_DGP,income=income,modmode=21,plotthis = TRUE,computeR=F)
+  BBP_in_equilibrium_YaT_R(eq$transfers,income = income, altruism = altruism,capacities = matrix(capacity_DGP,n,n),tolerance = 0.001)
+  vfvf
   observed_transfers<-1*(eq$transfers>0)
   if (mean(observed_transfers[kinship==1])==1|mean(observed_transfers[kinship==0])==0) cat("XXXXXXXXXXXXXXx")
   
@@ -184,7 +183,6 @@ for (i in 14:24) {
                   distance=distance,noiseseed=3998,prec=1000,verbose=TRUE)))
   eins<-run_1000_new
   
-}
   
   
 colmedian<-function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=median, na.rm=na.rm)

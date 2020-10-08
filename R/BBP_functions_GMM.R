@@ -215,8 +215,7 @@ utlity <- function(consumption,altruism,verbose=FALSE) {
   cutility[is.nan(cutility)]<- -9999999 #replace -Inf/NaN, because it causes annoyingwarnings
   options(warn=0)
   if(verbose) {print(cutility)}
-  utlity=cutility%*%altruism
-  
+  utlity=altruism%*%cutility
   return(utlity)
 }
 
@@ -306,7 +305,7 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
     }
   }
   if (computeR&computeCPP) {
-    if (any(abs(transfers-transfers_R)>0.001) | any((transfers>0.0001 )!=(transfers_R>0.001))) browser() else cat("all good\n");
+    if (any(abs(transfers-transfers_R)>0.01) | any((transfers>0.0001 )!=(transfers_R>0.001))) browser() else cat("all good\n");
   }
   
   if (length(c(transfers))==1) browser()
@@ -317,7 +316,7 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
     #Plot the altruism network
     g<-graph_from_adjacency_matrix(altruism-diag(n),weighted=TRUE)
     E(g)$width <- E(g)$weight*4 + 1 # offset=1
-    c_scale <- colorRamp(c('white','green'))
+    c_scale <- colorRamp(c('orange','green'))
     E(g)$color = apply(c_scale(E(g)$weight^2), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
     vertex_attr(g, "label") <- round(consumption,1)
     #E(g)$label<-round(E(g)$weight,2)
@@ -456,7 +455,6 @@ BBP_c_from_atY_old <- function(alphas,transferstructure,incomes,t_components_mat
 
 BBP_in_equilibrium_YaT <-function(transfers,income,altruism,capacities=Inf,tolerance=1e-4) {
   #a<-BBP_in_equilibrium_YaT_R(transfers,income,altruism,capacities,tolerance)
-  #cat("zz")
   b<-BBP_in_equilibrium_YaT_cpp(transfers,income,altruism,matrix(1,nrow(transfers),ncol(transfers))*capacities,tolerance)
   #if (a!=b) browser();
   return(b)
@@ -466,7 +464,12 @@ BBP_in_equilibrium_YaT_R <-function(transfers,income,altruism,capacities=Inf,tol
   consumption = income+colSums(transfers)-rowSums(transfers)
   con <- matrix(consumption,nrow=nrow(transfers),ncol=nrow(transfers))
   offdiag<-!diag(nrow(transfers))
+  print(round((altruism),digits=3))
+  print(round((transfers),digits=3))
+  print(round((t(con)/(con)),digits=3))
   
+  print(abs(t(con)/(con)-altruism)<tolerance & transfers>0) 
+  print((transfers==0 & t(con)/(con)>=altruism))
   eqcondition <- (abs(t(con)/(con)-altruism)<tolerance & transfers>0) | (transfers==0 & t(con)/(con)>=altruism)
   if (any(is.na(eqcondition))) browser()
   if (all(eqcondition[offdiag])) {
