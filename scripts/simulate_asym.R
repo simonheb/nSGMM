@@ -18,18 +18,21 @@ colMads<-function(x) {colmeans(abs(sweep(x,2,colmeans(x))))}
 rowMads<-function(x) {rowmeans(abs(sweep(x,1,rowmeans(x))))}
 upper_tri.assign<-function(x,y) {x[upper.tri(x)]<-y;return(x)}
 lower_tri.assign<-function(x,y) {x[lower.tri(x)]<-y;return(x)}
-
+for(i in 1:10) {
+  simulate_BBP_symmetric_cpp(n,delta0 = delta0_DGP, delta1 = delta1_DGP, sigma = sigma_DGP, distance = distance,kinship = kinship, capacity = matrix(capacity_DGP,n,n),income = income,reps = 400, seed=1,rounds = 333,theta=true_th)
+  simulate_BBP_cpp(n,delta0 = delta0_DGP, delta1 = delta1_DGP, sigma = sigma_DGP, distance = distance,kinship = kinship, capacity = matrix(capacity_DGP,n,n),income = income,reps = 400, seed=1,rounds = 333,theta=true_th)
+}
 
 seed<-3#round(runif(1)*100)
 set.seed(seed)
 ############# Set Simulation Parameters and Draw Random Altruism Network#############
 #population size 
-n<-20
+n<-50
 
   delta0_DGP<- -4.4447
   delta1_DGP<- 1.9133
 sigma_DGP<-exp(0.4055)
-capacity_DGP<-9999
+capacity_DGP<-0.9
 
 true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity_DGP)
 

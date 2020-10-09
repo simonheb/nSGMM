@@ -316,7 +316,7 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
     #Plot the altruism network
     g<-graph_from_adjacency_matrix(altruism-diag(n),weighted=TRUE)
     E(g)$width <- E(g)$weight*4 + 1 # offset=1
-    c_scale <- colorRamp(c('orange','green'))
+    c_scale <- colorRamp(c('white','green'))
     E(g)$color = apply(c_scale(E(g)$weight^2), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
     vertex_attr(g, "label") <- round(consumption,1)
     #E(g)$label<-round(E(g)$weight,2)
@@ -332,13 +332,13 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
     V(g)$label.cex<-V(gt)$label.cex <- 0.8
     colfunc <- colorRampPalette(c("white", "red"))
     V(gt)$color  <-V(g)$color  <- colfunc(10)[floor((income-min(income))/(max(income)-min(income))*9)+1]
-    plot(g, layout = coords, edge.arrow.size=0, vertex.size = 11,sub=subtitle)
+    plot(g, layout = coords, edge.arrow.size=0, vertex.size = 11,sub=subtitle,edge.curved=-0.1)
     legendpoints = quantile(income,seq(0, 1, .5))
     legend('topleft',legend=round(legendpoints,1),fill=colfunc(10)[floor((legendpoints-min(income))/(max(income)-min(income))*9)+1],title="Cons. indicated inside nodes\n\nPre-transfer income")
     Sys.sleep(0)
     E(gt)$label<-round(E(gt)$weight,1)
     E(gt)$label.cex<-0.6
-    plot(gt, layout = coords,add=TRUE, vertex.size = 11 )
+    plot(gt, layout = coords,add=TRUE, vertex.size = 11)
   }
   return(list(transfers=transfers,coords=coords))
 }
@@ -464,13 +464,14 @@ BBP_in_equilibrium_YaT_R <-function(transfers,income,altruism,capacities=Inf,tol
   consumption = income+colSums(transfers)-rowSums(transfers)
   con <- matrix(consumption,nrow=nrow(transfers),ncol=nrow(transfers))
   offdiag<-!diag(nrow(transfers))
-  print(round((altruism),digits=3))
-  print(round((transfers),digits=3))
-  print(round((t(con)/(con)),digits=3))
   
-  print(abs(t(con)/(con)-altruism)<tolerance & transfers>0) 
-  print((transfers==0 & t(con)/(con)>=altruism))
-  eqcondition <- (abs(t(con)/(con)-altruism)<tolerance & transfers>0) | (transfers==0 & t(con)/(con)>=altruism)
+  #print(abs(t(con)/(con)-altruism)<tolerance & transfers>0) 
+  #print((transfers==0 & t(con)/(con)>=altruism))
+  eqcondition <- 
+    (abs(t(con)/(con)-altruism)<tolerance & transfers>0) | 
+    (transfers==0 & t(con)/(con)>=altruism) |
+    (transfers==capacities & t(con)/(con)<=altruism)
+    
   if (any(is.na(eqcondition))) browser()
   if (all(eqcondition[offdiag])) {
     return(TRUE)
@@ -493,20 +494,9 @@ mynegutility_old <- function(mytransfers,i,transfers,altruism,income) {
 #foobar <-0
 BBP_get_BR <- function(i,transfers,income,altruism,capacities=99999) {
   consumption = income+colSums(transfers)-rowSums(transfers)
-  #BR2<-optim(par=transfers[i,],fn=mynegutility_old,i=i,transfers=transfers,income=income,altruism=altruism,method="L-BFGS-B",lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
-  #BR3<-optim(par=transfers[i,],fn=mynegutility_old,gr=mynegutility_gr,i=i,transfers=transfers,income=income,altruism=altruism,method="L-BFGS-B",lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
   BRR<-nlminb(start=transfers[i,],objective=mynegutility_old,i=i,transfers=transfers,income=income,altruism=altruism,lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
-  #print(BRR)
-  #BRRa<-BBP_get_BR_analytically(i,transfers,income,altruism,matrix(1,nrow(transfers),ncol(transfers))*capacities)
-  #BRRs<-BBP_get_BR_analytically_smarter(i,transfers,income,altruism,matrix(1,nrow(transfers),ncol(transfers))*capacities)
   BRR[i]<-0
-  #if (max(abs(BRR-BRRs))>4e-3|any((BRR>0)!=(BRRs>0))) {print(rbind(BRR,BRRs));browser()}
-  #BRC<-BBP_get_BR_analytically_cpp(i,transfers,income,altruism,matrix(1,nrow(transfers),ncol(transfers))*capacities)
-  #foobar <<- foobar-1
-  #if (foobar<0) browser()
-  #transfers[i,]<-BRC
-  #consumption = income+colSums(transfers)-rowSums(transfers)
-  #cat(i,"updates giving to 29", transfers[i,29], " now 29 has",consumption[29],"\n")
+
   if(is.nan(mynegutility(BRR,i,transfers,altruism,income))) browser()
   #only do it if it's strictly better:
   if (mynegutility(BRR,i,transfers,altruism,income)>mynegutility(transfers[i,],i,transfers,altruism,income)) {

@@ -154,7 +154,10 @@ mat get_BBP_BR_analytically_cpp_inline(uword i, mat transfers, const vec& income
 bool BBP_in_equilibrium_YaT_cpp(const mat& transfers, const vec& income, const mat& altruism,const mat& capacities, double tolerance) {
   vec consumption = income + trans(sum(transfers,0))-sum(transfers,1);
   mat con = (1/consumption)*trans(consumption);
-  umat eqcondition = ((abs(con-altruism)<tolerance) % (transfers>0)) + ((transfers==0) % (con>=altruism));
+  umat eqcondition = ((abs(con-altruism)<tolerance) % (transfers>0)) +
+    ((transfers==0) % (con>=altruism)) +
+    ((transfers==capacities) % (con<=altruism))
+    ;
   eqcondition.diag().ones();
   
   if (all(all(eqcondition))) {
@@ -294,14 +297,12 @@ mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const ma
   vec net_transfers_in  = zeros(income.n_elem);
   vec net_transfers_out = zeros(income.n_elem);
   int updates; 
-//std::cout << "(" << altruism(1,2) <<  ")";
   for (r=0;r<maxrounds;r++) {
     updates=0;
     uvec updating = linspace<uvec>(1, income.n_elem,income.n_elem);
     uword updatingmax = income.n_elem;
     for (int rep=0;rep<20;rep++){
       uword next_updateingmax = 0;
-      //std::cout <<endl << "("<<rep<<"): ";
       for (uword u=0; u<updatingmax; u++) { //for each player
         uword i=updating(u);        //find the best response
         //std::cout << i;
@@ -315,14 +316,10 @@ mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const ma
       if (next_updateingmax==0) break;
       updatingmax = next_updateingmax;
     }
-//  if (verbose & ((r%20==0)|(updates==0)|(1==1))) {std::cout << "c:Round" << r <<"... (" <<updates <<" nodes updated their transactions)" << endl;}
     if (updates==0) {break;}
   }
   
-  //std::cout << "r:" <<r;
   transfers=max(transfers-trans(transfers),zeros(income.n_elem,income.n_elem));
-  //if (verbose) std::cout << endl << r<<endl;
-  //if (verbose & r>200) std::cout << "********";
   NE=true;
   if (updates>0) {
     NE=false;

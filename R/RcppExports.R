@@ -89,12 +89,20 @@ symmetrix_normal_error_matrix <- function(n, mean, sd, seed) {
     .Call(`_nSGMM_symmetrix_normal_error_matrix`, n, mean, sd, seed)
 }
 
+normal_error_matrix <- function(n, mean, sd, seed) {
+    .Call(`_nSGMM_normal_error_matrix`, n, mean, sd, seed)
+}
+
 seedfromindex <- function(index) {
     .Call(`_nSGMM_seedfromindex`, index)
 }
 
 simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds)
+}
+
+simulate_BBP_symmetric_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_symmetric_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds)
 }
 
 simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {

@@ -10,7 +10,7 @@
 
 using namespace arma;
 
-using namespace arma;
+
 // [[Rcpp::export]]
 vec random_normal_seed(int n, double mean, double sd, int seed) {
   if (sd<0) {std::cout <<"negative sigma"<<endl;}
@@ -25,22 +25,74 @@ vec random_normal_seed(int n, double mean, double sd, int seed) {
 //draws a symmetric random matrix of width n, where the off-diagonal elements are iid normal with mean an sd.
 // [[Rcpp::export]]
 mat symmetrix_normal_error_matrix(int n, double mean, double sd, int seed) {
-  uvec tri_coords = find(trimatu(ones(n,n),1));
-  mat ret(n,n);
-  ret.elem(tri_coords)= random_normal_seed(n*(n-1)/2,mean,sd,seed);
-  return(symmatu(ret));
+ uvec tri_coords = find(trimatu(ones(n,n),1));
+ mat ret(n,n);
+ ret.elem(tri_coords)= random_normal_seed(n*(n-1)/2,mean,sd,seed);
+ return(symmatu(ret));
 }
+// [[Rcpp::export]]
+mat normal_error_matrix(int n, double mean, double sd, int seed) {
+  if (sd<0) {std::cout <<"negative sigma"<<endl;}
+  std::mt19937 rng(seed);
+  std::normal_distribution<double> distribution(mean,sd);
+  mat ret(n,n);
+  for (int i=0; i<n; ++i) {
+    for (int j=0; j<n; ++j) {
+      if (i!=j) {
+        ret(i,j)=distribution(rng);
+      }
+    }
+  }
+  return(ret);
+}
+
+
+
 //this is to ensure that consequtive indices dont result in consequctive seeds
 // [[Rcpp::export]]
 int seedfromindex(int index) {
+  for (int i=0; i<10; ++i) {
   std::mt19937 mt_rand(index);
   return(mt_rand());
+  }
 }
 
 // [[Rcpp::export]]
 mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,vec theta,int reps,int seed,int rounds) {
   if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,12);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
+    altruism.diag().ones();
+    int rounds_;
+    bool converged_;
+    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true, rounds_,converged_,rounds);
+    eqtrans2.elem( find(eqtrans2) ).ones();
+    vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
 
+    
+    for(int mom=0;mom<12;mom++)
+      finalMatrix(i,mom) = moments(mom);
+    roundsc(i) = rounds_;
+    converged(i) = converged_;
+  }
+  if (mean(converged)<0.9) {
+    std::cout << "(" << floor(mean(converged)*100) <<"%c)" ;
+    finalMatrix.zeros();
+  }
+  return(finalMatrix);
+}
+
+// [[Rcpp::export]]
+mat simulate_BBP_symmetric_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,vec theta,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
   mat finalMatrix = zeros(reps,12);
   vec converged(reps);
   vec roundsc(reps);
@@ -52,14 +104,10 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     altruism.diag().ones();
     int rounds_;
     bool converged_;
-    tic(1);
     mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true, rounds_,converged_,rounds);
-    tic(2);    
     eqtrans2.elem( find(eqtrans2) ).ones();
-    tic(3);    
     vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
-    toc();
-    
+
     
     for(int mom=0;mom<12;mom++)
       finalMatrix(i,mom) = moments(mom);
@@ -70,7 +118,6 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     std::cout << "(" << floor(mean(converged)*100) <<"%c)" ;
     finalMatrix.zeros();
   }
-  tictoc(3);
   return(finalMatrix);
 }
 
@@ -100,7 +147,7 @@ struct simulate_BBP_worker : public RcppParallel::Worker
   // take the square root of the range of elements requested
   void operator()(std::size_t begin, std::size_t end) {
     for(size_t i = begin; i < end; i++) {
-      mat error = symmetrix_normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+      mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
       mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
       altruism.diag().ones();
       
