@@ -153,8 +153,8 @@ g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=50
   return(mean(c(rx)<ret))
 }
 moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep) {
-  inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
-  offdiag<-!(diag(nrow(kinship)))
+  #inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
+  #offdiag<-!(diag(nrow(kinship)))
   
   
   #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
@@ -169,7 +169,7 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
     diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
     cat("approximating VCV via simulations\n")
   }
-  if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
+  #if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
   
