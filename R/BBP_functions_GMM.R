@@ -2,8 +2,8 @@ library(Rfast)
 library(stats) #for MLE
 library(igraph)
 library(foreach)
-library(tictoc)
-  library(doParallel)
+#library(tictoc)
+#library(doParallel)
   logistic<-function(x) {
     1/(1+exp(-x))
   }

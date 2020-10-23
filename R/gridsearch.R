@@ -1,6 +1,6 @@
 colMadss<-function(x) {colMeans(abs(sweep(x,2,colMeans(x))))}
-library(scales)
-library(mlrMBO)
+#library(scales)
+#library(mlrMBO)
 colSd <- function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=sd, na.rm=na.rm)
 plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
   x<- (0:steps)/steps*(maxoffset-minoffset)+minoffset
