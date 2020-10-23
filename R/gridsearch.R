@@ -75,7 +75,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
   } 
   
   if(currentround%%roundstopartial==50) { #every 100 rounds solve for the partial min
-    theta<-partialoptim(fun,theta,prec=precschedule(rounds,rounds),lower=lower,upper=upper,steps=4,maxrounds=precschedule(rounds,rounds)/4,...)
+    theta<-partialoptim(fun,theta,prec=precschedule(rounds,rounds),lower=lower,upper=upper,steps=4,maxrounds=precschedule(rounds,rounds)/4,noiseseed=noiseseed,...)
     currentvalueage<-Inf #make sure this gets re-computed.
   }
   #decay momentum
@@ -86,7 +86,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
   theta<-pmax(pmin(theta,upper),lower)
   newtheta<-pmax(pmin(newtheta,upper),lower)
   
-  if(currentvalueage>=10) { #after recycling the same value 10 times, let's  use a new draw so that we are not getting stuck in a lucky draw from g
+  if(currentvalueage>=40 | is.null(current)) { #after recycling the same value 10 times, let's  use a new draw so that we are not getting stuck in a lucky draw from g
     old<-max(0.000001,fun(theta,prec=precschedule(rounds,rounds),noiseseed=noiseseed,...))
     currentvalueage<-0
     cat("=")
@@ -154,7 +154,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
   }
   
   
-  if((rounds-currentround-1)%%200==0|rounds<=currentround+1) {
+  if((rounds-currentround-1)%%500==0|rounds<=currentround+1) {
     if (is.null(true_theta)) {
       plot_trace(trace,c(theta,true_g),bestpast,rounds,stepsize_trace=stepsize_trace)
     } else {
@@ -175,7 +175,7 @@ partialoptim<-function(fun,#the function to be minimized
                        upper,  lower, #limits (important!)
                        steps=8
 ) {
-  curr<-fun(theta,prec=prec,noiseseed=noiseseed,...)
+  curr<-fun(theta,prec=prec,...)
   if (length(lower)==1) lower = rep(lower,length(theta))
   if (length(upper)==1) upper = rep(upper,length(theta))
   cat("{",round(curr,3))
@@ -196,7 +196,7 @@ partialoptim<-function(fun,#the function to be minimized
       for (x in xs) {
         tsugg<-theta
         tsugg[par]<-x
-        cand<-fun(tsugg,prec=prec,noiseseed=noiseseed,...)
+        cand<-fun(tsugg,prec=prec,...)
         if(cand<curr){
           theta<-tsugg
           curr<-cand

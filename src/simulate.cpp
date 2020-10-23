@@ -189,7 +189,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
   if (mean(convergance)<0.85) {
     Rcpp::Rcout  << "(" << floor(mean(convergance)*100) <<"%)";
   }
-  if (mean(convergance)<0.50) {
+  if (mean(convergance)<0.20) {
     Rcpp::NumericMatrix z(reps,12);
     return z;
   }

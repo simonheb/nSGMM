@@ -152,6 +152,50 @@ g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=50
 
   return(mean(c(rx)<ret))
 }
+
+moment_distance_many_villages <- function(theta,village_fixed_effects,village_data,prec,noiseseed=1,maxrounds=500,vcv,keep,village_weights=NULL) {
+  simulated_moments<-NULL
+  data_moments<-NULL
+  ic<-0
+  cat("\n")
+  for(i in names(village_data)) {
+    cat("-")
+    ic<-ic+1
+    if (length(village_fixed_effects)==length(village_data))
+      th<-c(village_fixed_effects[ic],theta)
+    else
+      th<-c(village_fixed_effects,theta)
+    kinship<-village_data[[i]][["m8am8bm8c"]]
+    income<-village_data[[i]][["income"]]+1
+    distance<-village_data[[i]][["distance"]]
+    transfers<-village_data[[i]][["m4m6m7"]]
+    
+    data_moments<-c(data_moments,compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th))
+    
+    simulated_moments<-cbind(simulated_moments,simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds))
+  }
+  diff<-tryCatch(sweep(simulated_moments,2,data_moments), error=function(cond) {return(NA)})
+  if (any(is.na(diff))) browser()
+  
+ 
+    
+  
+  diff<-diff[,keep]
+  vcv<-vcv[keep,keep]
+  if (is.null(village_weights)) {
+    vcv<-as.matrix(Matrix::bdiag(rep(list(vcv),length(village_data))))
+  }
+  W<-solve(vcv)
+  ret<-NULL
+  for (i in 1:nrow(diff)) {
+    ret<-c(ret,diff[i,]%*%W%*%diff[i,])
+  }
+  cat(mean(ret),"\n")
+  print("Talk to Georg how to weight theses")
+  return(mean(ret))
+}
+
+
 moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep) {
   #inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
   #offdiag<-!(diag(nrow(kinship)))
@@ -163,13 +207,15 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
                                   distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
-  diff<-sweep(simx,2,x)
+  diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
+  if (any(is.na(diff))) browser()
+  
   if (is.null(vcv)) {
     vcv<-var(diff)
     diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
     cat("approximating VCV via simulations\n")
   }
-  #if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
+  if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
   
