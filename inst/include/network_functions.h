@@ -8,6 +8,6 @@ using namespace arma;
 
 double Ccomponents(const mat& transferstructure,uvec & t_components_csize,uvec & t_components_membership, mat & t_components_matrix, mat & t_conmat);
 double component_counts(const mat& transferstructure);
-vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance,const vec& income,const vec& theta) ;
+vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance,const vec& income) ;
 
 #endif

@@ -1,5 +1,5 @@
 source('D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM/R/gridsearch.R', echo=TRUE)
-dims<<-2
+dims<<-6
 ftick<<-0
 testfun <- function(theta,noise) {
 
@@ -10,7 +10,7 @@ testfun <- function(theta,noise) {
   #print(theta)
   z1<-sum(z*z)
   z2<-abs(sin(z))
-  return(sum(0.9*z1+t(as.vector(z2))%*%as.vector(z2))+noise*rnorm(1)+100)
+  return(sum(0.1*z1+t(as.vector(z2))%*%as.vector(z2))+noise*rnorm(1))
 }
 
 
@@ -25,38 +25,11 @@ library(hydroPSO)
 
 bounds <- list(lower=lower,upper=upper)
 
-z<-hydroPSO(fn=testfun, lower=bounds$lower, noise=20,
-            upper=bounds$upper,
-            control=list(maxit=500,out.with.pbest=TRUE))
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=5,
-            upper=bounds$upper,
-            control=list(maxit=50,out.with.pbest=TRUE))
-#(z$pbest.Parameter.Values)
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=0.5,
-            upper=bounds$upper,
-            control=list(maxit=50,out.with.pbest=TRUE))
-plot(z$pbest.Parameter.Values)
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=0.25,
-            upper=bounds$upper,
-            control=list(maxit=50,out.with.pbest=TRUE))
-points(z$pbest.Parameter.Values)
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=0.1,
-            upper=bounds$upper,
-            control=list(maxit=50,out.with.pbest=TRUE))
-points(z$pbest.Parameter.Values)
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=0,
-            upper=bounds$upper,
-            control=list(maxit=50,out.with.pbest=TRUE))
-points(z$pbest.Parameter.Values,col="blue")
-
-
-
-z<-hydroPSO(fn=testfun, par=z$pbest.Parameter.Values,lower=bounds$lower, noise=0.1,
-            upper=bounds$upper,
-            control=list(maxit=300,out.with.pbest=TRUE))
-points(z$pbest.Parameter.Values,col="red")
-csdcsdc
-vsfdvfd
+hydroPSO(fn=testfun, lower=bounds$lower, noise=0.00001,
+          upper=bounds$upper,
+          control=list(maxiter=10000,
+            out.with.pbest=TRUE), )
+vfdvfdvf
 
 
 # 

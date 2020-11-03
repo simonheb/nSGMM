@@ -298,6 +298,7 @@ mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const ma
   vec net_transfers_out = zeros(income.n_elem);
   int updates; 
   for (r=0;r<maxrounds;r++) {
+    
     updates=0;
     uvec updating = linspace<uvec>(1, income.n_elem,income.n_elem);
     uword updatingmax = income.n_elem;

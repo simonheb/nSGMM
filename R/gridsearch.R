@@ -11,6 +11,7 @@ plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
 
 random_walk_cooling<-function(fun,#the function to be minimized
                               theta,#staring value
+                              plotfreq=500,
                               ...,#other options to be passed to fun
                               stepsize=NULL,#initial stepsize for candidate search 
                               reheatineval=100,#after how many iterations do we consider going back to an old optimum?
@@ -154,7 +155,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
   }
   
   
-  if((rounds-currentround-1)%%500==0|rounds<=currentround+1) {
+  if((rounds-currentround-1)%%plotfreq==20|rounds<=currentround+1) {
     if (is.null(true_theta)) {
       plot_trace(trace,c(theta,true_g),bestpast,rounds,stepsize_trace=stepsize_trace)
     } else {
@@ -164,7 +165,7 @@ random_walk_cooling<-function(fun,#the function to be minimized
     cat("\n[cround",currentround,":c(",paste0(round(theta,3),collapse=","),")=",current,"; pastbest@",bestpast$currentround,", was",bestpast$fit,"with theta=c(",paste0(round(bestpast$theta,3),collapse=","),")]\n")
     
   }
-  return(random_walk_cooling(fun,theta,...,stepsize=stepsize,stepsize_rekindling=stepsize_rekindling,noiseseed=noiseseed,stepsize_decay=stepsize_decay,stepsize_blowup=stepsize_blowup,stepsize_trace=stepsize_trace,currentround=currentround+1,lastreheat=lastreheat,momentum=momentum,minstep=minstep,momentumpersistence=momentumpersistence,trace=trace,rounds=rounds,reheatineval=reheatineval,warmuplength=warmuplength,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule,bestpast=bestpast,current=current,currentvalueage=currentvalueage,lastplottet=lastplottet,true_g=true_g))
+  return(random_walk_cooling(fun,theta,...,stepsize=stepsize,plotfreq=plotfreq,stepsize_rekindling=stepsize_rekindling,noiseseed=noiseseed,stepsize_decay=stepsize_decay,stepsize_blowup=stepsize_blowup,stepsize_trace=stepsize_trace,currentround=currentround+1,lastreheat=lastreheat,momentum=momentum,minstep=minstep,momentumpersistence=momentumpersistence,trace=trace,rounds=rounds,reheatineval=reheatineval,warmuplength=warmuplength,upper=upper,lower=lower,true_theta=true_theta,precschedule=precschedule,bestpast=bestpast,current=current,currentvalueage=currentvalueage,lastplottet=lastplottet,true_g=true_g))
 }
 
 
@@ -257,9 +258,9 @@ plot_trace<-function(trace,true_theta,bestpast,rounds,stepsize_trace) {
       lines(ttrace[,3],type="l",ylab="sigma", ylim=c( min(0,true_theta[3],tail(ttrace[,3],1),trace[optloc,3])-1,max(0,true_theta[3],tail(ttrace[,3],1),trace[optloc,3])+1));
       abline(h=bestpast$theta[3],col="green");abline(h=true_theta[3],col="orange");abline(v=optloc,col="blue");
       abline(h = 0, lty = 2,col="gray")
-    plot(ttrace[,4],type="l",ylab="cap",   ylim=c( min(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])-1,max(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])+1));
+    plot(ttrace[,4],type="l",ylab="cap",   ylim=c( min(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])-0.1,max(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])+1));
       add.error.bars(1:nrow(stepsize_trace),ttrace[,4],stepsize_trace[,4],0,"cadetblue2");
-      lines(ttrace[,4],type="l",ylab="cap",   ylim=c( min(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])-1,max(0,true_theta[4],tail(ttrace[,4],1),trace[optloc,4])+1));
+      lines(ttrace[,4],type="l",ylab="cap",  );
       abline(h=bestpast$theta[4],col="green");abline(h=true_theta[4],col="orange");abline(v=optloc,col="blue");
       abline(h = 0, lty = 2,col="gray")
     plot(ttrace[,5],type="l",ylab="fit",   ylim=c(0, max(true_theta[5]*2,5*min(ttrace[,5],na.rm=TRUE))));
@@ -275,4 +276,96 @@ plot_trace<-function(trace,true_theta,bestpast,rounds,stepsize_trace) {
     print(paste("plotting error:  ",err))
   }
   ,finally={})
+}
+HydroPSOandSPG <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=10) {
+  
+  guesses1<-NULL
+  for (i in 1:initialrounds) {
+    z<-hydroPSO(fn=fn, lower=lower,
+                upper=upper, 
+                control=list(maxit=200), 
+                prec=ceiling(repfactor*14), noiseseed=1000*seed+i, 
+                ...
+    )
+    cat("hydrofit:",z$value,"\n")
+    print(z$par)
+    zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+            upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.02),
+            prec=ceiling(repfactor*500),noiseseed=1000*seed+100+i,
+            ...
+    )
+    cat("fit:",exp(zz$value),"\n")
+    guesses1<-rbind(guesses1,c(zz$par))
+    print(guesses1)
+  }
+  print("fullhydro")
+  z<-hydroPSO(fn=function(...) log(fn(...)), lower=lower,
+              upper=upper, 
+              par=guesses1,
+              control=list(maxit=200,npart=nrow(guesses1)), 
+              prec=ceiling(repfactor*2000), noiseseed=1000*seed+1111, 
+              ...
+  )
+  zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+          upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
+          prec=4000,noiseseed=1000*seed+2222, ...
+  )
+  return(zz$par)   
+  par<-zz$par
+  names(par)<-NULL
+  val<-fn(par,prec=4000,noiseseed=seed,...)
+  return(list(par=par,val=val))   
+}
+HydroPSOandSPG_fast <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=150) {
+  
+  guesses1<-NULL
+  newlow<-upper
+  newhigh<-lower
+  for (i in 1:initialrounds) {
+    if (i>initialrounds*0.5) { #after half of the inital rounds, focus more on only the parts where particles ended up in
+      print("spacevolume")
+      print(prod(upper-lower))
+      lower<-newlow
+      upper<-newhigh
+      print(prod(upper-lower))
+      print(upper)
+      print(lower)
+    }
+    z<-hydroPSO(fn=fn, lower=lower,
+                upper=upper, 
+                control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE), 
+                prec=ceiling(repfactor*4), noiseseed=1000*seed+i, 
+                ...
+    )
+    cat("hydrofit:",z$value,"\n")
+    newlow<-pmin(newlow,Rfast::colMins(z$pbest.Parameter.Values,value=TRUE))
+    newhigh<-pmin(newhigh,Rfast::colMaxs(z$pbest.Parameter.Values,value=TRUE))
+    zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+            upper=upper,lower=lower,control=list(maximize=FALSE,write2disk, trace=FALSE, eps=0.02),
+            prec=ceiling(repfactor*100),noiseseed=1000*seed+initialrounds+i,
+            ...
+    )
+    cat("fit:",exp(zz$value),"\n")
+    guesses1<-rbind(guesses1,c(zz$par))
+    print(guesses1)
+  }
+  print("highlow")
+  print(newhigh)
+  print(newlow)
+  print("fullhydro")
+  z<-hydroPSO(fn=function(...) log(fn(...)), lower=newlow,
+              upper=newhigh, 
+              par=guesses1,
+              control=list(maxit=200,npart=nrow(guesses1),out.with.pbest=TRUE,write2disk=FALSE), 
+              prec=ceiling(repfactor*1000), noiseseed=1000*seed+1111, 
+              ...
+  )
+  zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+          upper=newhigh,lower=newlow,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
+          prec=4000,noiseseed=1000*seed+2222, ...
+  )
+  par<-zz$par
+  names(par)<-NULL
+  val<-fn(par,prec=4000,noiseseed=seed,...)
+  return(list(par=par,val=val))   
 }

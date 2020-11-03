@@ -7,22 +7,24 @@ library(foreach)
   logistic<-function(x) {
     1/(1+exp(-x))
   }
-simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,noiseseed=1,reps=2,parallel=FALSE,computeR=FALSE,plotthis=FALSE) {
+simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,seed=1,reps=2,rounds=1000,theta,parallel=FALSE,computeR=FALSE,plotthis=FALSE) {
   oldseed <- .Random.seed
   #cat("repet:",reps,"\n")
+  if (any(theta!=c(delta0,delta1,log(sigma),kappatransformation(mean(capacity))))) browser() #the duble parameter parameter is not identical
   if (!parallel) {
     finalMatrix<-NULL
     
     for (i in 1:reps) {
       #cat(".",delta0,delta1,sigma,"\n")
-      set.seed(noiseseed+i)
+      set.seed(seed+i)
       error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
       error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
       error <- lower_tri.assign(error,lower_tri(t(error)))
       altruism <- 1/(1+exp(-(delta0+delta1*kinship+error)))
       diag(altruism)<-1
       if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
-      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=21,capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
+      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=round(rounds/1000*21),capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
+      browser()
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance,income,theta=c(delta0,delta1,sigma))
       finalMatrix<-rbind(finalMatrix,ret)
     }
@@ -33,7 +35,14 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
   return(finalMatrix)
 }
 
-
+kappatransformation<-function(x){
+  #return(x)
+  return(10/x-1)
+  #return(-log(x))
+}
+invkappatransformation<-function(x) {
+  return( 1/((x+1)/10) )
+}
 drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
   n<-length(income)
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
@@ -43,10 +52,12 @@ drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=-log(theta[4]),income=income,modmode=21,plotthis = modelplot)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4]),income=income,modmode=21,plotthis = modelplot)
   gg<-graph_from_adjacency_matrix((eq$transfers>0)*1)
+  print(moments::skewness(degree(gg,mode = "all")))
+  
+  if (!modelplot)
   plot(gg,...,main="simulated")
-  return((eq$transfers>0)*1)
 }
 gini_from_theta<-function(theta,kinship,income,distance,...,flataltruism=FALSE) {
   n<-length(income)
@@ -60,101 +71,114 @@ gini_from_theta<-function(theta,kinship,income,distance,...,flataltruism=FALSE) 
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=-log(theta[4]),income=income,modmode=21,plotthis = FALSE)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4]),income=income,modmode=21,plotthis = FALSE)
   return(Rfast::ginis(as.matrix(income+colSums(eq$transfers)-rowSums(eq$transfers))))
 }
 
 
-compute_moments<-function(btransfers,kinship,distance,income,theta) {
+compute_moments<-function(btransfers,kinship,distance,income) {
   offdiag<-!(diag(nrow(btransfers)))
   g<-igraph::graph_from_adjacency_matrix(btransfers)
-  undir<-btransfers+t(btransfers)
-  pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
+  undir<-pmax(btransfers,t(btransfers))
+  #pathlenghts<-igraph::average.path.length(g,directed=FALSE,unconnected=FALSE)/nrow(btransfers)
   fb2<-forestness(undir)
   ib<-intermediation(btransfers)
-  sa<-support_fast2(btransfers)
-  ra<-recip(btransfers)
+  #sa<-support_fast2(btransfers)
+  #ra<-recip(btransfers)
   c1<-cor(c(undir[offdiag]),c(kinship[offdiag]))
-  c2<-cor(c(undir[offdiag]),c(distance[offdiag]))
+  #c2<-cor(c(undir[offdiag]),c(distance[offdiag]))
   density_<-mean(btransfers[offdiag])
   inc <- matrix(income,nrow=nrow(btransfers),ncol=nrow(btransfers))
   
   
-  dat=data.frame(a=c(log(inc/t(inc))[offdiag]),b=sign(log(inc/t(inc)))[offdiag],c=c(kinship[offdiag]))  
-  dat$aa<-dat$a*dat$a
-  dat$ab<-dat$a*dat$b
-  dat$ac<-dat$a*dat$c
-  dat$bc<-dat$b*dat$c
-  r3<-summary(lm(btransfers[offdiag] ~ ., dat))$sigma^2
+  #dat=data.frame(a=c(log(inc/t(inc))[offdiag]),b=sign(log(inc/t(inc)))[offdiag],c=c(kinship[offdiag]))  
+  #dat$aa<-dat$a*dat$a
+  #dat$ab<-dat$a*dat$b
+  #dat$ac<-dat$a*dat$c
+  #dat$bc<-dat$b*dat$c
+  #r3<-summary(lm(btransfers[offdiag] ~ ., dat))$sigma^2
   
   da2t=data.frame(a=abs(c(log(inc/t(inc))[offdiag])),b=c(kinship[offdiag]))  
 
   r4<-summary(lm(undir[offdiag] ~ ., da2t))$sigma^2
   
-  c3<-mean(abs(log(inc/t(inc)))[undir==1])
+  #c3<-mean(abs(log(inc/t(inc)))[undir==1])
   #sharetransferstoricher<- mean((inc<t(inc))[btransfers>0])
-  equated_rest<- btransfers-log(inc/t(inc))-theta[1]-theta[2]*kinship #the extend to which income and kin explain transfers
-  sqresidual_proxy<-mean(equated_rest[inc>t(inc)]^2) #only for those where income can explain trnsfers
+  #equated_rest<- btransfers-log(inc/t(inc))-theta[1]-theta[2]*kinship #the extend to which income and kin explain transfers
+  #sqresidual_proxy<-mean(equated_rest[inc>t(inc)]^2) #only for those where income can explain trnsfers
   #equated_rest2<- btransfers-log(inc/t(inc)+1)-theta[1]-theta[2]*kinship #the extend to which income and kin explain transfers
   #sqresidual_proxy2<-mean(equated_rest2[offdiag]^2) #only for those where income can explain trnsfers
-  sqresidual_proxy3<-mean(equated_rest[offdiag]^2) #only for those where income can explain trnsfers
+  #sqresidual_proxy3<-mean(equated_rest[offdiag]^2) #only for those where income can explain trnsfers
+  degs<-colsums(undir)
+  degree_skewness<-mean(((degs-mean(degs))/sd(degs))^3)
+
+  
+  
+  loop<-(undir%*%undir & undir | undir%*%undir>2)
+  cc<-cor(c(loop[eq$transfers>0]),c(distance[eq$transfers>0]))
+  
   warning("THIS SHOULD ONLY BE USED IN DEBUG MODE")
   return(cbind(density_,#density                                            X X     alpha                                            
                fb2,#forestness                                              X X     kappa                                
                ib,#intermeidation                                             X     ?????
-               sa,#support                                                  X X     kappa                                        
-               ra,#reciprocity                                                                                                
-               pathlenghts,#pathlenghts                                     X       ????    
+               99,#sa,#support                                                  X X     kappa                                        
+               99,#ra,#reciprocity                                                                                                
+               99,#pathlenghts,#pathlenghts                                     X       ????    
                c1,#correatlion between kin and transfers                    X X     beta                      
-               c2,#correlation between distance and transfers                                                
-               r3,#residual o incometranfers regressed on all                 X     sigma                                 
+               99,#c2,#correlation between distance and transfers                                                
+               99,#r3,#residual o incometranfers regressed on all                 X     sigma                                 
                r4,#                                           
-               c3,           #                                              X       alpha                               
-               sqresidual_proxy3#                                           X       sigma    
-               #               sharetransferstoricher
+               99,#c3,           #                                              X       alpha                               
+               cc,#sqresidual_proxy3#                                           X       sigma    
+               degree_skewness#               sharetransferstoricher
                )) #1,1,0,1,0,1,1,0,0,0,1,1
   
 }
 gg<<-0
-g<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
+g<-function(th,transfers,kinship,distance,...,prec,maxrounds=NULL){
   #cat("g(",th,")=")
+  if (is.null(maxrounds))
+    maxrounds <- 100+prec/5
   ret<-c(moment_distance(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
   if (length(ret)==0) { return(Inf)}
   #cat(ret,"\n")
   return(ret)
 }
-
-g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
-  #cat("gn(",th,")=")
-  ret<-c(moment_distance_new(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
-  if (length(ret)==0) { return(Inf)}
-  #cat(ret,"\n")
-  return(ret)
-}
-g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=500,noiseseed=1){
-  x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
-  
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
-  diff<-sweep(simx,2,colmeans(simx))
-  x<-x-colmeans(simx)
- 
-  x<-x[keep]
-  diff<-diff[,keep]
-  vcv<-vcv[keep,keep]
-
-  W<-solve(vcv)
-  ret<-NULL
-  for (i in 1:nrow(diff)) {
-    ret<-c(ret,diff[i,]%*%W%*%diff[i,])
-  }
-  rx<-x%*%W%*%x
-
-  return(mean(c(rx)<ret))
-}
+# 
+# g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
+#   #cat("gn(",th,")=")
+#   ret<-c(moment_distance_new(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
+#   if (length(ret)==0) { return(Inf)}
+#   #cat(ret,"\n")
+#   return(ret)
+# }
+# g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=500,noiseseed=1){
+#   x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
+#   
+#   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
+#                                   distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
+#   diff<-sweep(simx,2,colmeans(simx))
+#   x<-x-colmeans(simx)
+#  
+#   x<-x[keep]
+#   diff<-diff[,keep]
+#   vcv<-vcv[keep,keep]
+# 
+#   W<-solve(vcv)
+#   ret<-NULL
+#   for (i in 1:nrow(diff)) {
+#     ret<-c(ret,diff[i,]%*%W%*%diff[i,])
+#   }
+#   rx<-x%*%W%*%x
+# 
+#   return(mean(c(rx)<ret))
+# }
 
 moment_distance_many_villages <- function(theta,village_fixed_effects,village_data,prec,noiseseed=1,maxrounds=500,vcv,keep,village_weights=NULL) {
+  print(village_fixed_effects)
   simulated_moments<-NULL
+  print(prec)
+  print(theta)
   data_moments<-NULL
   ic<-0
   cat("\n")
@@ -170,9 +194,9 @@ moment_distance_many_villages <- function(theta,village_fixed_effects,village_da
     distance<-village_data[[i]][["distance"]]
     transfers<-village_data[[i]][["m4m6m7"]]
     
-    data_moments<-c(data_moments,compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th))
+    data_moments<-c(data_moments,compute_moments_cpp(1*(transfers>0),kinship,distance,income))
     
-    simulated_moments<-cbind(simulated_moments,simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds))
+    simulated_moments<-cbind(simulated_moments,simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds))
   }
   diff<-tryCatch(sweep(simulated_moments,2,data_moments), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
@@ -187,11 +211,12 @@ moment_distance_many_villages <- function(theta,village_fixed_effects,village_da
   }
   W<-solve(vcv)
   ret<-NULL
+  browser()
   for (i in 1:nrow(diff)) {
     ret<-c(ret,diff[i,]%*%W%*%diff[i,])
   }
   cat(mean(ret),"\n")
-  print("Talk to Georg how to weight theses")
+  #print("Talk to Georg how to weight theses")
   return(mean(ret))
 }
 
@@ -202,11 +227,19 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   
   
   #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
-  x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th), error=function(cond) {return(NA)})
+  x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income), error=function(cond) {return(NA)})
   if (any(is.na(x))) browser()
-  
+  if (length(th)==4) {
+    capacity<-matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship))
+  }
+  else if (length(th)==5) {
+    capacity<-pmax(th[4]+distance*th[5],0)
+  }
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds)
+                                  distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+
+  
+  
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   
@@ -233,7 +266,7 @@ moment_distance_new <- function(th,transfers,kinship,distance,income,prec,noises
   
   
   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(-log(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
+                                  distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
   diff<-sweep(simx,2,x)
   if (is.null(vcv)) {
     vcv<-var(diff)
@@ -302,6 +335,7 @@ equilibrate_analytically <- function(altruism,income,capacity,starttransfers=NUL
 }
 #this is required for the optimizer, finding the best response. returns the (negative) utility for individual i
 equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
+  n <- nrow(altruism)
   se = FALSE
   if (is.null(starttransfers)) {
     transfers <- matrix(0,nrow=nrow(altruism),ncol=nrow(altruism))
@@ -360,10 +394,11 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
   if (plotthis) {
     consumption = income+colSums(transfers)-rowSums(transfers)
     #Plot the altruism network
-    g<-graph_from_adjacency_matrix(altruism-diag(n),weighted=TRUE)
+    g<-graph_from_adjacency_matrix(capacity,weighted=TRUE)
+    g<-simplify(g,remove.multiple = F,remove.loops = T)
     E(g)$width <- E(g)$weight*4 + 1 # offset=1
     c_scale <- colorRamp(c('white','green'))
-    E(g)$color = apply(c_scale(E(g)$weight^2), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
+    E(g)$color = apply(c_scale((E(g)$weight<=0.1)), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
     vertex_attr(g, "label") <- round(consumption,1)
     #E(g)$label<-round(E(g)$weight,2)
     
@@ -539,6 +574,7 @@ mynegutility_old <- function(mytransfers,i,transfers,altruism,income) {
 }
 #foobar <-0
 BBP_get_BR <- function(i,transfers,income,altruism,capacities=99999) {
+  n<-length(income )
   consumption = income+colSums(transfers)-rowSums(transfers)
   BRR<-nlminb(start=transfers[i,],objective=mynegutility_old,i=i,transfers=transfers,income=income,altruism=altruism,lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
   BRR[i]<-0

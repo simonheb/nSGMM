@@ -77,8 +77,8 @@ dijkstra_all <- function(graph) {
     .Call(`_nSGMM_dijkstra_all`, graph)
 }
 
-compute_moments_cpp <- function(btransfers, kinship, distance, income, theta) {
-    .Call(`_nSGMM_compute_moments_cpp`, btransfers, kinship, distance, income, theta)
+compute_moments_cpp <- function(btransfers, kinship, distance, income) {
+    .Call(`_nSGMM_compute_moments_cpp`, btransfers, kinship, distance, income)
 }
 
 random_normal_seed <- function(n, mean, sd, seed) {
@@ -97,15 +97,11 @@ seedfromindex <- function(index) {
     .Call(`_nSGMM_seedfromindex`, index)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds)
+simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_symmetric_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_symmetric_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds)
-}
-
-simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, theta, reps, seed, rounds)
+simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
