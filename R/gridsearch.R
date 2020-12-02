@@ -277,95 +277,229 @@ plot_trace<-function(trace,true_theta,bestpast,rounds,stepsize_trace) {
   }
   ,finally={})
 }
-HydroPSOandSPG <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=10) {
-  
+# 
+# HydroPSOandSPG_fast <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=15) {
+#   #fast bc less iterations in initial rounds
+#   #less precision in initial spg
+#   #less wide search in second half of initial rounds
+#   #more precise because: more focussed afte 50% of inial rounds
+#   T1<-0
+#   T2<-0
+#   T3<-0
+#   T4<-0
+#   guesses1<-NULL
+#   o_upper<-upper
+#   o_lower<-lower
+#   newlow<-upper
+#   newhigh<-lower
+#   for (i in 1:initialrounds) {
+#     start_time <- Sys.time()
+#     
+#     if (i>initialrounds*0.5) { #after half of the inital rounds, focus more on only the parts where particles ended up in
+#       lower<-newlow
+#       upper<-newhigh
+#     }
+#     T1<-T1+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#     
+#     z<-hydroPSO(fn=fn, lower=lower,
+#                 upper=upper, 
+#                 control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE,verbose=FALSE), 
+#                 prec=ceiling(repfactor*4), noiseseed=1000*seed+i, 
+#                 ...
+#     )
+#     T2<-T2+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#     
+#     swarm<-z$pbest.Parameter.Values
+#     
+#     zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+#             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.02),
+#             prec=ceiling(repfactor*400),noiseseed=1000*seed+initialrounds+i,
+#             ...
+#     )
+#     
+#     swarm<-rbind(swarm,zz$par)
+#     newlow<-pmin(newlow,Rfast::colMins(swarm,value=TRUE))
+#     newhigh<-pmax(newhigh,Rfast::colMaxs(swarm,value=TRUE))
+#     
+#     if (any(zz$par==newlow))
+#       newlow<-o_lower
+#     if (any(zz$par==newhigh))
+#       newhigh<-o_upper
+#     
+#     
+#     
+#     guesses1<-rbind(guesses1,c(zz$par))
+#   }
+#   print(guesses1)
+#   print("fullhydro")
+#   T3<-T3+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#   
+#   z<-hydroPSO(fn=function(...) log(fn(...)), lower=newlow,
+#               upper=newhigh, 
+#               par=guesses1,
+#               control=list(maxit=200,npart=nrow(guesses1),out.with.pbest=TRUE,write2disk=FALSE), 
+#               prec=ceiling(repfactor*1000), noiseseed=1000*seed+initialrounds+1111, 
+#               ...
+#   )
+#   print("a")
+#   zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+#           upper=newhigh,lower=newlow,control=list(maximize=FALSE, trace=TRUE, eps=0.001),
+#           prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...
+#   )
+#   T4<-T4+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#   cat("times per section",T1,T2,T3,T4)
+#   
+#   par<-zz$par
+#   names(par)<-NULL
+#   val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+#   return(list(par=par,val=val))   
+# }
+# 
+# HydroPSOandSPG_fast_dependent <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=15) {
+#   #possibly faster/better because each round uses last round's best as one of fourty starting points
+#   T1<-0
+#   T2<-0
+#   T3<-0
+#   T4<-0
+#   guesses1<-NULL
+#   o_upper<-upper
+#   o_lower<-lower
+#   newlow<-upper
+#   newhigh<-lower
+#   for (i in 1:initialrounds) {
+#     start_time <- Sys.time()
+#     if (i>initialrounds*0.5) { #after half of the inital rounds, focus more on only the parts where particles ended up in
+#       lower<-newlow
+#       upper<-newhigh
+#     }
+#     
+#     z<-hydroPSO(fn=fn, lower=lower,
+#                 par=ifelse(c(matrix(is.null(guesses1),ncol=length(upper))),(lower+upper)/2,guesses1),
+#                 upper=upper, 
+#                 control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE,verbose=FALSE), 
+#                 prec=ceiling(repfactor*4), noiseseed=1000*seed+i, 
+#                 ...
+#     )
+#     
+#     T1<-T1+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+# 
+#     swarm<-z$pbest.Parameter.Values
+#     
+#     
+#     zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+#             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.02),
+#             prec=ceiling(repfactor*400),noiseseed=1000*seed+i, quiet=TRUE,
+#             ...
+#     )
+#     T2<-T2+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#     
+#     swarm<-rbind(swarm,zz$par)
+#     newlow<-pmin(newlow,Rfast::colMins(swarm,value=TRUE))
+#     newhigh<-pmax(newhigh,Rfast::colMaxs(swarm,value=TRUE))
+#     
+#     if (any(zz$par==newlow))
+#       newlow<-o_lower
+#     if (any(zz$par==newhigh))
+#       newhigh<-o_upper
+#     
+#     
+#     guesses1<-rbind(guesses1,c(zz$par))
+#   }
+#   fits<-apply(guesses1,1,FUN=function(par){fn(par,prec=5000,noiseseed=seed,...)})
+#   print(cbind(guesses1, fits))
+#   F1<-min(fits)
+#   z<-hydroPSO(fn=function(...) log(fn(...)), lower=newlow,
+#               upper=newhigh, 
+#               par=guesses1,
+#               control=list(maxit=100,npart=nrow(guesses1),out.with.pbest=TRUE,write2disk=FALSE), 
+#               prec=ceiling(repfactor*1000), noiseseed=1000*seed+initialrounds+1111, 
+#               ...
+#   )
+#   T3<-T3+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#   F2<-fn(z$par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+#   print("ab")
+#   zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
+#           upper=newhigh,lower=newlow,control=list(maximize=FALSE, trace=TRUE, eps=0.001),
+#           prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...
+#   )
+#   T4<-T4+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+#   par<-zz$par
+#   names(par)<-NULL
+#   val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+# 
+#   cat("HydroPSOandSPG_fast_dependent+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#   cat("times per section",T1,T2,T3,T4,"\n")
+#   cat("value evolution",F1,F2,val,"\n")
+#   
+#   return(list(par=par,val=val))   
+# }
+# 
+
+
+HydroPSOandSPG_fast_dep_quick <- function(fn, lower, upper, seed=1, ... ,repfactor=1,initialrounds=15,maxittwo=100,repfactortwo=1) {
+  #possibly faster/better because each round uses last round's best as one of fourty starting points
+  T1<-0
+  T2<-0
+  T3<-0
+  T4<-0
   guesses1<-NULL
-  for (i in 1:initialrounds) {
-    z<-hydroPSO(fn=fn, lower=lower,
-                upper=upper, 
-                control=list(maxit=200), 
-                prec=ceiling(repfactor*14), noiseseed=1000*seed+i, 
-                ...
-    )
-    cat("hydrofit:",z$value,"\n")
-    print(z$par)
-    zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
-            upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.02),
-            prec=ceiling(repfactor*500),noiseseed=1000*seed+100+i,
-            ...
-    )
-    cat("fit:",exp(zz$value),"\n")
-    guesses1<-rbind(guesses1,c(zz$par))
-    print(guesses1)
-  }
-  print("fullhydro")
-  z<-hydroPSO(fn=function(...) log(fn(...)), lower=lower,
-              upper=upper, 
-              par=guesses1,
-              control=list(maxit=200,npart=nrow(guesses1)), 
-              prec=ceiling(repfactor*2000), noiseseed=1000*seed+1111, 
-              ...
-  )
-  zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
-          upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
-          prec=4000,noiseseed=1000*seed+2222, ...
-  )
-  return(zz$par)   
-  par<-zz$par
-  names(par)<-NULL
-  val<-fn(par,prec=4000,noiseseed=seed,...)
-  return(list(par=par,val=val))   
-}
-HydroPSOandSPG_fast <- function(fn, lower, upper, seed=1,...,repfactor=1,initialrounds=150) {
-  
-  guesses1<-NULL
-  newlow<-upper
-  newhigh<-lower
-  for (i in 1:initialrounds) {
-    if (i>initialrounds*0.5) { #after half of the inital rounds, focus more on only the parts where particles ended up in
-      print("spacevolume")
-      print(prod(upper-lower))
-      lower<-newlow
-      upper<-newhigh
-      print(prod(upper-lower))
-      print(upper)
-      print(lower)
-    }
-    z<-hydroPSO(fn=fn, lower=lower,
-                upper=upper, 
-                control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE), 
+    newlower<-upper
+    newupper<-lower
+    for (i in 1:initialrounds) {
+      start_time <- Sys.time()
+      
+      print(t(data.frame(lower=(lower*(initialrounds-i)+newlower*(i-1))/(initialrounds-1),
+                       upper=(upper*(initialrounds-i)+newupper*(i-1))/(initialrounds-1))))
+      
+    z<-hydroPSO(fn=fn, lower=(lower*(initialrounds-i)+newlower*(i-1))/(initialrounds-1),
+                par=ifelse(c(matrix(is.null(guesses1),ncol=length(upper))),(lower+upper)/2,guesses1),
+                upper=(upper*(initialrounds-i)+newupper*(i-1))/(initialrounds-1), 
+                control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE,verbose=FALSE), 
                 prec=ceiling(repfactor*4), noiseseed=1000*seed+i, 
                 ...
     )
-    cat("hydrofit:",z$value,"\n")
-    newlow<-pmin(newlow,Rfast::colMins(z$pbest.Parameter.Values,value=TRUE))
-    newhigh<-pmin(newhigh,Rfast::colMaxs(z$pbest.Parameter.Values,value=TRUE))
-    zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
-            upper=upper,lower=lower,control=list(maximize=FALSE,write2disk, trace=FALSE, eps=0.02),
-            prec=ceiling(repfactor*100),noiseseed=1000*seed+initialrounds+i,
+    T1<-T1+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+    swarm<-z$pbest.Parameter.Values
+   
+    zz<-spg(par=z$par, fn=function(...) log(fn(...)),  quiet=TRUE,
+            upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.02),
+            prec=ceiling(repfactor*200),noiseseed=1000*seed+i,
             ...
     )
-    cat("fit:",exp(zz$value),"\n")
+    
+    swarm<-rbind(swarm,zz$par)
+    newlower<-pmin(newlower,Rfast::colMins(swarm,value=TRUE))
+    newupper<-pmax(newupper,Rfast::colMaxs(swarm,value=TRUE))
+    T2<-T2+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+    
     guesses1<-rbind(guesses1,c(zz$par))
-    print(guesses1)
-  }
-  print("highlow")
-  print(newhigh)
-  print(newlow)
-  print("fullhydro")
-  z<-hydroPSO(fn=function(...) log(fn(...)), lower=newlow,
-              upper=newhigh, 
+    }
+  fits<-apply(guesses1,1,FUN=function(par){fn(par,prec=5000,noiseseed=seed,...)})
+  print(cbind(guesses1, fits))
+  F1<-min(fits)
+
+  z<-hydroPSO(fn=function(...) log(fn(...)), lower=lower,
+              upper=upper, 
               par=guesses1,
-              control=list(maxit=200,npart=nrow(guesses1),out.with.pbest=TRUE,write2disk=FALSE), 
-              prec=ceiling(repfactor*1000), noiseseed=1000*seed+1111, 
+              control=list(maxit=maxittwo,npart=nrow(guesses1),out.with.pbest=TRUE,write2disk=FALSE), 
+              prec=ceiling(repfactor*1000*repfactortwo), noiseseed=1000*seed+initialrounds+1111, 
               ...
   )
+  F2<-fn(z$par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+  T3<-T3+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+  
+  print("cab")
   zz<-spg(par=z$par, fn=function(...) log(fn(...)), 
-          upper=newhigh,lower=newlow,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
-          prec=4000,noiseseed=1000*seed+2222, ...
+          upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.001),
+          prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...
   )
+  T4<-T4+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
   par<-zz$par
   names(par)<-NULL
-  val<-fn(par,prec=4000,noiseseed=seed,...)
+  val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+
+  cat("HydroPSOandSPG_fast_dep_quick+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  cat("times per section",T1,T2,T3,T4,"\n")
+  cat("value evolution",F1,F2,val,"\n")
   return(list(par=par,val=val))   
 }

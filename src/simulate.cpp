@@ -87,46 +87,12 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     converged(i) = converged_;
   }
   if (mean(converged)<0.9) {
-    Rcpp::Rcout << "(" << floor(mean(converged)*100) <<"%c)" ;
+    Rcpp::Rcout << "" << floor(mean(converged)*100) <<"%" ;
     finalMatrix.zeros();
   }
   tictoc(3);
   return(finalMatrix);
 }
-/*
-// [[Rcpp::export]]
-mat simulate_BBP_symmetric_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,vec theta,int reps,int seed,int rounds) {
-  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-  
-  mat finalMatrix = zeros(reps,13);
-  vec converged(reps);
-  vec roundsc(reps);
-  
-  for (int i=0; i<reps;i++) {
-    //std::cout << "s:" <<i;
-    mat error = symmetrix_normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
-    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-    altruism.diag().ones();
-    int rounds_;
-    bool converged_;
-    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true, rounds_,converged_,rounds);
-    eqtrans2.elem( find(eqtrans2) ).ones();
-    vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
-
-    
-    for(int mom=0;mom<13;mom++)
-      finalMatrix(i,mom) = moments(mom);
-    roundsc(i) = rounds_;
-    converged(i) = converged_;
-  }
-  if (mean(converged)<0.9) {
-    std::cout << "(" << floor(mean(converged)*100) <<"%c)" ;
-    finalMatrix.zeros();
-  }
-  return(finalMatrix);
-}
-
-*/
 
 struct simulate_BBP_worker_smart : public RcppParallel::Worker
 {
@@ -166,7 +132,7 @@ struct simulate_BBP_worker_smart : public RcppParallel::Worker
       convergance(i,0) = converged_;
       //as a "trick" to speed up computations in situations with low convergence, we can skip rounds, whenever there convergence ratio in the past was too low
       //We achieve this, by skippnig (using the result from some previous round) two iterations for every one that did not converge
-      if (i>begin+5 & i < end-5 & !converged_) {
+      if (i>begin+10 & i < end-10 & !converged_) {
         i = i + 1;
         for(int mom=0;mom<13;mom++)
           output(i,mom) = output(begin+round((i-begin)*1/3),mom);
@@ -182,49 +148,6 @@ struct simulate_BBP_worker_smart : public RcppParallel::Worker
   }
   
 };
-/*this is without skipping non-converging ones
-struct simulate_BBP_worker : public RcppParallel::Worker
-{
-  // source matrix
-  int n,reps,seed,rounds;
-  double delta0,delta1,sigma;
-  const mat distance;
-  const mat kinship;
-  const mat capacity;
-  const vec income;
-  const vec theta;
-
-  // destination matrix
-  RcppParallel::RMatrix<double> output; //it seems that using a arma::mat here is problematic https://stackoverflow.com/questions/27523979/stack-imbalance-with-rcppparallel
-  RcppParallel::RMatrix<double> convergance; //it seems that using a arma::mat here is problematic https://stackoverflow.com/questions/27523979/stack-imbalance-with-rcppparallel
-  
-  // initialize with source and destination
-  simulate_BBP_worker(Rcpp::NumericMatrix output,Rcpp::NumericMatrix convergance,  int n, double delta0,double delta1,double sigma, const mat& distance, const mat& kinship,const  mat& capacity,const vec& income, const vec& theta,  int reps,int seed,int rounds) 
-    : output(output), convergance(convergance), n(n), delta0(delta0), delta1(delta1), sigma(sigma), distance(distance), kinship(kinship), capacity(capacity), income(income), theta(theta), reps(reps), seed(seed), rounds(rounds)
-  {}
-  
-  // take the square root of the range of elements requested
-  void operator()(std::size_t begin, std::size_t end) {
-    for(size_t i = begin; i < end; i++) {
-      mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
-      mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-      altruism.diag().ones();
-      
-      int rounds_;
-      bool converged_;
-      mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true,rounds_,converged_,rounds);
-      eqtrans2.elem( find(eqtrans2) ).ones();
-      
-      vec moments=compute_moments_cpp(eqtrans2,kinship,distance,income,theta);
-      for(int mom=0;mom<12;mom++)
-        output(i,mom) = moments(mom);
-      convergance(i,0) = converged_;
-      
-    }
-    
-  }
-  
-};*/
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1,double sigma, const mat& distance, const mat& kinship, const mat& capacity,const vec& income,int reps,int seed,int rounds)  {
@@ -244,7 +167,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
   parallelFor(0, reps, sim);
   
   if (mean(convergance)<0.85) {
-    Rcpp::Rcout  << "(" << floor(mean(convergance)*100) <<"%)";
+    Rcpp::Rcout  << "" << floor(mean(convergance)*100) <<"%";
   }
   if (mean(convergance)<0.20) {
     Rcpp::NumericMatrix z(reps,13);

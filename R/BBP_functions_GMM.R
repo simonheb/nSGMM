@@ -135,11 +135,11 @@ compute_moments<-function(btransfers,kinship,distance,income) {
   
 }
 gg<<-0
-g<-function(th,transfers,kinship,distance,...,prec,maxrounds=NULL){
+g<-function(th,vdata,...,prec,maxrounds=NULL,villagewise=FALSE){
   #cat("g(",th,")=")
   if (is.null(maxrounds))
     maxrounds <- 100+prec/5
-  ret<-c(moment_distance(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
+  ret<-c(moment_distance(th=th,vdata,...,villagewise=villagewise,maxrounds=maxrounds,prec=max(2,prec)))
   if (length(ret)==0) { return(Inf)}
   #cat(ret,"\n")
   return(ret)
@@ -221,12 +221,13 @@ moment_distance_many_villages <- function(theta,village_fixed_effects,village_da
 }
 
 
-moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep) {
-  #inc <- matrix(income,nrow=nrow(kinship),ncol=nrow(kinship))
-  #offdiag<-!(diag(nrow(kinship)))
+moment_distance <- function(th,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv,keep,villagewise=TRUE) {
+  kinship<-vdata$kinship
+  transfers<-vdata$transfers
+  distance<-vdata$distance
+  income<-vdata$income
   
   
-  #x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
   x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income), error=function(cond) {return(NA)})
   if (any(is.na(x))) browser()
   if (length(th)==4) {
@@ -243,48 +244,24 @@ moment_distance <- function(th,transfers,kinship,distance,income,prec,noiseseed=
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   
-  if (is.null(vcv)) {
-    vcv<-var(diff)
-    diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
-    cat("approximating VCV via simulations\n")
-  }
+
+  
   if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
   
-  ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
+  if (villagewise) {
+    WW<-solve(vcv)
+    ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
+  } else {
+    ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
+  }
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
   if (ret==Inf) browser()
   return(ret)
 }
 
-moment_distance_new <- function(th,transfers,kinship,distance,income,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,
-                                keep
-) {
-  x<-compute_moments(1*(transfers>0),kinship,distance,income,theta=th)
-  
-  
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
-  diff<-sweep(simx,2,x)
-  if (is.null(vcv)) {
-    vcv<-var(diff)
-    diag(vcv)[which(diag(vcv)==0)]<-0.00000001 #replace 0 diagonal elements
-    cat("approximating VCV via simulations\n")
-  }  
-  diff<-diff[,keep]
-  vcv<-vcv[keep,keep]
-  W<-solve(vcv)
-  ret<-NULL
-  for (i in 1:nrow(diff)) {
-    ret<-c(ret,diff[i,]%*%W%*%diff[i,])
-  }
-  return(mean(ret))
-}
-lognormal<-function(n,mean,sd) {
-  exp(rnorm(n)*sd+mean) - exp(mean+sd^2/2)
-}
 
 
 #utlity function (vector valued)
