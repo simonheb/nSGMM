@@ -4,8 +4,6 @@
 #include <network_functions.h>
 using namespace arma;
 
-
-
 // [[Rcpp::export]]
 double  utlity_cppvec(const vec& consumption, const rowvec& altruism) {
   return as_scalar(altruism*log(consumption));

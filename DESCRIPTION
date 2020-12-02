@@ -1,9 +1,9 @@
 Package: nSGMM
 Type: Package
-Title: What the package does (short line)
+Title: Tools to simulate networks and perform simulation-based inference.
 Version: 1.0
 Date: 2019-10-09
-Author: Who wrote it
+Author: Simon Hess
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?

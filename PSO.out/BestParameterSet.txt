@@ -1,2 +1,0 @@
-BestParticle  GoF     Param1  Param2  Param3  Param4  Param5  
-21   2.7118390E-01  -1.9911623E+00   6.7253459E-01   1.9852223E-01   2.1985801E+00  -2.0784219E+00  

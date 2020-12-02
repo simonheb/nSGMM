@@ -235,42 +235,15 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   
   mat m_undir=max(btransfers,trans(btransfers));
   mat m_recip=btransfers%trans(btransfers);
-  //mat pl=BFS_dist_all(m_undir);
-  //pl=pl.replace(0,datum::nan);
-  //pl=pl.replace(datum::inf,btransfers.n_rows);
-  //double pathlenghts=mean(pl.elem(find_finite(pl)))/btransfers.n_rows;
+  
   double fb2=forestness_cpp(m_undir);
   double ib=intermediation_cpp(btransfers,m_recip);
-  //double sa=support_fast2_cpp(btransfers,m_undir);
-  //double ra=recip_cpp(m_undir,m_recip);
   mat c1=cor(vectorise(m_undir(offdiag)),vectorise(kinship(offdiag)));
   mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
   double density=mean(vectorise(btransfers(offdiag)));
   
   mat con = (1/income)*trans(income);
   mat logcon = log(trans(con));
-  //double c3;
-  //if (density==0) {
-  //  c3=0;
-  //}else{
-  //  c3=mean(abs(logcon(find(m_undir))));
-  //}
- // mat dat(offdiag.n_elem,7);
- // dat.col(0)=vectorise(logcon(offdiag));
- // dat.col(1)=sign(dat.col(0));
- // dat.col(2)=vectorise(kinship(offdiag));
- // dat.col(3)=dat.col(0)%dat.col(0);
- // dat.col(4)=dat.col(0)%dat.col(1);
- // dat.col(5)=dat.col(0)%dat.col(2);
-//  dat.col(6)=dat.col(1)%dat.col(2);
-
-  //int n = dat.n_rows, k = dat.n_cols;
-  
-  //vec coef = solve(dat, btransfers(offdiag)); 
-//  vec resid = btransfers(offdiag) - dat*coef; 
-  
-  //double sig2 = as_scalar(trans(resid)*resid/(n-k));
-  
 
   mat dat2(offdiag.n_elem,2);
   dat2.col(0)=abs(vectorise(logcon(offdiag)));
@@ -283,24 +256,8 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   double sig22 = as_scalar(trans(resid2)*resid2/(n2-k2));
   
 
-  //mat equated_rest=btransfers-logcon-theta(0)-theta(1)*kinship;
-  //vec sqyared_rest=pow(equated_rest(find(logcon>0)),2);
+    vec degree_distribution = sum(m_undir,1);
   
-  
-  //vec sqyared_rest3=pow(equated_rest(offdiag),2);
-  
-  
-  //double sqresidual_proxy;
-  
-//if (sqyared_rest.n_elem>0) {
-//double  sqresidual_proxy=mean(sqyared_rest);
-//double  sqresidual_proxy3=mean(sqyared_rest3);
-//} else {
-    //sqresidual_proxy=999;
-//  }
-  vec degree_distribution = sum(m_undir,1);
-  //double sd = ;
-  //vec powdd = ;
   double degree_skewness = mean(pow((degree_distribution-mean(degree_distribution))/stddev(degree_distribution),3));
 
     
@@ -315,7 +272,7 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   vec dist_distribution = sum(distance,1);
   vec outdegree_distribution = sum(btransfers,1);
   mat correlation_of_degrees = cor(degree_distribution,dist_distribution);
-  
+
   vec ret = {density, 
              fb2,
              ib, 
