@@ -24,9 +24,21 @@
 # }
 
 bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,vdata,...,outcome="y") {
+  
+  datahash<-digest::digest(vdata)
+  optimizerhash<-digest::digest(deparse(optimizer))
+  
+  dir.create("estimates")
+  dir.create(paste0("estimates/",optimizerhash,sep=""))
+  dir.create(paste0("estimates/",optimizerhash,"/",datahash,sep=""))
+
+  storedestimates_file<-paste0("estimates/",optimizerhash,"/",datahash,"/boostrapestimates.R",sep="")
+  
+  callkey<-paste(sep = "",bootstrapseed,digest::digest(c(par,digest::digest(list(...)))))
+  
+  #open file if exists, use empty list otherwise
   boostrapestimates<-list()
-  tryCatch(boostrapestimates<-readRDS("boostarapdestimates"), error = function(e) {})
-  callkey<-paste(sep = "",bootstrapseed,digest::digest(c(par,digest::digest(vdata),digest::digest(deparse(optimizer)),digest::digest(list(...)))))
+  tryCatch(boostrapestimates<-readRDS(storedestimates_file), error = function(e) {})
   
   if (callkey %in% names(boostrapestimates))
   {
@@ -39,7 +51,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,v
   #obtain estimates
   bootest<-optimizer(vdata,...)
   boostrapestimates[[callkey]]<-bootest
-  saveRDS(boostrapestimates,"boostarapdestimates")
+  saveRDS(boostrapestimates,storedestimates_file)
   return(bootest)
 }
 # 
