@@ -2,8 +2,7 @@ library(Rfast)
 library(stats) #for MLE
 library(igraph)
 library(foreach)
-#library(tictoc)
-#library(doParallel)
+
   logistic<-function(x) {
     1/(1+exp(-x))
   }
@@ -43,21 +42,20 @@ kappatransformation<-function(x){
 invkappatransformation<-function(x) {
   return( 1/((x+1)/10) )
 }
-drawfortheta<-function(theta,kinship,income,distance,...,modelplot=FALSE) {
-  n<-length(income)
+draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE) {
+  n<-length(vdata[["income"]])
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
+  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(par[3]))) #make symmetric
   error <- lower_tri.assign(error,lower_tri(t(error)))
-  altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
+  altruism <- 1/(1+exp(-(par[1]+par[2]*vdata[["kinship"]]+error)))
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4]),income=income,modmode=21,plotthis = modelplot)
-  gg<-graph_from_adjacency_matrix((eq$transfers>0)*1)
-  print(moments::skewness(degree(gg,mode = "all")))
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(par[4]),income=vdata[["income"]],modmode=21,plotthis = modelplot)
+  return((eq$transfers>0)*1)
+  #print(moments::skewness(degree(gg,mode = "all")))
   
-  if (!modelplot)
-  plot(gg,...,main="simulated")
+  #if (modelplot)plot(gg,...,main="simulated")
 }
 gini_from_theta<-function(theta,kinship,income,distance,...,flataltruism=FALSE) {
   n<-length(income)
@@ -134,45 +132,14 @@ compute_moments<-function(btransfers,kinship,distance,income) {
                )) #1,1,0,1,0,1,1,0,0,0,1,1
   
 }
-gg<<-0
 g<-function(th,vdata,...,prec,maxrounds=NULL,villagewise=FALSE){
-  #cat("g(",th,")=")
   if (is.null(maxrounds))
     maxrounds <- 100+prec/5
   ret<-c(moment_distance(th=th,vdata,...,villagewise=villagewise,maxrounds=maxrounds,prec=max(2,prec)))
   if (length(ret)==0) { return(Inf)}
-  #cat(ret,"\n")
   return(ret)
 }
-# 
-# g_new<-function(th,transfers,kinship,distance,...,prec,maxrounds=500){
-#   #cat("gn(",th,")=")
-#   ret<-c(moment_distance_new(th=th,transfers=transfers,kinship=kinship,distance=distance,...,maxrounds=maxrounds,prec=prec))
-#   if (length(ret)==0) { return(Inf)}
-#   #cat(ret,"\n")
-#   return(ret)
-# }
-# g_dist<-function(th,transfers,kinship,distance,income,vcv,prec=1000,maxrounds=500,noiseseed=1){
-#   x<-compute_moments_cpp(1*(transfers>0),kinship,distance,income,theta=th)
-#   
-#   simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-#                                   distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,reps=prec,noiseseed,maxrounds)
-#   diff<-sweep(simx,2,colmeans(simx))
-#   x<-x-colmeans(simx)
-#  
-#   x<-x[keep]
-#   diff<-diff[,keep]
-#   vcv<-vcv[keep,keep]
-# 
-#   W<-solve(vcv)
-#   ret<-NULL
-#   for (i in 1:nrow(diff)) {
-#     ret<-c(ret,diff[i,]%*%W%*%diff[i,])
-#   }
-#   rx<-x%*%W%*%x
-# 
-#   return(mean(c(rx)<ret))
-# }
+
 
 moment_distance_many_villages <- function(theta,village_fixed_effects,village_data,prec,noiseseed=1,maxrounds=500,vcv,keep,village_weights=NULL) {
   print(village_fixed_effects)

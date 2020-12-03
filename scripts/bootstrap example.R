@@ -1,4 +1,3 @@
-rm(list=ls())
 set.seed(1)
 set.seed(round(runif(1)*100000))
 n<-50
@@ -8,18 +7,9 @@ y<-0.5*x^2+rnorm(n)*5
 x1<<-NULL
 
 fit<-lm(y~x)
+print(summary(fit))
+
 par<-c(coefficients(fit)["(Intercept)"],coefficients(fit)["x"],summary(fit)$sigma  )
-
-bootcoeffs<-NULL
-for (i in 1:1000) {
-  BSy<-par[1]+par[2]*x+par[3]*rnorm(n)
-  bootfit<-lm(BSy ~ x)
-  bootcoeffs<-c(bootcoeffs,coefficients(bootfit)["x"])
-}
-print(round(coefficients(summary(fit)),3))
-cat("x            ",round(mean(bootcoeffs),3),"   ",round(sd(bootcoeffs),3),"\n")
-
-
 
 #this is not usefully parallelized, so instead, write a wrapper that does this and
 # takes a set of parameters, a search algorithm and a seed as input
@@ -32,7 +22,7 @@ draw_for_given_par<-function(par,vdata) {
   return(BSy)
 }
 
-bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,vdata,...) {
+bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,vdata,...,outcome="y") {
   boostrapestimates<-list()
   tryCatch(boostrapestimates<-readRDS("boostarapdestimates"), error = function(e) {})
   callkey<-paste(sep = "",bootstrapseed,digest::digest(c(par,digest::digest(vdata),digest::digest(deparse(optimizer)),digest::digest(list(...)))))
@@ -44,9 +34,9 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,v
   }
   set.seed(bootstrapseed)
   #generate fake data
-  observed<-drawcommand(par,vdata)
+  vdata[[outcome]]<-drawcommand(par,vdata)
   #obtain estimates
-  bootest<-optimizer(booty=observed,vdata,...)
+  bootest<-optimizer(vdata,...)
   boostrapestimates[[callkey]]<-bootest
   saveRDS(boostrapestimates,"boostarapdestimates")
   return(bootest)
@@ -59,8 +49,8 @@ for (i in 1:1000) {
                                                   bootstrapseed=i,
                                                   drawcommand = draw_for_given_par,
                                                   vdata=list(x=x),
-                                                  optimizer = function(booty,vdata) {
-                                                    bootfit<-lm(booty ~ vdata$x) 
+                                                  optimizer = function(vdata) {
+                                                    bootfit<-lm(vdata$y ~ vdata$x) 
                                                     ret<-c(coefficients(bootfit)["(Intercept)"],coefficients(bootfit)["vdata$x"],summary(bootfit)$sigma  )
                                                     return(ret)
                                                   }

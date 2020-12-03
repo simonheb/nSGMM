@@ -52,7 +52,7 @@ results<-NULL
 
 
 reps<-1000
-for (i in 6:129) {
+for (i in 7:129) {
   source('R/gridsearch.R')
   
   
