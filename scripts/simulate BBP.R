@@ -52,7 +52,7 @@ results<-NULL
 
 
 reps<-1000
-for (i in 1:129) {
+for (i in 6:129) {
   source('R/gridsearch.R')
   
   
@@ -97,30 +97,39 @@ for (i in 1:129) {
   keep<-                     as.logical(c(1,1,1,0,0,0,1,0,0,1,0,0,1))
   keep_with_degreecorr_geo2<-as.logical(c(1,1,1,0,0,0,1,0,1,1,0,0,1))
   
-  vdata<-vdata=list(
+  vdata<-list(
     kinship=kinship,
     income=income,
     transfers= observed_transfers,
     distance=distance)
   
   
+  set.seed(rseed)
   ptm <- Sys.time()
   run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
                                                lower=lower,upper=upper,  seed=1,
                                                vdata=vdata,
-                                               initialrounds = 8,
+                                               initialrounds = 8, debug=TRUE,
                                                vcv=var(mcpp),  keep=keep)
   results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
   ptm <- Sys.time()
   run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
-                                     lower=lower,upper=upper,  seed=1,
+                                               lower=lower,upper=upper,  seed=1,
+                                               vdata=vdata,
+                                               initialrounds = 10, maxittwo=1,repfactortwo=4, debug=TRUE,
+                                               vcv=var(mcpp),  keep=keep)
+  results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
+  
+  
+  ptm <- Sys.time()
+  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+                                     lower=lower,upper=upper,  seed=1, 
                                      vdata=vdata,
-                                     maxittwo=10,repfactortwo=4,
+                                     maxittwo=1,repfactortwo=4, debug=TRUE,
                                      vcv=var(mcpp),  keep=keep)
   results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
-  set.seed(rseed)
   ptm <- Sys.time()
   
 
