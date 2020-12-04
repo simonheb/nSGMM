@@ -348,3 +348,67 @@ HydroPSOandSPG_fast_dep_quick <- function(fn, lower, upper, seed=1, ... ,repfact
   if (debug) cat("value evolution",F1,F2,val,"\n")
   return(list(par=par,val=val))   
 }
+
+
+
+parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,initialrounds=15,debug=FALSE) {
+  #possibly faster/better because each round uses last round's best as one of fourty starting points
+  T1<-0
+  T2<-0
+  T3<-0
+  T4<-0
+  guesses1<-NULL
+  newlower<-upper
+  newupper<-lower
+  for (i in 1:initialrounds) {
+    start_time <- Sys.time()
+    
+    z<-hydroPSO(fn=fn, lower=(lower*(initialrounds-i)+newlower*(i-1))/(initialrounds-1),
+                par=ifelse(c(matrix(is.null(guesses1),ncol=length(upper))),(lower+upper)/2,guesses1),
+                upper=(upper*(initialrounds-i)+newupper*(i-1))/(initialrounds-1), 
+                control=list(maxit=100,out.with.pbest=TRUE,write2disk=FALSE,verbose=FALSE), 
+                prec=ceiling(repfactor*4), noiseseed=1000*seed+i, 
+                ...
+    )
+    T1<-T1+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+    swarm<-z$pbest.Parameter.Values
+    
+    zz<-spg(par=z$par, fn=function(...) log(fn(...)),  quiet=TRUE,
+            upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.02),
+            prec=ceiling(repfactor*200),noiseseed=1000*seed+i,
+            ...
+    )
+    
+    swarm<-rbind(swarm,zz$par)
+    newlower<-pmin(newlower,Rfast::colMins(swarm,value=TRUE))
+    newupper<-pmax(newupper,Rfast::colMaxs(swarm,value=TRUE))
+    T2<-T2+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+    
+    guesses1<-rbind(guesses1,c(zz$par))
+  }
+  if (debug) fits<-apply(guesses1,1,FUN=function(par){fn(par,prec=5000,noiseseed=seed,...)})
+  if (debug) print(cbind(guesses1, fits))
+  if (debug) F1<-min(fits)
+  
+  groupfits<-apply(guesses1,1,FUN=function(par){fn(par,prec=ceiling(repfactor*4000),noiseseed=seed,...)})
+  zpar<-guesses1[which.min(groupfits),]
+  
+  if (debug) F2<-fn(zpar,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+  T3<-T3+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+  
+  print("cab")
+  zz<-spg(par=zpar, fn=function(...) log(fn(...)), 
+          upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
+          prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...
+  )
+  T4<-T4+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
+  par<-zz$par
+  names(par)<-NULL
+  val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+  
+  if (debug) cat("newpara+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  if (debug) cat("times per section",T1,T2,T3,T4,"\n")
+  if (debug) cat("value evolution",F1,F2,val,"\n")
+  return(list(par=par,val=val))   
+}
+

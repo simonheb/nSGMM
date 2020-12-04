@@ -1,10 +1,37 @@
 library(Rcpp)
 library(foreach)
+library(BB)
 library(doParallel)
 library(nSGMM)
 library(hydroPSO)
 setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
+
+
+
+vsdata<-readRDS("../nSGMM/DataforBBP")
+transfernet<-"m4m6m7"
+
+
+##compute sample moments, which are used for the weighting matrix
+mcpp<-NULL
+scandidates<-NULL
+for (vill in names(vsdata)) {
+  kinship<-vsdata[[vill]][["m8am8bm8c"]]
+  income<-vsdata[[vill]][["income"]]+1
+  distance<-vsdata[[vill]][["distance"]]
+  transfers<-vsdata[[vill]][[transfernet]]
+  
+  if (min(table(c(kinship),c(transfers))[,2])>=0){
+    mcpp<-rbind(cbind(t(compute_moments_cpp(transfers,kinship,distance,income))),mcpp)
+    scandidates<-c(scandidates,vill)
+  }
+}
+weighting_matrix<-var(mcpp)
+
+
+
+
 
 colsums<-colSums
 colmeans<-colMeans
@@ -46,13 +73,13 @@ capacity1_DGP<- NULL#-0.3
 true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity0_DGP,capacity1_DGP)
 
 foo<-NULL
-results<-NULL
+results<-readRDS("a")
 
 
 
 
 reps<-1000
-for (i in 7:129) {
+for (i in 6:16) {
   source('R/gridsearch.R')
   
   
@@ -105,28 +132,27 @@ for (i in 7:129) {
   
   
   set.seed(rseed)
-  ptm <- Sys.time()
-  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
-                                               lower=lower,upper=upper,  seed=1,
-                                               vdata=vdata,
-                                               initialrounds = 8, debug=TRUE,
-                                               vcv=var(mcpp),  keep=keep)
-  results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
+  # ptm <- Sys.time()
+  # run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+  #                                              lower=lower,upper=upper,  seed=1,
+  #                                              vdata=vdata,
+  #                                              initialrounds = 8, debug=TRUE,
+  #                                              vcv=var(mcpp),  keep=keep)
+  # results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
+  # 
+  # ptm <- Sys.time()
+  # run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+  #                                              lower=lower,upper=upper,  seed=1,
+  #                                              vdata=vdata,
+  #                                              initialrounds = 10, maxittwo=1,repfactortwo=4, debug=TRUE,
+  #                                              vcv=var(mcpp),  keep=keep)
+  # results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
+  #3 was the same as this:
   ptm <- Sys.time()
-  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
-                                               lower=lower,upper=upper,  seed=1,
-                                               vdata=vdata,
-                                               initialrounds = 10, maxittwo=1,repfactortwo=4, debug=TRUE,
-                                               vcv=var(mcpp),  keep=keep)
-  results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
-  
-  
-  ptm <- Sys.time()
-  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+  run_1000_new3<-parallel_HydroPSOandSPG(g,
                                      lower=lower,upper=upper,  seed=1, 
-                                     vdata=vdata,
-                                     maxittwo=1,repfactortwo=4, debug=TRUE,
+                                     vdata=vdata, debug=TRUE,
                                      vcv=var(mcpp),  keep=keep)
   results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
