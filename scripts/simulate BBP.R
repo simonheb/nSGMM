@@ -73,13 +73,12 @@ capacity1_DGP<- NULL#-0.3
 true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity0_DGP,capacity1_DGP)
 
 foo<-NULL
-results<-readRDS("a")
+results<-NULL #readRDS("a")
 
 
 
 
-reps<-1000
-for (i in 6:16) {
+for (i in 17:160) {
   source('R/gridsearch.R')
   
   
@@ -132,22 +131,24 @@ for (i in 6:16) {
   
   
   set.seed(rseed)
-  # ptm <- Sys.time()
-  # run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
-  #                                              lower=lower,upper=upper,  seed=1,
-  #                                              vdata=vdata,
-  #                                              initialrounds = 8, debug=TRUE,
-  #                                              vcv=var(mcpp),  keep=keep)
-  # results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
-  # 
-  # ptm <- Sys.time()
-  # run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
-  #                                              lower=lower,upper=upper,  seed=1,
-  #                                              vdata=vdata,
-  #                                              initialrounds = 10, maxittwo=1,repfactortwo=4, debug=TRUE,
-  #                                              vcv=var(mcpp),  keep=keep)
-  # results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
+  ptm <- Sys.time()
+  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+                                               lower=lower,upper=upper,  seed=1,
+                                               vdata=vdata,
+                                               initialrounds = 8, debug=TRUE,
+                                               vcv=var(mcpp),  keep=keep)
+  results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
+
+  ptm <- Sys.time()
+  run_1000_new3<-HydroPSOandSPG_fast_dep_quick(g,
+                                               lower=lower,upper=upper,  seed=1,
+                                               vdata=vdata,
+                                               initialrounds = 10, maxittwo=1,repfactortwo=4, debug=TRUE,
+                                               vcv=var(mcpp),  keep=keep)
+  results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
+  ptm <- Sys.time()
+
   #3 was the same as this:
   ptm <- Sys.time()
   run_1000_new3<-parallel_HydroPSOandSPG(g,
@@ -156,9 +157,6 @@ for (i in 6:16) {
                                      vcv=var(mcpp),  keep=keep)
   results<-rbind(results,c(run_1000_new3$par,run_1000_new3$val,as.numeric((Sys.time() - ptm),unit="mins"),rseed))
   
-  ptm <- Sys.time()
-  
-
   
   colnames(results)<-c("p1","p2","p3","p4","fit","time","round")
   

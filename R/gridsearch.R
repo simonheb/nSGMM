@@ -390,7 +390,7 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
   if (debug) print(cbind(guesses1, fits))
   if (debug) F1<-min(fits)
   
-  groupfits<-apply(guesses1,1,FUN=function(par){fn(par,prec=ceiling(repfactor*4000),noiseseed=seed,...)})
+  groupfits<-apply(guesses1,1,FUN=function(par){fn(par,prec=ceiling(repfactor*4000),noiseseed=1000*seed+initialrounds+1111,...)})
   zpar<-guesses1[which.min(groupfits),]
   
   if (debug) F2<-fn(zpar,prec=ceiling(repfactor*5000),noiseseed=seed,...)
