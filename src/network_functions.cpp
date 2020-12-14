@@ -272,16 +272,16 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   vec dist_distribution = sum(distance,1);
   vec outdegree_distribution = sum(btransfers,1);
   mat correlation_of_degrees = cor(degree_distribution,dist_distribution);
-
-  vec ret = {density, 
-             fb2,
-             ib, 
-             99,//sa,
-             99,//ra,
-             99,//pathlenghts,
-             c1(0),
-             c2(0),
-             corrdoubledista,//sig2,
+//  1  2  3  7  9 10 13
+  vec ret = {density, //1 
+             fb2, //2
+             ib,  //3
+             99,//4
+             99,//5,
+             99,//6
+             c1(0),//7
+             c2(0),//8
+             corrdoubledista,//9
              sig22,
              correlation_of_degrees(0), //// sqresidual_proxy3
              99, //c3
