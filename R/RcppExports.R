@@ -61,6 +61,10 @@ Ccomponents <- function(transferstructure, t_components_csize, t_components_memb
     .Call(`_nSGMM_Ccomponents`, transferstructure, t_components_csize, t_components_membership, t_components_matrix, t_conmat)
 }
 
+forestness_cpp <- function(adj) {
+    .Call(`_nSGMM_forestness_cpp`, adj)
+}
+
 zeroOneBFS <- function(m, src) {
     .Call(`_nSGMM_zeroOneBFS`, m, src)
 }
@@ -75,6 +79,10 @@ dijkstra <- function(graph, src) {
 
 dijkstra_all <- function(graph) {
     .Call(`_nSGMM_dijkstra_all`, graph)
+}
+
+dskewness <- function(adj) {
+    .Call(`_nSGMM_dskewness`, adj)
 }
 
 compute_moments_cpp <- function(btransfers, kinship, distance, income) {

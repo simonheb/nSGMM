@@ -217,6 +217,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// forestness_cpp
+double forestness_cpp(const mat& adj);
+RcppExport SEXP _nSGMM_forestness_cpp(SEXP adjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const mat& >::type adj(adjSEXP);
+    rcpp_result_gen = Rcpp::wrap(forestness_cpp(adj));
+    return rcpp_result_gen;
+END_RCPP
+}
 // zeroOneBFS
 mat zeroOneBFS(const mat& m, int src);
 RcppExport SEXP _nSGMM_zeroOneBFS(SEXP mSEXP, SEXP srcSEXP) {
@@ -260,6 +271,17 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< mat >::type graph(graphSEXP);
     rcpp_result_gen = Rcpp::wrap(dijkstra_all(graph));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dskewness
+double dskewness(const mat& adj);
+RcppExport SEXP _nSGMM_dskewness(SEXP adjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const mat& >::type adj(adjSEXP);
+    rcpp_result_gen = Rcpp::wrap(dskewness(adj));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -389,10 +411,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_recip_cpp", (DL_FUNC) &_nSGMM_recip_cpp, 2},
     {"_nSGMM_component_counts", (DL_FUNC) &_nSGMM_component_counts, 1},
     {"_nSGMM_Ccomponents", (DL_FUNC) &_nSGMM_Ccomponents, 5},
+    {"_nSGMM_forestness_cpp", (DL_FUNC) &_nSGMM_forestness_cpp, 1},
     {"_nSGMM_zeroOneBFS", (DL_FUNC) &_nSGMM_zeroOneBFS, 2},
     {"_nSGMM_BFS_dist_all", (DL_FUNC) &_nSGMM_BFS_dist_all, 1},
     {"_nSGMM_dijkstra", (DL_FUNC) &_nSGMM_dijkstra, 2},
     {"_nSGMM_dijkstra_all", (DL_FUNC) &_nSGMM_dijkstra_all, 1},
+    {"_nSGMM_dskewness", (DL_FUNC) &_nSGMM_dskewness, 1},
     {"_nSGMM_compute_moments_cpp", (DL_FUNC) &_nSGMM_compute_moments_cpp, 4},
     {"_nSGMM_random_normal_seed", (DL_FUNC) &_nSGMM_random_normal_seed, 4},
     {"_nSGMM_symmetrix_normal_error_matrix", (DL_FUNC) &_nSGMM_symmetrix_normal_error_matrix, 4},

@@ -78,6 +78,7 @@ double Ccomponents(const mat& transferstructure,uvec & t_components_csize,uvec &
   
   return t_components_no;
 } 
+// [[Rcpp::export]]
 
 double forestness_cpp(const mat& adj) {
   return(2*(adj.n_rows-component_counts(adj)) / accu(adj));
@@ -221,7 +222,14 @@ mat dijkstra_all(mat graph)
   return(ret);
 }
 
-
+// [[Rcpp::export]]
+double dskewness(const mat& adj)
+{
+  
+  vec degree_distribution = sum(adj,1);
+  return(mean(pow((degree_distribution-mean(degree_distribution))/stddev(degree_distribution),3)));
+  
+}
 
 // [[Rcpp::export]] 
 vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance,const vec& income) {
@@ -255,12 +263,9 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   
   double sig22 = as_scalar(trans(resid2)*resid2/(n2-k2));
   
-
-    vec degree_distribution = sum(m_undir,1);
+  double degree_skewness = dskewness(m_undir);
+  vec degree_distribution = sum(m_undir,1);
   
-  double degree_skewness = mean(pow((degree_distribution-mean(degree_distribution))/stddev(degree_distribution),3));
-
-    
   
   /* correlation between having multiple paths and distance*/
   mat twopaths=(m_undir*m_undir)%m_undir;
@@ -272,7 +277,7 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   vec dist_distribution = sum(distance,1);
   vec outdegree_distribution = sum(btransfers,1);
   mat correlation_of_degrees = cor(degree_distribution,dist_distribution);
-//  1  2  3  7  9 10 13
+//  1  2  3  7  10 13
   vec ret = {density, //1 
              fb2, //2
              ib,  //3
@@ -282,10 +287,10 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
              c1(0),//7
              c2(0),//8
              corrdoubledista,//9
-             sig22,
-             correlation_of_degrees(0), //// sqresidual_proxy3
-             99, //c3
-             degree_skewness
+             sig22,//10
+             correlation_of_degrees(0), //// 11
+             99, //12
+             degree_skewness //13
     };
   return(ret.replace(datum::nan,0));
 }
