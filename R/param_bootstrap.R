@@ -22,6 +22,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
     cat("*")
     return(boostrapestimates[[callkey]])
   }
+  ptm<-Sys.time()
   set.seed(bootstrapseed)
   #generate fake data
   vdata[[outcome]]<-
@@ -29,6 +30,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   #obtain estimates
   bootest<-optimizer(vdata,...)
   boostrapestimates[[callkey]]<-bootest
+  boostrapestimates[[callkey]]$time<-round(as.numeric(Sys.time() - ptm,units="mins"))
   saveRDS(boostrapestimates,storedestimates_file)
   return(bootest)
 }

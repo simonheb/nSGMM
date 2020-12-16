@@ -396,7 +396,7 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
   if (debug) F2<-fn(zpar,prec=ceiling(repfactor*5000),noiseseed=seed,...)
   T3<-T3+as.numeric(Sys.time() - start_time, units="mins"); start_time <- Sys.time()
   
-  print("cab")
+  
   zz<-spg(par=zpar, fn=function(...) log(fn(...)), 
           upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
           prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...

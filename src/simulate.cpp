@@ -87,7 +87,7 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     converged(i) = converged_;
   }
   if (mean(converged)<0.9) {
-    Rcpp::Rcout << "" << floor(mean(converged)*100) <<"%" ;
+    //Rcpp::Rcout << "" << floor(mean(converged)*100) <<"%" ;
     finalMatrix.zeros();
   }
   tictoc(3);
@@ -167,7 +167,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
   parallelFor(0, reps, sim);
   
   if (mean(convergance)<0.85) {
-    Rcpp::Rcout  << "" << floor(mean(convergance)*100) <<"%";
+    //Rcpp::Rcout  << "" << floor(mean(convergance)*100) <<"%";
   }
   if (mean(convergance)<0.20) {
     Rcpp::NumericMatrix z(reps,13);
