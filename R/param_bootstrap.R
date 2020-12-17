@@ -20,7 +20,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   if (callkey %in% names(boostrapestimates))
   {
     cat("*")
-    print(boostrapestimates[[callkey]])
+    #print(boostrapestimates[[callkey]])
     return(boostrapestimates[[callkey]])
   }
   ptm<-Sys.time()
