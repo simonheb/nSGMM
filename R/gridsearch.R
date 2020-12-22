@@ -374,7 +374,7 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
     swarm<-z$pbest.Parameter.Values
     
     zz<-spg(par=z$par, fn=function(...) log(fn(...)),  quiet=TRUE,
-            upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.02),
+            upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.02),
             prec=ceiling(repfactor*200),noiseseed=1000*seed+i,
             ...
     )
@@ -399,7 +399,7 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
   
   print("final_spg:")
   zz<-spg(par=zpar, fn=function(...) log(fn(...)), 
-          upper=upper,lower=lower,control=list(maximize=FALSE, trace=FALSE, eps=0.001),
+          upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.001),
           prec=ceiling(repfactor*5000),noiseseed=1000*seed+2222, ...
   )
   cat("took me", as.numeric(Sys.time() - start_time, units="mins"), "\n")
@@ -409,7 +409,7 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
   val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
   
   if (debug) cat("newpara+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  if (debug) cat("times per section",T1,T2,T3,T4,"\n")
+  cat("times per section",T1,T2,T3,T4,"\n")
   if (debug) cat("value evolution",F1,F2,val,"\n")
   return(list(par=par,val=val))   
 }
