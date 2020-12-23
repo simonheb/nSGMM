@@ -138,7 +138,7 @@ compute_moments<-function(btransfers,kinship,distance,income) {
 }
 g<-function(th,vdata,...,prec,maxrounds=NULL,villagewise=FALSE){
   if (is.null(maxrounds))
-    maxrounds <- 100+prec/5
+    maxrounds <- 300+prec/5
   ret<-c(moment_distance(th=th,vdata,...,villagewise=villagewise,maxrounds=maxrounds,prec=max(2,prec)))
   if (length(ret)==0) { return(Inf)}
   return(ret)
