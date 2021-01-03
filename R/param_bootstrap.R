@@ -10,19 +10,31 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   dir.create(paste0("estimates/",optimizerhash,"/",datahash,sep=""))
 
   storedestimates_file<-paste0("estimates/",optimizerhash,"/",datahash,"/boostrapestimates.R",sep="")
+  storedestimates_file_new<-paste0("estimates/",datahash,"/",bootstrapseed,"/",optimizerhash,"/bootstrapestimate.Rda",sep="")
   
   callkey<-paste(sep = "",bootstrapseed,digest::digest(c(par,digest::digest(list(...)))))
   
   #open file if exists, use empty list otherwise
   boostrapestimates<-list()
-  tryCatch(boostrapestimates<-readRDS(storedestimates_file), error = function(e) {})
-  
+  #if it exists in new files
+  tryCatch(boostrapestimates<-readRDS(storedestimates_file_new), error = function(e) {})
   if (callkey %in% names(boostrapestimates))
   {
     cat("*")
-    #print(boostrapestimates[[callkey]])
     return(boostrapestimates[[callkey]])
   }
+  boostrapestimates<-list()
+  #if it exists in old files
+  tryCatch(boostrapestimates<-readRDS(storedestimates_file), error = function(e) {})
+  if (callkey %in% names(boostrapestimates))
+  {
+    cat("x")
+    newboostrapestimates<-list()
+    newboostrapestimates[[callkey]]<-boostrapestimates[[callkey]]
+    saveRDS(newboostrapestimates,storedestimates_file_new)
+    return(boostrapestimates[[callkey]])
+  }
+  
   ptm<-Sys.time()
   set.seed(bootstrapseed)
   #generate fake data
@@ -32,6 +44,6 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   bootest<-optimizer(vdata,...)
   boostrapestimates[[callkey]]<-bootest
   boostrapestimates[[callkey]]$time<-round(as.numeric(Sys.time() - ptm,units="mins"))
-  saveRDS(boostrapestimates,storedestimates_file)
+  saveRDS(boostrapestimates,storedestimates_file_new)
   return(bootest)
 }
