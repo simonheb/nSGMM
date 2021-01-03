@@ -8,6 +8,11 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   dir.create("estimates")
   dir.create(paste0("estimates/",optimizerhash,sep=""))
   dir.create(paste0("estimates/",optimizerhash,"/",datahash,sep=""))
+  
+  dir.create("estimates")
+  dir.create(paste0("estimates/",datahash,sep=""))
+  dir.create(paste0("estimates/",datahash,"/",bootstrapseed,sep=""))
+  dir.create(paste0("estimates/",datahash,"/",bootstrapseed,"/",optimizerhash,sep=""))
 
   storedestimates_file<-paste0("estimates/",optimizerhash,"/",datahash,"/boostrapestimates.R",sep="")
   storedestimates_file_new<-paste0("estimates/",datahash,"/",bootstrapseed,"/",optimizerhash,"/bootstrapestimate.Rda",sep="")
