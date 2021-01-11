@@ -38,7 +38,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
         cat("*")
       }
     }
-    return(boostrapestimates[[callkey]])
+    return(thisest)
   }
   
   
