@@ -227,10 +227,11 @@ moment_distance <- function(th,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALS
   } else {
     ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
   }
+  
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
   if (ret==Inf) browser()
-  return(ret)
+  return(max(ret,1e-64)) #if this is actually 0, this ist mostly due to empty networks being provided, e.g. in a bootstrap case
 }
 
 
