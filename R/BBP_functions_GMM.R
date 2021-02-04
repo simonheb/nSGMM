@@ -35,9 +35,9 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
 }
 
 kappatransformation<-function(x,log){
-  if (log)
+  if (log) 
     return(-log(0.1*x)*10)
-  else
+  else 
     return(10/x-1)
 }
 invkappatransformation<-function(x,log) {
@@ -61,20 +61,26 @@ draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
   
   #if (modelplot)plot(gg,...,main="simulated")
 }
-gini_from_theta<-function(theta,kinship,income,distance,...,flataltruism=FALSE,kappa.log) {
-  n<-length(income)
+gini_from_theta<-function(theta,vdata,shufflekin=FALSE,kappa.log) {
+  n<-length(vdata$income)
+  kinship<-vdata$m8am8bm8c
+  
+  if (shufflekin) {
+    kinship[upper.tri(kinship)]<-sample(kinship[upper.tri(kinship)])
+    kinship[upper.tri(kinship)]<-t(kinship)[upper.tri(kinship)]
+  }
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
   error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
   error <- lower_tri.assign(error,lower_tri(t(error)))
   altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
-  if (flataltruism) {
-    altruism[!diag(nrow(kinship))] <- mean(altruism[!diag(nrow(kinship))])
-  }
+
+  
   diag(altruism)<-1
+  
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4],log=kappa.log),income=income,modmode=21,plotthis = FALSE)
-  return(Rfast::ginis(as.matrix(income+colSums(eq$transfers)-rowSums(eq$transfers))))
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4],log=kappa.log),income=vdata$income,modmode=21,plotthis = FALSE)
+  return(Rfast::ginis(as.matrix(vdata$income+colSums(eq$transfers)-rowSums(eq$transfers))))
 }
 
 
@@ -220,7 +226,7 @@ moment_distance <- function(th,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALS
   if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
-  
+  print(rbind(Rfast::colmeans(simx[,keep]),x[keep],diag(vcv)))
   if (villagewise) {
     WW<-solve(vcv)
     ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
@@ -402,7 +408,6 @@ consumption_weights_old<-function(alphas,transferdirections,t_conmat) {
     care<-care%*%care0
     diag(care)<-0
     
-    
   }
   
   diag(cw)<-1 #CW tells us about how consumptions must relate to each other to fit the equality constraint for linked hhs
@@ -520,7 +525,7 @@ mynegutility_old <- function(mytransfers,i,transfers,altruism,income) {
   consumption <- income+colSums(transfers)-rowSums(transfers)
   return(-utlity(consumption,altruism)[i])
 }
-#foobar <-0
+
 BBP_get_BR <- function(i,transfers,income,altruism,capacities=99999) {
   n<-length(income )
   consumption = income+colSums(transfers)-rowSums(transfers)
@@ -740,18 +745,3 @@ multiplicity<-function(g) {
   return(sum(pathcount>1)/sum(pathcount>0))
 }
 
-# ###########
-# fit:
-#   density     forest      support     pathlengths correlation1
-# [1] 0.03721000 0.84610393 0.05619804 0.21139954 0.15015951
-# true:
-# [1] 0.03637222 0.83635829 0.02018914 0.24995272 0.15071341
-# 
-# real moments:
-# [1] 0.03777778 0.85294118 0.08823529 0.16421456 0.14973230
-# 
-# 
-# 
-# fb2         ib         sa ra pathlenghts        c1           c2
-# [1,] 0.03777778 0.8529412 0.06666667 0.08823529  0   0.1642146 0.1497323 -0.001912973
-# Browse[1]> x[keep]
