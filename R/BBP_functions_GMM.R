@@ -226,7 +226,7 @@ moment_distance <- function(th,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALS
   if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
   diff<-diff[,keep]
   vcv<-vcv[keep,keep]
-  print(rbind(Rfast::colmeans(simx[,keep]),x[keep],diag(vcv)))
+  #print(rbind(Rfast::colmeans(simx[,keep]),x[keep],diag(vcv)))
   if (villagewise) {
     WW<-solve(vcv)
     ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
