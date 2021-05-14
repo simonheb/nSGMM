@@ -407,6 +407,8 @@ parallel_HydroPSOandSPG <- function(fn, lower, upper, seed=1, ... ,repfactor=1,i
   par<-zz$par
   names(par)<-NULL
   val<-fn(par,prec=ceiling(repfactor*5000),noiseseed=seed,...)
+  cat("hydro val:",zz$par,"\n")
+  cat("new val:",val,"\n")
   
   if (debug) cat("newpara+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   cat("times per section",T1,T2,T3,T4,"\n")
