@@ -21,11 +21,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   {
     thisest<-boostrapestimates[[callkey]]
     if ("val" %in% names(thisest)) {
-      if (thisest$val>100) {
-        cat("-")
-        boostrapestimates[[callkey]]<-NULL
-        saveRDS(boostrapestimates,storedestimates_file_new)
-      } else if (thisest$val>10) {
+      if (thisest$val>10) {
         cat("warning, value is high:",thisest$val)
         cat("*")
       } else {

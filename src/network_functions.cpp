@@ -3,7 +3,7 @@
 #include <tictoc.h>
 
 using namespace arma;
-
+ 
 
 double intermediation_cpp(const mat& adj,const mat& radj) {
   mat nradj=adj-radj; //nonreciprocal
