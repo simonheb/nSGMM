@@ -1,7 +1,7 @@
 
 
 bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,drawcommand_control=list(),vdata,...,outcome="y") {
-  
+
   datahash<-digest::digest(vdata)
   optimizerhash<-digest::digest(deparse(optimizer))
 
