@@ -257,40 +257,51 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   dat2.col(0)=abs(vectorise(logcon(offdiag)));
   dat2.col(1)=vectorise(kinship(offdiag));
   int n2 = dat2.n_rows, k2 = dat2.n_cols;
-  
+  //lm(pmax(transfers,t(transfers))[offdiag] ~ -1 + kinship[offdiag] + abs(logcon[offdiag]))
   vec coef2 = solve(dat2, m_undir(offdiag)); 
   vec resid2 = m_undir(offdiag) - dat2*coef2; 
-  
   double sig22 = as_scalar(trans(resid2)*resid2/(n2-k2));
   
+  //auxiliary regression for all
+  mat dat_full(offdiag.n_elem,3);
+  dat_full.col(0)=ones(offdiag.n_elem);
+  dat_full.col(1)=vectorise(logcon(offdiag));
+  dat_full.col(2)=vectorise(kinship(offdiag));
+  int n_full = dat_full.n_rows, k_full = dat_full.n_cols;
+  vec coef_full = solve(dat_full, btransfers(offdiag)); 
+  vec resid_full = btransfers(offdiag) - dat_full*coef_full; 
+  double sig_full = as_scalar(trans(resid_full)*resid_full/(n_full-k_full));
+  
+  /*
   double degree_skewness = dskewness(m_undir);
   vec degree_distribution = sum(m_undir,1);
+  */
   
-  
-  /* correlation between having multiple paths and distance*/
+  /* correlation between having multiple paths and distance
   mat twopaths=(m_undir*m_undir)%m_undir;
   mat corrdoubledist_=cor(twopaths(offdiag),distance(offdiag));
   double corrdoubledista=corrdoubledist_(0);
+   */
   
-  
-  /*correlation between distance-degree (centrality) and link degree: The idea: s/o with few relatives, will have high constraints and thus more links?*/
+  /*correlation between distance-degree (centrality) and link degree: The idea: s/o with few relatives, will have high constraints and thus more links?
   vec dist_distribution = sum(distance,1);
   vec outdegree_distribution = sum(btransfers,1);
   mat correlation_of_degrees = cor(degree_distribution,dist_distribution);
+  */
 //  1  2  3  7  10 13
   vec ret = {density, //1 
              fb2, //2
              ib,  //3
-             99,//4
-             99,//5,
-             99,//6
+             coef_full(0),//4
+             coef_full(1),//5,
+             coef_full(2),//6
              c1(0),//7
              c2(0),//8
-             corrdoubledista,//9
+             coef2(0),//9
              sig22,//10
-             correlation_of_degrees(0), //// 11
-             99, //12
-             degree_skewness //13
+             coef2(1),//correlation_of_degrees(0), //// 11
+             sig_full, //12
+             99//degree_skewness //13
     };
   return(ret.replace(datum::nan,0));
 }
