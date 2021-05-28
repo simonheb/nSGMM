@@ -247,12 +247,14 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   double fb2=forestness_cpp(m_undir);
   double ib=intermediation_cpp(btransfers,m_recip);
   mat c1=cor(vectorise(m_undir(offdiag)),vectorise(kinship(offdiag)));
-  mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
+  //mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
   double density=mean(vectorise(btransfers(offdiag)));
   
   mat con = (1/income)*trans(income);
   mat logcon = log(trans(con));
 
+  /*resulst in the current draft are based on this, but for the current run we don't need to compute these
+   * 
   mat dat2(offdiag.n_elem,2);
   dat2.col(0)=abs(vectorise(logcon(offdiag)));
   dat2.col(1)=vectorise(kinship(offdiag));
@@ -261,7 +263,7 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   vec coef2 = solve(dat2, m_undir(offdiag)); 
   vec resid2 = m_undir(offdiag) - dat2*coef2; 
   double sig22 = as_scalar(trans(resid2)*resid2/(n2-k2));
-  
+  */
   //auxiliary regression for all
   mat dat_full(offdiag.n_elem,3);
   dat_full.col(0)=ones(offdiag.n_elem);
@@ -296,10 +298,10 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
              coef_full(1),//5,
              coef_full(2),//6
              c1(0),//7
-             c2(0),//8
-             coef2(0),//9
-             sig22,//10
-             coef2(1),//correlation_of_degrees(0), //// 11
+             99,//c2(0),//8
+             99,//coef2(0),//9
+             99,//sig22,//10
+             99,//coef2(1),//correlation_of_degrees(0), //// 11
              sig_full, //12
              99//degree_skewness //13
     };
