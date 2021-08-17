@@ -17,11 +17,11 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
       #cat(".",delta0,delta1,sigma,"\n")
       set.seed(seed+i)
       error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-      error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
-      error <- lower_tri.assign(error,lower_tri(t(error)))
+      error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=sigma))#make symmetric
+      error <- Rfast::lower_tri.assign(error,Rfast::lower_tri(t(error)))
       altruism <- 1/(1+exp(-(delta0+delta1*kinship+error)))
       diag(altruism)<-1
-      if(mean(upper_tri(altruism)>0.999)>0.5) cat("b")
+      if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("b")
       eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=round(rounds/1000*21),capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
       browser()
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance,income,theta=c(delta0,delta1,sigma))
@@ -49,8 +49,8 @@ invkappatransformation<-function(x,log) {
 draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
   n<-length(vdata[["income"]])
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(par[3]))) #make symmetric
-  error <- lower_tri.assign(error,lower_tri(t(error)))
+  error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(par[3]))) #make symmetric
+  error <- Rfast::lower_tri.assign(error,Rfast::lower_tri(t(error)))
   altruism <- 1/(1+exp(-(par[1]+par[2]*vdata[["kinship"]]+error)))
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
@@ -66,12 +66,12 @@ gini_from_theta<-function(theta,vdata,shufflekin=FALSE,kappa.log) {
   kinship<-vdata$m8am8bm8c
   
   if (shufflekin) {
-    kinship[upper.tri(kinship)]<-sample(kinship[upper.tri(kinship)])
-    kinship[upper.tri(kinship)]<-t(kinship)[upper.tri(kinship)]
+    kinship[Rfast::upper.tri(kinship)]<-sample(kinship[Rfast::upper.tri(kinship)])
+    kinship[Rfast::upper.tri(kinship)]<-t(kinship)[Rfast::upper.tri(kinship)]
   }
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
-  error <- upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
-  error <- lower_tri.assign(error,lower_tri(t(error)))
+  error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
+  error <- Rfast::lower_tri.assign(error,Rfast::lower_tri(t(error)))
   altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
 
   
@@ -327,7 +327,7 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
 }
 equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=21,computeR=FALSE,computeCPP=TRUE) {
   n<-nrow(altruism)
-  if(mean(upper_tri(altruism)>0.999)>0.5) cat("a")
+  if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("a")
   if (computeCPP) {
     transfers<-equilibrate_cpp_fast8_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity)
   }
@@ -723,7 +723,7 @@ support_fast<-function(m) {
 support_fast2<-function(m) {
   undir<-pmax(m,t(m))
   twopaths = undir%*%undir
-  return(mean(((twopaths[upper.tri(m)])>=1)[undir[upper.tri(m)]==1]))
+  return(mean(((twopaths[Rfast::upper.tri(m)])>=1)[undir[Rfast::upper.tri(m)]==1]))
 }
 multiplicity<-function(g) {
   pathcount<-matrix(NA,nrow=gorder(g),ncol=gorder(g))
