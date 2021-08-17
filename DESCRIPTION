@@ -7,5 +7,5 @@ Author: Simon He&szlig;
 Maintainer: S.H. <simon.h.hess@gmail.com>
 Description: 
 License: What license is it under?
-Imports: Rcpp (>= 1.0.2), hydroPSO, igraph, Rfast, foreach
+Imports: Rcpp (>= 1.0.2), hydroPSO, igraph, Rfast, foreach, BB
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel
