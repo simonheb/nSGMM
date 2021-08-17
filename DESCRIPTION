@@ -3,9 +3,9 @@ Type: Package
 Title: Tools to simulate networks and perform simulation-based inference.
 Version: 1.0
 Date: 2019-10-09
-Author: Simon Hess
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Author: Simon He&szlig;
+Maintainer: S.H. <simon.h.hess@gmail.com>
+Description: 
 License: What license is it under?
-Imports: Rcpp (>= 1.0.2)
+Imports: Rcpp (>= 1.0.2), hydroPSO, igraph, Rfast, foreach
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel
