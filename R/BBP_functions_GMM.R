@@ -1,3 +1,12 @@
+# R/BBP_functions.R
+#' something
+#'
+#' @param foo
+#'
+#' @examples simulate_BBP(10,0.5,0.5,0.5,1,1,1,1)
+#' 
+
+
 library(Rfast)
 library(stats) #for MLE
 library(igraph)
@@ -22,7 +31,7 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
       altruism <- 1/(1+exp(-(delta0+delta1*kinship+error)))
       diag(altruism)<-1
       if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("b")
-      eq<-equilibrate_and_plot(altruism=altruism,income=income,modmode=round(rounds/1000*21),capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
+      eq<-equilibrate_and_plot(altruism=altruism,income=income,capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
       browser()
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance,income,theta=c(delta0,delta1,sigma))
       finalMatrix<-rbind(finalMatrix,ret)
@@ -34,17 +43,17 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
   return(finalMatrix)
 }
 
-kappatransformation<-function(x,log){
+kappatransformation<-function(x,log=TRUE, factor=10){
   if (log) 
-    return(-log(0.1*x)*10)
+    return(-log((x/factor))*10)
   else 
-    return(10/x-1)
+    return(factor/x-1)
 }
-invkappatransformation<-function(x,log) {
+invkappatransformation<-function(x,log=TRUE, factor=10) {
   if (log)
-    return(10*exp(-0.1*x))
+    return(factor*exp(-(1/10)*x))
   else
-    return( 1/((x+1)/10) )
+    return( 1/((x+1)/factor) )
 }
 draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
   n<-length(vdata[["income"]])
@@ -55,19 +64,45 @@ draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(par[4],log=kappa.log),income=vdata[["income"]],modmode=21,plotthis = modelplot)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(par[4],log=kappa.log),income=vdata[["income"]],plotthis = modelplot)
   return((eq$transfers>0)*1)
   #print(moments::skewness(degree(gg,mode = "all")))
   
   #if (modelplot)plot(gg,...,main="simulated")
+}
+recipients_transfer_income_share<-function(theta,vdata,shufflekin=FALSE,kappa.log) {
+  n<-length(vdata$income)
+  kinship<-vdata$m8am8bm8c
+  
+  if (shufflekin) {
+    kinship[upper.tri(kinship)]<-sample(kinship[upper.tri(kinship)])
+    kinship[upper.tri(kinship)]<-t(kinship)[upper.tri(kinship)]
+  }
+  error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
+  error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
+  error <- Rfast::lower_tri.assign(error,Rfast::lower_tri(t(error)))
+  altruism <- 1/(1+exp(-(theta[1]+theta[2]*kinship+error)))
+  
+  
+  diag(altruism)<-1
+  
+  if(any(is.nan(altruism))) browser()
+  #########emprical vcv####
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4],log=kappa.log),income=vdata$income,plotthis = FALSE)
+  intrans<-colSums(eq$transfers)
+  outtrans<-rowSums(eq$transfers)
+  net_intrans<-intrans-outtrans
+  net_recipients<-intrans>outtrans
+  consumptionshare<-net_intrans/c(vdata$income+net_intrans)
+  return(mean(consumptionshare[net_recipients]))
 }
 gini_from_theta<-function(theta,vdata,shufflekin=FALSE,kappa.log) {
   n<-length(vdata$income)
   kinship<-vdata$m8am8bm8c
   
   if (shufflekin) {
-    kinship[Rfast::upper.tri(kinship)]<-sample(kinship[Rfast::upper.tri(kinship)])
-    kinship[Rfast::upper.tri(kinship)]<-t(kinship)[Rfast::upper.tri(kinship)]
+    kinship[upper.tri(kinship)]<-sample(kinship[upper.tri(kinship)])
+    kinship[upper.tri(kinship)]<-t(kinship)[upper.tri(kinship)]
   }
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
   error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(theta[3])))#make symmetric
@@ -79,7 +114,7 @@ gini_from_theta<-function(theta,vdata,shufflekin=FALSE,kappa.log) {
   
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4],log=kappa.log),income=vdata$income,modmode=21,plotthis = FALSE)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(theta[4],log=kappa.log),income=vdata$income,plotthis = FALSE)
   return(Rfast::ginis(as.matrix(vdata$income+colSums(eq$transfers)-rowSums(eq$transfers))))
 }
 
@@ -142,102 +177,105 @@ compute_moments<-function(btransfers,kinship,distance,income) {
                )) #1,1,0,1,0,1,1,0,0,0,1,1
   
 }
-g<-function(th,vdata,...,prec,maxrounds=NULL,villagewise=FALSE){
+target_function<-function(theta,vdata,...,prec,maxrounds=NULL, verbose=F){
+  if (verbose)
+    cat("theta=",theta,"\n")
   if (is.null(maxrounds))
     maxrounds <- 300+prec/5
-  ret<-c(moment_distance(th=th,vdata,...,villagewise=villagewise,maxrounds=maxrounds,prec=max(2,prec)))
+  ret<-c(moment_distance(theta=theta,vdata,...,maxrounds=maxrounds,prec=max(2,prec))$value)
+
   if (length(ret)==0) { return(Inf)}
   return(ret)
 }
 
-# 
-# moment_distance_many_villages <- function(theta,village_fixed_effects,village_data,prec,noiseseed=1,maxrounds=500,vcv,keep,village_weights=NULL) {
-#   print(village_fixed_effects)
-#   simulated_moments<-NULL
-#   print(prec)
-#   print(theta)
-#   data_moments<-NULL
-#   ic<-0
-#   cat("\n")
-#   for(i in names(village_data)) {
-#     cat("-")
-#     ic<-ic+1
-#     if (length(village_fixed_effects)==length(village_data))
-#       th<-c(village_fixed_effects[ic],theta)
-#     else
-#       th<-c(village_fixed_effects,theta)
-#     kinship<-village_data[[i]][["m8am8bm8c"]]
-#     income<-village_data[[i]][["income"]]+1
-#     distance<-village_data[[i]][["distance"]]
-#     transfers<-village_data[[i]][["m4m6m7"]]
-#     
-#     data_moments<-c(data_moments,compute_moments_cpp(1*(transfers>0),kinship,distance,income))
-#     
-#     simulated_moments<-cbind(simulated_moments,simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),distance,kinship,matrix(kappatransformation(th[4]),nrow(kinship),nrow(kinship)),income,th,prec,noiseseed,maxrounds))
-#   }
-#   diff<-tryCatch(sweep(simulated_moments,2,data_moments), error=function(cond) {return(NA)})
-#   if (any(is.na(diff))) browser()
-#   
-#  
-#     
-#   
-#   diff<-diff[,keep]
-#   vcv<-vcv[keep,keep]
-#   if (is.null(village_weights)) {
-#     vcv<-as.matrix(Matrix::bdiag(rep(list(vcv),length(village_data))))
-#   }
-#   W<-solve(vcv)
-#   ret<-NULL
-#   browser()
-#   for (i in 1:nrow(diff)) {
-#     ret<-c(ret,diff[i,]%*%W%*%diff[i,])
-#   }
-#   cat(mean(ret),"\n")
-#   #print("Talk to Georg how to weight theses")
-#   return(mean(ret))
-# }
-# 
+identify_dependent_columns_lm <- function(mat) {
+  n <- ncol(mat)
+  dependent_columns <- c()
+  
+  for (i in 1:n) {
+    response <- mat[, i]
+    predictors <- mat[, -i]
+    
+    model <- lm(response ~ predictors - 1)
+    residuals <- residuals(model)
+    
+    # Check if the residuals are all nearly zero
+    if (all(abs(residuals) < 1e-10)) {
+      dependent_columns <- c(dependent_columns, i)
+    }
+  }
+  
+  return(dependent_columns)
+}
 
-moment_distance <- function(th,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv,keep,villagewise=TRUE,kappa.log) {
+
+
+moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE) {
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
   income<-vdata$income
   
+  # I need at least as many n as I have moments, for the continuous vcv case, otherwise the matrix is not invertible
+  if (is.null(vcv)) {
+    prec <- max(prec,sum(keep)+1)
+  }
+  
   
   x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income), error=function(cond) {return(NA)})
   if (any(is.na(x))) browser()
-  if (length(th)==4) {
-    capacity<-matrix(kappatransformation(th[4],log=kappa.log),nrow(kinship),nrow(kinship))
-  }
-  else if (length(th)==5) {
-    capacity<-pmax(th[4]+distance*th[5],0)
-  }
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),th[1],th[2],exp(th[3]),
-                                  distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+  capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
   
+  simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]),
+                                  distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   
-
+  vcv0<-var(simx) #because I'm also returning the vcv. if not this can be moved into the if
   
-  if (verbose) print(rbind(t(x),colmeans(simx),keep,colmeans(diff)))  
-  diff<-diff[,keep]
-  vcv<-vcv[keep,keep]
-  #print(rbind(Rfast::colmeans(simx[,keep]),x[keep],diag(vcv)))
-  if (villagewise) {
-    WW<-solve(vcv)
-    ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
+  if (is.null(vcv)) {
+    vcv_to_be_used<-vcv0[keep,keep]
   } else {
-    ret<-tryCatch({Rfast::colmeans(diff)%*%solve(vcv)%*%Rfast::colmeans(diff)},error=function(cond) {return(Inf)})
+    vcv_to_be_used<-vcv[keep,keep]
   }
   
+  if (regularization_lambda>0) {
+    vcv_to_be_used<-vcv_to_be_used+regularization_lambda*diag(nrow(vcv_to_be_used))
+  }
+  if (drop_collinear_moments) {
+    collinear_columns <- identify_dependent_columns_lm(vcv_to_be_used)
+    if (length(collinear_columns) > 0) {
+      cat("Dropping collinear columns: ", collinear_columns, "\n")
+      todrop <- collinear_columns[-1]
+      vcv_to_be_used <- vcv_to_be_used[-todrop, -todrop]
+      keep <- which(keep)[-todrop]
+    }
+  }
+      
+  diff<-diff[,keep]
+  
+  WW <- tryCatch(solve(vcv_to_be_used),error = function(e) NA)
+  if (any(is.na(WW)))  {
+    #if (is.null(vcv) & recurse_if_non_invertible) {
+    #  cat("recursing")
+    #  ret <- moment_distance(theta = theta, vdata = vdata, prec = prec*10, noiseseed = noiseseed, maxrounds = maxrounds, verbose = verbose, vcv = vcv, keep = keep, kappa.log = kappa.log, kappa.factor = kappa.factor, recurse_if_non_invertible = FALSE)$value
+    #} else {
+      ret <- Inf
+    #}
+  }
+  else 
+    ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
-  if (ret==Inf) browser()
-  return(max(ret,1e-64)) #if this is actually 0, this ist mostly due to empty networks being provided, e.g. in a bootstrap case
+  #if (ret==Inf) browser()
+  return(
+    list(
+      value=ret,#if this is actually 0, this is mostly due to empty networks being provided, e.g. in a bootstrap case
+      vcv_full=vcv0
+      )
+    )
 }
 
 
@@ -325,11 +363,14 @@ equilibrate <- function(altruism,income,capacity,starttransfers=NULL) {
   if (updates>0) {cat("Best responses did not converge to a NE, probably you need to increase the rounds."); return(FALSE)} #else {cat("Stopped after ",r," rounds. Found a/the nash equilibium\n")}
   return(transfers)
 }
-equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,modmode=21,computeR=FALSE,computeCPP=TRUE) {
+
+equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NULL,capacity=Inf,plotthis=FALSE,maxrounds=500,computeR=FALSE,computeCPP=TRUE,startnet=NULL) {
+  if (is.null(startnet))
+    startnet<-matrix(0,nrow(altruism),nrow(altruism))
   n<-nrow(altruism)
-  if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("a")
+  if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("more than half of the altruism ties are effectively 1")
   if (computeCPP) {
-    transfers<-equilibrate_cpp_fast8_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity)
+    transfers<-equilibrate_cpp_fast8_smarter(altruism,income,matrix(1,nrow(altruism),ncol(altruism))*capacity,startnet,maxrounds = maxrounds)
   }
   
   if (computeR) {
@@ -348,12 +389,17 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
   ##################### Visualization #####################       2.3963   0.5893   6.4229   8.7627   7.7891   7.9731   4.5527   4.1008   8.1087   6.0493 
   if (plotthis) {
     consumption = income+colSums(transfers)-rowSums(transfers)
-    #Plot the altruism network
+
+    # if capacity is a scalar:
+    if (length(capacity)==1) {
+      capacity<-matrix(capacity,nrow(altruism),nrow(altruism))
+    }
+    
     g<-graph_from_adjacency_matrix(capacity,weighted=TRUE)
     g<-simplify(g,remove.multiple = F,remove.loops = T)
     E(g)$width <- E(g)$weight*4 + 1 # offset=1
     c_scale <- colorRamp(c('white','green'))
-    E(g)$color = apply(c_scale((E(g)$weight<=0.1)), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
+    E(g)$color <- apply(c_scale((E(g)$weight<=0.1)), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255) )
     vertex_attr(g, "label") <- round(consumption,1)
     #E(g)$label<-round(E(g)$weight,2)
     
@@ -361,6 +407,9 @@ equilibrate_and_plot<-function(altruism,income,seed=NULL,subtitle=NULL,coords=NU
     gt<-graph_from_adjacency_matrix(transfers*c(1,-1)[1+(transfers==capacity)],weighted=TRUE) #negative means its at the capacity limit
     vertex_attr(gt, "label") <- paste0(V(gt),": ",round(consumption,1))
     if (is.null(coords)) {
+      old <- .Random.seed
+      on.exit( { .Random.seed <<- old } )
+      set.seed(1)
       coords <- layout_nicely(graph_from_adjacency_matrix(altruism-diag(n)+5*(transfers>0),weighted=TRUE)) # layout_with_fr layout_with_drl
     }
     E(gt)$color<-c(rgb(0,0,0),rgb(1,0,0))[1+(E(gt)$weight<0)]
@@ -427,28 +476,28 @@ BBP_T_from_atY_plain<-function(alphas,transferstructure,incomes) {
   #if (any(a!=b)) browser()
   return(b)
 }
-BBP_T_from_atY_plain_old<-function(alphas,transferstructure,incomes) {
-  transferstructure<-1*(transferstructure>0)
-  t_components<-components(graph_from_adjacency_matrix(transferstructure>0))
-  t_components_matrix<-matrix(0,nrow=n,ncol=t_components$no)
-  t_components_matrix[cbind(1:n,t_components$membership)]<-1
-  t_components_csize<-t_components$csize
-  t_conmat <- matrix(0,nrow(alphas),nrow(alphas))
-  for(cc in 1:t_components$no) {
-    t_conmat[t_components$membership==cc,t_components$membership==cc]<-1
-  }
-  
-  consumptions <- BBP_c_from_atY_cpp(alphas,transferstructure,c(incomes),t_components_matrix,t_components_csize,t_conmat)
-  #print(consumptions)
-  Tr<-BBP_T_from_tYc_cpp(transferstructure,incomes,consumptions,matrix(0,length(incomes),length(incomes)))
-  return(Tr)
-}
+# BBP_T_from_atY_plain_old<-function(alphas,transferstructure,incomes) {
+#   transferstructure<-1*(transferstructure>0)
+#   t_components<-components(graph_from_adjacency_matrix(transferstructure>0))
+#   t_components_matrix<-matrix(0,nrow=n,ncol=t_components$no)
+#   t_components_matrix[cbind(1:n,t_components$membership)]<-1
+#   t_components_csize<-t_components$csize
+#   t_conmat <- matrix(0,nrow(alphas),nrow(alphas))
+#   for(cc in 1:t_components$no) {
+#     t_conmat[t_components$membership==cc,t_components$membership==cc]<-1
+#   }
+#   
+#   consumptions <- BBP_c_from_atY_cpp(alphas,transferstructure,c(incomes),t_components_matrix,t_components_csize,t_conmat)
+#   #print(consumptions)
+#   Tr<-BBP_T_from_tYc_cpp(transferstructure,incomes,consumptions,matrix(0,length(incomes),length(incomes)))
+#   return(Tr)
+# }
 BBP_TC_from_atY<-function(alphas,transferstructure,incomes,equilibrium_check=FALSE,t_components=NULL){
   transferstructure<-1*(transferstructure>0)
   if (is.null(t_components)) {
-    t_components<-components(graph_from_adjacency_matrix(transferstructure>0))
+    t_components<-igraph::components(igraph::graph_from_adjacency_matrix(transferstructure>0))
   }
-  t_components_matrix<-matrix(0,nrow=n,ncol=t_components$no)
+  t_components_matrix<-matrix(0,nrow=nrow(alphas),ncol=t_components$no)
   t_components_matrix[cbind(1:n,t_components$membership)]<-1
   t_components_csize<-t_components$csize
   t_conmat <- matrix(0,nrow(alphas),nrow(alphas))
@@ -460,7 +509,7 @@ BBP_TC_from_atY<-function(alphas,transferstructure,incomes,equilibrium_check=FAL
   Tr<-BBP_T_from_tYc(transferstructure,incomes,consumptions)
   equilibrium<-NA
   if(equilibrium_check) {
-    equilibrium<-BBP_in_equilibrium_YaT(transfer=Tr,income=incomes,altruism=alphas) 
+    equilibrium<-BBP_in_equilibrium_YaT(transfers=Tr,income=incomes,altruism=alphas) 
   }
   return(list(
     consumption=consumptions,
@@ -530,7 +579,7 @@ mynegutility_old <- function(mytransfers,i,transfers,altruism,income) {
 BBP_get_BR <- function(i,transfers,income,altruism,capacities=99999) {
   n<-length(income )
   consumption = income+colSums(transfers)-rowSums(transfers)
-  BRR<-nlminb(start=transfers[i,],objective=mynegutility_old,i=i,transfers=transfers,income=income,altruism=altruism,lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
+  BRR<-stats::nlminb(start=transfers[i,],objective=mynegutility_old,i=i,transfers=transfers,income=income,altruism=altruism,lower=rep(0,n), upper=pmin(consumption[i],capacities))$par
   BRR[i]<-0
 
   if(is.nan(mynegutility(BRR,i,transfers,altruism,income))) browser()

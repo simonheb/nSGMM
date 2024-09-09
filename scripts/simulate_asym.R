@@ -5,7 +5,7 @@ library(doParallel)
 library(nSGMM)
 library(mlrMBO)
 
-setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
+setwd("C:/Users/shess/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
 
 colsums<-colSums

@@ -13,7 +13,9 @@ using namespace arma;
 
 // [[Rcpp::export]]
 vec random_normal_seed(int n, double mean, double sd, int seed) {
-  if (sd<0) {std::cout <<"negative sigma"<<endl;}
+  if (sd<0) {
+    Rcpp::Rcout <<"negative sigma"<<endl;
+  }
   std::mt19937 rng(seed);
   std::normal_distribution<double> distribution(mean,sd);
   vec ret(n);
@@ -32,7 +34,7 @@ mat symmetrix_normal_error_matrix(int n, double mean, double sd, int seed) {
 }
 // [[Rcpp::export]]
 mat normal_error_matrix(int n, double mean, double sd, int seed) {
-  if (sd<0) {std::cout <<"negative sigma"<<endl;}
+  if (sd<0) { Rcpp::Rcout <<"negative sigma"<<endl;}
   std::mt19937 rng(seed);
   std::normal_distribution<double> distribution(mean,sd);
   mat ret(n,n);
@@ -48,7 +50,7 @@ mat normal_error_matrix(int n, double mean, double sd, int seed) {
 
 
 
-//this is to ensure that consequtive indices dont result in consequctive seeds
+//this is to ensure that consecutive indices don't result in consecutive seeds
 // [[Rcpp::export]]
 int seedfromindex(int index) {
   for (int i=0; i<10; ++i) {
@@ -73,7 +75,7 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     int rounds_;
     bool converged_;
     tic(1);
-    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true, rounds_,converged_,rounds);
+    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
     eqtrans2.elem( find(eqtrans2) ).ones();
     
     tic(2);
@@ -123,7 +125,7 @@ struct simulate_BBP_worker_smart : public RcppParallel::Worker
       
       int rounds_;
       bool converged_;
-      mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,true,rounds_,converged_,rounds);
+      mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true,rounds_,converged_,rounds);
       eqtrans2.elem( find(eqtrans2) ).ones();
       
       vec moments=compute_moments_cpp(eqtrans2,kinship,distance,income);

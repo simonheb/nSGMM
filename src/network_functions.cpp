@@ -94,7 +94,7 @@ double forestness_cpp(const mat& adj) {
 // the set of vertices not yet included in shortest path tree 
 int minDistance(vec dist, vec sptSet) { 
   // Initialize min value 
-  double min = datum::inf, min_index; 
+  double min = datum::inf, min_index = 0; 
   int V=dist.n_elem;
 
   for (int v = 0; v < V; v++) {
@@ -108,6 +108,7 @@ int minDistance(vec dist, vec sptSet) {
 
 
 //Breath first shortest distances: https://www.geeksforgeeks.org/multi-source-shortest-path-in-unweighted-graph/
+// This function returns for a given adjacency matrix and a given source node the shortest distances to all other nodes
 // [[Rcpp::export]]
 mat zeroOneBFS(const mat& m,int src) 
 { 
@@ -148,6 +149,7 @@ mat zeroOneBFS(const mat& m,int src)
   
   return(dist);
 } 
+
 
 // [[Rcpp::export]]
 mat BFS_dist_all(mat graph) 
@@ -230,12 +232,20 @@ double dskewness(const mat& adj)
   return(mean(pow((degree_distribution-mean(degree_distribution))/stddev(degree_distribution),3)));
   
 }
+// [[Rcpp::export]]
+double degreesd(const mat& adj)
+{
+  
+  vec degree_distribution = sum(adj,1);
+  return(stddev(degree_distribution));
+  
+}
 
 // [[Rcpp::export]] 
 vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& distance,const vec& income) {
   vec values=btransfers.elem(find(btransfers>0));
   if (values.n_elem>0) {
-    if (values.min()<1 | values.max()>1) {
+      if ((values.min()<1) | (values.max()>1)) {
       Rcpp::Rcout << "your matrix is not binary";
     }
   }
@@ -246,9 +256,7 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   
   double fb2=forestness_cpp(m_undir);
   double ib=intermediation_cpp(btransfers,m_recip);
-  mat c1=cor(vectorise(m_undir(offdiag)),vectorise(kinship(offdiag)));
-  //mat c2=cor(vectorise(m_undir(offdiag)),vectorise(distance(offdiag)));
-  double density=mean(vectorise(btransfers(offdiag)));
+  
   
   mat con = (1/income)*trans(income);
   mat logcon = log(trans(con));
@@ -269,15 +277,23 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   dat_full.col(0)=ones(offdiag.n_elem);
   dat_full.col(1)=vectorise(logcon(offdiag));
   dat_full.col(2)=vectorise(kinship(offdiag));
-  int n_full = dat_full.n_rows, k_full = dat_full.n_cols;
-  vec coef_full = solve(dat_full, btransfers(offdiag)); 
-  vec resid_full = btransfers(offdiag) - dat_full*coef_full; 
-  double sig_full = as_scalar(trans(resid_full)*resid_full/(n_full-k_full));
   
+  //int n_full = dat_full.n_rows, k_full = dat_full.n_cols;
+  vec coef_full = solve(dat_full, btransfers(offdiag)); 
+  //vec resid_full = btransfers(offdiag) - dat_full*coef_full; 
+  //double sig_full = as_scalar(trans(resid_full)*resid_full/(n_full-k_full));
+  
+  //double degree_skewness = dskewness(m_undir);
+  double degree_sd = degreesd(m_undir);
   /*
-  double degree_skewness = dskewness(m_undir);
-  vec degree_distribution = sum(m_undir,1);
+   vec degree_distribution = sum(m_undir,1);
   */
+  
+  //create datinteract directly from dat_Full with an additioncal column with the interaction of col 2 and 3
+  mat datinteract(dat_full.n_rows,dat_full.n_cols+1);
+  datinteract.cols(0,dat_full.n_cols-1)=dat_full;
+  datinteract.col(dat_full.n_cols)=dat_full.col(1)%dat_full.col(2);
+  vec coefinteract = solve(datinteract, btransfers(offdiag));
   
   /* correlation between having multiple paths and distance
   mat twopaths=(m_undir*m_undir)%m_undir;
@@ -291,19 +307,19 @@ vec compute_moments_cpp(const mat& btransfers,const mat& kinship,const mat& dist
   mat correlation_of_degrees = cor(degree_distribution,dist_distribution);
   */
 //  1  2  3  7  10 13
-  vec ret = {density, //1 
+  vec ret = {degree_sd, //density, //1 
              fb2, //2
              ib,  //3
              coef_full(0),//4
              coef_full(1),//5,
              coef_full(2),//6
-             c1(0),//7
-             99,//c2(0),//8
-             99,//coef2(0),//9
-             99,//sig22,//10
-             99,//coef2(1),//correlation_of_degrees(0), //// 11
-             sig_full, //12
-             99//degree_skewness //13
+             99,//c1(0),//7
+             99, //degree_skewness, //c2(0),//8
+             99, //coef2(0),//9
+             coefinteract(0),//sig22,//10
+             coefinteract(1),//coef2(1),//correlation_of_degrees(0), //// 11
+             coefinteract(2), //12
+             coefinteract(3)//degree_skewness //13
     };
   return(ret.replace(datum::nan,0));
 }

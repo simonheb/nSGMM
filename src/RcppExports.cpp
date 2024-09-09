@@ -3,10 +3,79 @@
 
 #include "../inst/include/nSGMM.h"
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
+// Fln_cpp_fast
+vec Fln_cpp_fast(const vec x);
+RcppExport SEXP _nSGMM_Fln_cpp_fast(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(Fln_cpp_fast(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logpotential_fast_cpp
+double logpotential_fast_cpp(const vec& transfers, const mat& logaltruism, const vec& income);
+RcppExport SEXP _nSGMM_logpotential_fast_cpp(SEXP transfersSEXP, SEXP logaltruismSEXP, SEXP incomeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const vec& >::type transfers(transfersSEXP);
+    Rcpp::traits::input_parameter< const mat& >::type logaltruism(logaltruismSEXP);
+    Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
+    rcpp_result_gen = Rcpp::wrap(logpotential_fast_cpp(transfers, logaltruism, income));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gr_logpotential_fast_cpp
+arma::mat gr_logpotential_fast_cpp(const vec& transfers, const mat& logaltruism, const vec& income);
+RcppExport SEXP _nSGMM_gr_logpotential_fast_cpp(SEXP transfersSEXP, SEXP logaltruismSEXP, SEXP incomeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const vec& >::type transfers(transfersSEXP);
+    Rcpp::traits::input_parameter< const mat& >::type logaltruism(logaltruismSEXP);
+    Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
+    rcpp_result_gen = Rcpp::wrap(gr_logpotential_fast_cpp(transfers, logaltruism, income));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gr_logpotential_fake_cpp
+arma::mat gr_logpotential_fake_cpp(const vec& transfers, const mat& logaltruism, const vec& income);
+RcppExport SEXP _nSGMM_gr_logpotential_fake_cpp(SEXP transfersSEXP, SEXP logaltruismSEXP, SEXP incomeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const vec& >::type transfers(transfersSEXP);
+    Rcpp::traits::input_parameter< const mat& >::type logaltruism(logaltruismSEXP);
+    Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
+    rcpp_result_gen = Rcpp::wrap(gr_logpotential_fake_cpp(transfers, logaltruism, income));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gr_logpotential_old_cpp
+arma::mat gr_logpotential_old_cpp(const vec& transfers, const mat& logaltruism, const vec& income);
+RcppExport SEXP _nSGMM_gr_logpotential_old_cpp(SEXP transfersSEXP, SEXP logaltruismSEXP, SEXP incomeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const vec& >::type transfers(transfersSEXP);
+    Rcpp::traits::input_parameter< const mat& >::type logaltruism(logaltruismSEXP);
+    Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
+    rcpp_result_gen = Rcpp::wrap(gr_logpotential_old_cpp(transfers, logaltruism, income));
+    return rcpp_result_gen;
+END_RCPP
+}
 // utlity_cppvec
 double utlity_cppvec(const vec& consumption, const rowvec& altruism);
 RcppExport SEXP _nSGMM_utlity_cppvec(SEXP consumptionSEXP, SEXP altruismSEXP) {
@@ -149,33 +218,47 @@ BEGIN_RCPP
 END_RCPP
 }
 // equilibrate_cpp_fast8_debug
-mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const mat& capacity, bool verbose, int& r, bool& NE, int maxrounds);
-RcppExport SEXP _nSGMM_equilibrate_cpp_fast8_debug(SEXP altruismSEXP, SEXP incomeSEXP, SEXP capacitySEXP, SEXP verboseSEXP, SEXP rSEXP, SEXP NESEXP, SEXP maxroundsSEXP) {
+mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const mat& capacity, mat transfers, bool verbose, int& r, bool& NE, int maxrounds);
+RcppExport SEXP _nSGMM_equilibrate_cpp_fast8_debug(SEXP altruismSEXP, SEXP incomeSEXP, SEXP capacitySEXP, SEXP transfersSEXP, SEXP verboseSEXP, SEXP rSEXP, SEXP NESEXP, SEXP maxroundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const mat& >::type altruism(altruismSEXP);
     Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
     Rcpp::traits::input_parameter< const mat& >::type capacity(capacitySEXP);
+    Rcpp::traits::input_parameter< mat >::type transfers(transfersSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< int& >::type r(rSEXP);
     Rcpp::traits::input_parameter< bool& >::type NE(NESEXP);
     Rcpp::traits::input_parameter< int >::type maxrounds(maxroundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(equilibrate_cpp_fast8_debug(altruism, income, capacity, verbose, r, NE, maxrounds));
+    rcpp_result_gen = Rcpp::wrap(equilibrate_cpp_fast8_debug(altruism, income, capacity, transfers, verbose, r, NE, maxrounds));
     return rcpp_result_gen;
 END_RCPP
 }
 // equilibrate_cpp_fast8_smarter
-mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity, int maxrounds);
-RcppExport SEXP _nSGMM_equilibrate_cpp_fast8_smarter(SEXP altruismSEXP, SEXP incomeSEXP, SEXP capacitySEXP, SEXP maxroundsSEXP) {
+mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity, mat startnet, int maxrounds);
+RcppExport SEXP _nSGMM_equilibrate_cpp_fast8_smarter(SEXP altruismSEXP, SEXP incomeSEXP, SEXP capacitySEXP, SEXP startnetSEXP, SEXP maxroundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const mat& >::type altruism(altruismSEXP);
     Rcpp::traits::input_parameter< const vec& >::type income(incomeSEXP);
     Rcpp::traits::input_parameter< const mat& >::type capacity(capacitySEXP);
+    Rcpp::traits::input_parameter< mat >::type startnet(startnetSEXP);
     Rcpp::traits::input_parameter< int >::type maxrounds(maxroundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(equilibrate_cpp_fast8_smarter(altruism, income, capacity, maxrounds));
+    rcpp_result_gen = Rcpp::wrap(equilibrate_cpp_fast8_smarter(altruism, income, capacity, startnet, maxrounds));
+    return rcpp_result_gen;
+END_RCPP
+}
+// solve_BBP2
+arma::mat solve_BBP2(arma::mat& altruism, arma::vec& income);
+RcppExport SEXP _nSGMM_solve_BBP2(SEXP altruismSEXP, SEXP incomeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type altruism(altruismSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type income(incomeSEXP);
+    rcpp_result_gen = Rcpp::wrap(solve_BBP2(altruism, income));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -282,6 +365,17 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const mat& >::type adj(adjSEXP);
     rcpp_result_gen = Rcpp::wrap(dskewness(adj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// degreesd
+double degreesd(const mat& adj);
+RcppExport SEXP _nSGMM_degreesd(SEXP adjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const mat& >::type adj(adjSEXP);
+    rcpp_result_gen = Rcpp::wrap(degreesd(adj));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -396,6 +490,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_nSGMM_Fln_cpp_fast", (DL_FUNC) &_nSGMM_Fln_cpp_fast, 1},
+    {"_nSGMM_logpotential_fast_cpp", (DL_FUNC) &_nSGMM_logpotential_fast_cpp, 3},
+    {"_nSGMM_gr_logpotential_fast_cpp", (DL_FUNC) &_nSGMM_gr_logpotential_fast_cpp, 3},
+    {"_nSGMM_gr_logpotential_fake_cpp", (DL_FUNC) &_nSGMM_gr_logpotential_fake_cpp, 3},
+    {"_nSGMM_gr_logpotential_old_cpp", (DL_FUNC) &_nSGMM_gr_logpotential_old_cpp, 3},
     {"_nSGMM_utlity_cppvec", (DL_FUNC) &_nSGMM_utlity_cppvec, 2},
     {"_nSGMM_mynegutility_cpp", (DL_FUNC) &_nSGMM_mynegutility_cpp, 5},
     {"_nSGMM_mynegutility_cpp_consumption", (DL_FUNC) &_nSGMM_mynegutility_cpp_consumption, 5},
@@ -406,8 +505,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_BBP_c_from_atY_cpp", (DL_FUNC) &_nSGMM_BBP_c_from_atY_cpp, 6},
     {"_nSGMM_BBP_T_from_tYc_cpp", (DL_FUNC) &_nSGMM_BBP_T_from_tYc_cpp, 5},
     {"_nSGMM_BBP_T_from_atY_plain_cpp", (DL_FUNC) &_nSGMM_BBP_T_from_atY_plain_cpp, 3},
-    {"_nSGMM_equilibrate_cpp_fast8_debug", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_debug, 7},
-    {"_nSGMM_equilibrate_cpp_fast8_smarter", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_smarter, 4},
+    {"_nSGMM_equilibrate_cpp_fast8_debug", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_debug, 8},
+    {"_nSGMM_equilibrate_cpp_fast8_smarter", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_smarter, 5},
+    {"_nSGMM_solve_BBP2", (DL_FUNC) &_nSGMM_solve_BBP2, 2},
     {"_nSGMM_recip_cpp", (DL_FUNC) &_nSGMM_recip_cpp, 2},
     {"_nSGMM_component_counts", (DL_FUNC) &_nSGMM_component_counts, 1},
     {"_nSGMM_Ccomponents", (DL_FUNC) &_nSGMM_Ccomponents, 5},
@@ -417,6 +517,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_dijkstra", (DL_FUNC) &_nSGMM_dijkstra, 2},
     {"_nSGMM_dijkstra_all", (DL_FUNC) &_nSGMM_dijkstra_all, 1},
     {"_nSGMM_dskewness", (DL_FUNC) &_nSGMM_dskewness, 1},
+    {"_nSGMM_degreesd", (DL_FUNC) &_nSGMM_degreesd, 1},
     {"_nSGMM_compute_moments_cpp", (DL_FUNC) &_nSGMM_compute_moments_cpp, 4},
     {"_nSGMM_random_normal_seed", (DL_FUNC) &_nSGMM_random_normal_seed, 4},
     {"_nSGMM_symmetrix_normal_error_matrix", (DL_FUNC) &_nSGMM_symmetrix_normal_error_matrix, 4},

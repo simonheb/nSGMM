@@ -4,7 +4,7 @@ library(BB)
 library(doParallel)
 library(nSGMM)
 library(hydroPSO)
-setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
+setwd("C:/Users/shess/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
 
 
@@ -44,8 +44,8 @@ rowMads<-function(x) {rowmeans(abs(sweep(x,1,rowmeans(x))))}
 upper_tri.assign<-function(x,y) {x[upper.tri(x)]<-y;return(x)}
 lower_tri.assign<-function(x,y) {x[lower.tri(x)]<-y;return(x)}
 
-lower<-c(-10,-1,-1,-2)#,-4)
-upper<-c(5,15,3,3)#,2)
+lower<-c(-10,-1,-1,-2) 
+upper<-c(5,15,3,3) 
 
 #test strategy:
 #draw M networks for the estimated parameter values. for each of these, obtain the estimates and recompute the estimates
@@ -56,10 +56,10 @@ upper<-c(5,15,3,3)#,2)
 #report the standard deviation of each of these estimates
 
 
-
-
 print("Somehow i need to think about how the parametrization of the capacity constraint and the parametrization in the 
       estimation can be put together.")
+
+vfvfvfvfv
 ############# Set Simulation Parameters and Draw Random Altruism Network#############
 #population size 
 n<-35
@@ -74,13 +74,13 @@ true_th<-c(delta0_DGP,delta1_DGP,log(sigma_DGP),capacity0_DGP,capacity1_DGP)
 
 foo<-NULL
 results<-readRDS("a")
-vhh
+
+
 
 
 
 for (i in 17:160) {
   source('R/gridsearch.R')
-  
   
   cat(i,"=========================================================")
   cat(i,"=========================================================\n")

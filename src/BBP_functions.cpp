@@ -2,7 +2,84 @@
 #include <iostream>
 #include <tictoc.h>
 #include <network_functions.h>
+
 using namespace arma;
+
+
+
+arma::vec logyon;
+
+
+
+// [[Rcpp::export]]
+vec Fln_cpp_fast(const vec x) { //stammfuntion von ln(x) 
+  logyon = log(x);
+  logyon(find(x<=0)).fill(-99999999);
+  return(x%(logyon-1));
+}
+
+
+// [[Rcpp::export]]
+double logpotential_fast_cpp(const vec& transfers,const mat& logaltruism,const vec& income) {
+  mat transfersmat = reshape(transfers, income.n_elem,income.n_elem);
+  double potential_B = -sum(Fln_cpp_fast( income + trans(sum(transfersmat,0))-sum(transfersmat,1)));
+  uvec finaltr = find_finite(logaltruism);
+  vec taltru = transfersmat.elem(finaltr);
+  vec altru = logaltruism.elem(finaltr);
+  uvec ta0 = find(taltru>0);
+  double potential_C = -sum(-altru(ta0) % taltru(ta0));   
+  return(-potential_B-potential_C);
+}
+
+
+
+
+arma::mat pairdiff(const vec& y) {
+  mat v = zeros<mat>(y.n_elem,y.n_elem);
+  for(uword i=0;i<y.n_elem;i++) {
+    for(uword j=i+1;j<y.n_elem;j++) {
+      v(i,j) = y(i)-y(j);
+      v(j,i) = -v(i,j);
+    }
+  }
+  return(v);
+}
+// [[Rcpp::export]]
+arma::mat gr_logpotential_fast_cpp(const vec& transfers,const mat& logaltruism, const vec& income) {
+  return(-pairdiff(logyon) - logaltruism);
+}
+
+// [[Rcpp::export]]
+arma::mat gr_logpotential_fake_cpp(const vec& transfers,const mat& logaltruism, const vec& income) {
+  mat transfersmat = reshape(transfers, income.n_elem,income.n_elem);
+  mat gr_potential = zeros( income.n_elem,income.n_elem);
+  for(uword i=0;i<income.n_elem;i++) {
+    for(uword j=i+1;j<income.n_elem;j++) {
+      if (transfersmat(i,j)==0)
+        gr_potential(i,j) = -0.1*(logyon(i)-logyon(j) + logaltruism(i,j));
+      else 
+        gr_potential(i,j) = -logyon(i)+logyon(j) - logaltruism(i,j);
+      if (transfersmat(j,i)==0)
+        gr_potential(j,i) = -0.1*(-(logyon(i)-logyon(j)) + logaltruism(j,i));
+      else 
+        gr_potential(j,i) = logyon(i)-logyon(j) - logaltruism(j,i);
+    }
+  }
+  return(gr_potential);
+}
+
+// [[Rcpp::export]]
+arma::mat gr_logpotential_old_cpp(const vec& transfers,const mat& logaltruism, const vec& income) {
+  mat gr_potential = pairdiff(logyon) + logaltruism;
+  uvec tt = find(transfers==0);
+  gr_potential(tt) *= 0.1;
+  return(-gr_potential);
+}
+
+
+
+
+
 
 // [[Rcpp::export]]
 double  utlity_cppvec(const vec& consumption, const rowvec& altruism) {
@@ -82,7 +159,7 @@ bool BBP_update_BR_analytically_cpp_fast10(uword i, mat & transfers, vec & net_t
       A=nextA;
       nextA+=altruism(i-1,nextrecipient);// double A= accu(altruism.submat(me,whotogiveto.head(giveto)));
       
-      //if adding mone more recipient still does not lead to negative transfers
+      //if adding one more recipient still does not lead to negative transfers
       if ( (isconsumptionnetofmaxtransfers+nextC)/consumption(nextrecipient) > (1+nextA)/altruism(i-1,nextrecipient)) {continue;}
     }
     uvec whotooptimize=whotogiveto.head(giveto);
@@ -141,7 +218,7 @@ bool BBP_update_BR_analytically_cpp_fast10(uword i, mat & transfers, vec & net_t
 
 // [[Rcpp::export]]
 mat get_BBP_BR_analytically_cpp_inline(uword i, mat transfers, const vec& income, const mat& altruism, const mat& capacities) {
-  std::cout<< 1<<endl;
+  Rcpp::Rcout<< 1<<endl;
   vec transfers_in=trans(sum(transfers,0));
   vec transfers_out=sum(transfers,1);
   BBP_update_BR_analytically_cpp_fast10(i,transfers,transfers_in,transfers_out,income,altruism,capacities);
@@ -272,7 +349,7 @@ mat BBP_T_from_tYc_cpp(mat transferstructure, const vec& incomes, const vec& con
 mat BBP_T_from_atY_plain_cpp(const mat& alphas, const mat& transferstructure, const vec& incomes) {
   
   if (any(transferstructure(find(transferstructure>0))<1)) {
-    std::cout << "this shouldnt be non-binary" << transferstructure << endl;;
+    Rcpp::Rcout << "this shouldnt be non-binary" << transferstructure << endl;;
   }
   
   uvec t_components_csize;
@@ -290,16 +367,17 @@ mat BBP_T_from_atY_plain_cpp(const mat& alphas, const mat& transferstructure, co
 
 
 // [[Rcpp::export]]
-mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const mat& capacity,bool verbose, int& r, bool& NE, int maxrounds=500) {
-  mat transfers = zeros(income.n_elem,income.n_elem);
-  vec net_transfers_in  = zeros(income.n_elem);
-  vec net_transfers_out = zeros(income.n_elem);
-  int updates; 
+mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const mat& capacity, mat transfers,bool verbose, int& r, bool& NE, int maxrounds=500) {
+  vec net_transfers_in  = trans(sum(transfers,0));
+  vec net_transfers_out = sum(transfers,1);
+  int updates = 0; 
+  //loop over rounds
   for (r=0;r<maxrounds;r++) {
     
     updates=0;
     uvec updating = linspace<uvec>(1, income.n_elem,income.n_elem);
     uword updatingmax = income.n_elem;
+    //each round consists of up to 20 subrounds
     for (int rep=0;rep<20;rep++){
       uword next_updateingmax = 0;
       for (uword u=0; u<updatingmax; u++) { //for each player
@@ -330,8 +408,8 @@ mat equilibrate_cpp_fast8_debug(const mat& altruism, const vec& income, const ma
 
 
 // [[Rcpp::export]]
-mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity, int maxrounds=500) {
+mat equilibrate_cpp_fast8_smarter(const mat& altruism, const vec& income, const mat& capacity, mat startnet, int maxrounds=500) {
   int r;
   bool NE;
-  return(equilibrate_cpp_fast8_debug(altruism, income, capacity,false,r,NE));
+  return(equilibrate_cpp_fast8_debug(altruism, income, capacity,startnet,false,r,NE,maxrounds=maxrounds));
 }

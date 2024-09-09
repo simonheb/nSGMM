@@ -1,3 +1,5 @@
+# Description: This script is used to test the performance of the C++ code to simulate the game 
+
 library(nSGMM)
 library(tictoc)
 library(igraph)
@@ -19,7 +21,7 @@ set.seed(12)
     for(i in seq(1,18,1)) {
     tic()
       for (z in 1:10)
-        simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income,theta=c(th1,th2,th3,th4),rounds=1000,seed=1,reps=i)  
+        simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=i)  
     a<-toc()
     zdata<-rbind(zdata,c(i,a$toc-a$tic))
     }

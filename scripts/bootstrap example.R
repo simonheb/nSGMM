@@ -11,7 +11,7 @@ print(summary(fit))
 
 par<-c(coefficients(fit)["(Intercept)"],coefficients(fit)["x"],summary(fit)$sigma  )
 
-#this is not usefully parallelized, so instead, write a wrapper that does this and
+# this is not usefully parallelized, so instead, write a wrapper that does this and
 # takes a set of parameters, a search algorithm and a seed as input
 # runs the command for 1 round and returns and stores the result
 # this needs to be loopable

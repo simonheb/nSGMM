@@ -5,7 +5,7 @@ library(doParallel)
 library(nSGMM)
 library(mlrMBO)
 
-setwd("D:/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
+setwd("C:/Users/shess/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
 source('R/gridsearch.R')
 
@@ -127,8 +127,8 @@ layout<-drawnetexample(delta0_DGP,delta1_DGP,sigma_DGP,1,kinship,error,income,la
 layout<-drawnetexample(delta0_DGP,delta1_DGP,sigma_DGP,0.5,kinship,error,income,layout)
 layout<-drawnetexample(delta0_DGP,delta1_DGP,3,capacity_DGP,kinship,error,income,layout)
 layout<-drawnetexample(delta0_DGP,delta1_DGP,sigma_DGP,0.5,kinship,error,income,layout,showunconstrained = TRUE, prefix= "maintext")
-#altruism<-base$altruism
-#transfers<-base$transfers
+
+
 
 
 
