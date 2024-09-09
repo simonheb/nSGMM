@@ -1,11 +1,11 @@
 Package: nSGMM
 Type: Package
 Title: Tools to simulate networks and perform simulation-based inference
-Version: 1.1
+Version: 1.1.2
 Date: 2024-1-1
 Author: Simon HeSS;
 Maintainer: S.H. <simon@hesss.org>
 Description: The package provides tools to simulate networks and perform simulation-based inference. The package is based on the nSGMM model, which is a non-stationary extension of the Stochastic Block Model (SBM). The nSGMM model is a generative model for networks that allows for the number of communities to change over time. The package provides functions to simulate networks from the nSGMM model, estimate the model parameters, and perform hypothesis tests. The package also provides functions to estimate the number of communities in a network and to visualize the network structure.
 License: What license is it under?
-Imports: Rcpp (>= 1.0.2), hydroPSO, igraph, Rfast, foreach, RcppParallel, RcppArmadillo, RcppEigen
+Imports: Rcpp (>= 1.0.2), igraph, foreach, RcppParallel, RcppArmadillo, RcppEigen
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel, RcppEigen
