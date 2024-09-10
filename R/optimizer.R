@@ -322,8 +322,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
-    arrange(val) |>  filter(is.finite(val)) |> head(150) 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |>  filter(is.finite(val) & val < init_cutoff) |>  
+    arrange(val)  |> head(150) 
   
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -335,7 +335,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
   
   start_time <- Sys.time()
   # now loop through the 16 points and optimize with spg again
-  parameters <- mapply(
+
+    parameters <- mapply(
     function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
@@ -344,8 +345,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows() |> 
-    arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()    |> as.data.frame() |> 
+    arrange(val)  
     head(50) 
   
   
@@ -368,7 +369,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 50, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(10)
   
@@ -389,7 +390,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 500, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -409,7 +410,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 3000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -429,7 +430,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 8000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(1)
   
@@ -483,7 +484,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(150) 
   
@@ -506,7 +507,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(50) 
   
@@ -530,7 +531,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 50, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(10)
   
@@ -550,7 +551,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 500, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -570,7 +571,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 3000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -590,7 +591,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 8000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(1)
   
@@ -1180,7 +1181,6 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       val = fn(c_across(1:length(upper)), prec = 4, noiseseed = noiseseed, ...)
     ) |>
     arrange(val) 
-  browser()
     filter(is.finite(val) & val<init_cutoff)
   cat("1")
   
