@@ -1170,7 +1170,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
   start_time <- Sys.time()
   cat("2")
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
-  
+
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
