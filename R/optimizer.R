@@ -11,115 +11,6 @@ plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
   plot(x,lapply(xs,fun,...))
 }
 
-# 
-# twostage_gmm <- function(fn, lower, upper, seed=1, optimizer_function = parallel_one4, keep, initial_vcv=NULL, ...) {
-#   if (is.null(initial_vcv)) {
-#     initial_vcv <- diag(length(keep))
-#   }
-#   
-#   # first stage
-#   optimum1 <- optimizer_function(fn, lower, upper, seed=seed, vcv=initial_vcv, keep=keep, ...)
-#   optimum1$vcv <- moment_distance(optimum1$par, prec=50000, noiseseed=seed, vcv=initial_vcv, keep=keep, ...)$vcv_full
-#   
-# 
-#   # second stage
-#   optimum2 <- optimizer_function(fn, lower, upper, seed=seed, vcv=optimum1$vcv, keep=keep, ...)
-#   
-#   
-#   ret <- list(optimum1=optimum1, optimum2=optimum2)
-#   
-#   #print in orange the content of optimum1$par
-#   cat("\033[1;33m", "optimum1$par: ", optimum1$par, "\n", "\033[0m")
-#   
-#   # print in green as result the content of optimum2$par
-#   cat("\033[1;32m", "optimum2$par: ", optimum2$par, "\n", "\033[0m")
-#   
-#   return(ret)
-# }
-# # 
-# 
-# parallel_naples <- function(fn, lower, upper, seed=1, ... ,repfactor=1,initialrounds=15,debug=FALSE) {
-#   tic()
-#   lfn <- function(...) log(fn(...))
-#   print("init start")
-#   z<-hydroPSO::hydroPSO(fn=lfn,
-#                         lower=lower,
-#                         upper=upper,
-#                         control=list(
-#                           write2disk=FALSE,
-#                           npart=100,
-#                           maxit=200),
-#                         prec=4, noiseseed=seed,
-#                         ...
-#   )
-#   print("init done")
-#   precs <- c(4,    #1
-#              10,   #2
-#              50,   #3
-#              100,  #4
-#              200,  #5
-#              400,  #6
-#              800,  #7
-#              1600, #8
-#              3200, #9
-#              6400, #10
-#              12800, #11
-#              15000)
-#   epss_dyn <- pmax(0.3-log(precs)/26,1e-5)
-#   
-#   for (i in 1:length(precs)) {
-#     
-#     # blue
-#     cat("\033[1;34m", "iteration start eps", i, "\n", "\033[0m")
-#     z <- BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-#                  upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=epss_dyn[i]*1000),
-#                  prec=precs[i],noiseseed=seed,
-#                  ...
-#     )
-#     # blue
-#     cat("\033[1;34m", "iteration start eps", i, "\n", "\033[0m")
-#     z <- BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-#                  upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=epss_dyn[i]*100),
-#                  prec=precs[i],noiseseed=seed,
-#                  ...
-#     )
-#     # green
-#     cat("\033[1;32m", "iteration start eps/10", i, "\n", "\033[0m")
-#     z <- BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-#                  upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=epss_dyn[i]),
-#                  prec=precs[i],noiseseed=seed,
-#                  ...
-#     )
-#     # magenta
-#     cat("\033[1;35m", "iteration start eps/100", i, "\n", "\033[0m")
-#     z <- BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-#                  upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=epss_dyn[i]/100),
-#                  prec=precs[i],noiseseed=seed,
-#                  ...
-#     )
-#     
-#     cat("\033[1;35m", "iteration start eps/100", i, "\n", "\033[0m")
-#     z <- BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-#                  upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=epss_dyn[i]/1000),
-#                  prec=precs[i],noiseseed=seed,
-#                  ...
-#     )
-#     
-#     
-#     #print in orange
-#     cat("\033[1;33m", "z$par: ", z$par, "\n", "\033[0m")
-#   }
-# 
-# 
-# 
-# 
-#   par <- z$par
-#   return(list(par=par,
-#               val=fn(par, ..., prec=5000, noiseseed=seed),
-#               tictoc=toc()$callback_msg))
-# }
-# 
-
 
 parallel_one4_double <- function(...) {
   first <- parallel_one4(...)
@@ -404,7 +295,8 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
 
 
 parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
-  cat("function: parallel_manual_broad_and_fast")
+  cat("function: parallel_manual_broad_and_fast_mapply")
+  # print the name of the function that is being exectuted
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -430,15 +322,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4]) |> t() |> as.data.frame() |>
-    arrange(val) |>
-    filter(is.finite(val) & val<init_cutoff)
-  
-  
-  
-  
-  parameters <- parameters |> 
-    head(150) 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val) |>  filter(is.finite(val)) |> head(150) 
   
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -459,8 +344,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows() |> 
+    arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(50) 
   
   
@@ -483,8 +368,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 50, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(10)
   
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -504,8 +389,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 500, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -524,8 +409,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 3000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -544,8 +429,8 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
                         prec = precision_factor * 8000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(1)
   
   # print(summary(parameters))
@@ -572,7 +457,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
               tictoc=toc()$callback_msg))   
 }
 parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
-  cat("function: parallel_manual_broad_and_fast")
+  cat("function: parallel_manual_broad_and_fast_mapplymc")  # print the name of the function that is being exectuted
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -598,14 +483,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4]) |> t() |> as.data.frame() |>
-    arrange(val) |>
-    filter(is.finite(val) & val<init_cutoff)
-  
-  
-  
-  
-  parameters <- parameters |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(150) 
   
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -627,8 +506,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(50) 
   
   
@@ -651,8 +530,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 50, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(10)
   
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
@@ -662,7 +541,6 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
   cat("round 3 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
   start_time <- Sys.time()
-  
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
@@ -672,8 +550,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 500, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -684,7 +562,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   start_time <- Sys.time()
   
   parameters <- mcmapply(mc.cores=mc.cores,
-    function(x1, x2, x3, x4) {
+                         function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
@@ -692,8 +570,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 3000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters[,1:5]))
   
@@ -704,7 +582,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   start_time <- Sys.time()
   
   parameters <- mcmapply(mc.cores=mc.cores,
-                         function(x1, x2, x3, x4) {
+    function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
@@ -712,8 +590,8 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
                         prec = precision_factor * 8000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters$par1, parameters$par2, parameters$par3, parameters$par4) |> t() |> as.data.frame() |>
-    arrange(val) |>
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows() |> 
+    arrange(val)  |>
     head(1)
   
   # print(summary(parameters))
@@ -740,6 +618,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
               tictoc=toc()$callback_msg))   
 }
 worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
+  cat("function worked_nicely_once\n")
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -1097,7 +976,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
 
 
 parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
-  cat("function: parallel_manual_drop_the_last2")
+  cat("function: parallel_manual_drop_the_last2_flat")
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -1300,7 +1179,8 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       val = fn(c_across(1:length(upper)), prec = 4, noiseseed = noiseseed, ...)
     ) |>
-    arrange(val) |>
+    arrange(val) 
+  browser()
     filter(is.finite(val) & val<init_cutoff)
   cat("1")
   
