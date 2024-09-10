@@ -111,7 +111,7 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
 
 
 
-parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
+parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
   cat("function: parallel_manual_broad_and_fast")
   tic()
   if (is.null(seed)) {
@@ -130,7 +130,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
   
   start_time <- Sys.time()
   
-  parameters <- mcmapply(mc.cores=mc.cores,
+  parameters <- mcmapply(mc.cores=25,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
                            val <- fn(theta, prec = 1, noiseseed = noiseseed, ...)
@@ -614,7 +614,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
               val=val,
               tictoc=toc()$callback_msg))   
 }
-worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
+worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
   cat("function worked_nicely_once\n")
   tic()
   if (is.null(seed)) {
@@ -794,7 +794,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
 }
 
 
-parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
+parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
   cat("function: parallel_manual_drop_the_last2")
   tic()
   if (is.null(seed)) {
@@ -973,7 +973,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
 
 
 
-parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5) {
+parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
   cat("function: parallel_manual_drop_the_last2_flat")
   tic()
   if (is.null(seed)) {
@@ -1149,7 +1149,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
               val=val,
               tictoc=toc()$callback_msg))   
 }
-parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e6) {
+parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e6, mc.cores=25) {
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
