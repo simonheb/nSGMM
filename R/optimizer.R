@@ -141,7 +141,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     head(150) 
   
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -168,7 +168,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     head(50) 
   
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -194,7 +194,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     arrange(val)  |>
     head(10)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -217,7 +217,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     ) |>
     arrange(val)  |>
     head(3) 
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -240,7 +240,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     ) |>
     arrange(val)  |>
     head(2)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -321,7 +321,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |>  filter(is.finite(val) & val < init_cutoff) |>  
     arrange(val)  |> head(150) 
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -346,7 +346,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
     head(50) 
   
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -369,7 +369,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
     arrange(val)  |>
     head(10)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -389,7 +389,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(3) 
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -409,7 +409,7 @@ parallel_manual_broad_and_fast_mapply <- function(fn, spg_fun=BB::spg, lower, up
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(2)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -484,7 +484,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(150) 
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -508,7 +508,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     head(50) 
   
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -531,7 +531,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     arrange(val)  |>
     head(10)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -550,7 +550,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(3) 
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -570,7 +570,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(2)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -649,7 +649,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
   print(summary(parameters))
   
   parameters <- parameters |> head(100)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -674,7 +674,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     ) |>
     arrange(val)  |>
     head(32)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -699,7 +699,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     ) |>
     arrange(val)  |>
     head(8)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -722,7 +722,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     ) |>
     arrange(val)  |>
     head(4)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -745,7 +745,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     ) |>
     arrange(val)  |>
     head(1)
-#parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+#parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -825,7 +825,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(100) 
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -851,7 +851,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     arrange(val)  |>
     head(32)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -877,7 +877,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     arrange(val)  |>
     head(8)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -900,7 +900,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     ) |>
     arrange(val)  |>
     head(4)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -1004,7 +1004,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(100) 
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   
@@ -1030,7 +1030,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     arrange(val)  |>
     head(32)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -1056,7 +1056,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     arrange(val)  |>
     head(8)
   
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
@@ -1079,7 +1079,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     ) |>
     arrange(val)  |>
     head(4)
-  parameters <- rbind(parameters, colmeans(parameters[,1:5]))
+  parameters <- rbind(parameters, colmeans(parameters))
   
   print(summary(parameters))
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
