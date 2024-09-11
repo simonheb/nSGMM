@@ -230,7 +230,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
     simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
  # else 
   #  simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
-  
+
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   
