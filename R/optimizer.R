@@ -164,9 +164,9 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(50) 
-  
   
   parameters <- rbind(parameters, colmeans(parameters))
   
@@ -191,6 +191,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(10)
   
@@ -215,6 +216,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters))
@@ -238,6 +240,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -261,6 +264,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(1)
   
@@ -510,6 +514,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(32)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -535,6 +540,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(8)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -558,6 +564,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(4)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -581,6 +588,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(1)
 #parameters <- rbind(parameters, colmeans(parameters))
@@ -686,6 +694,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(32)
   
@@ -712,6 +721,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(8)
   
@@ -736,6 +746,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(4)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -759,6 +770,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(1)
   
@@ -782,7 +794,8 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   #     par4 = result$par[4],
   #     val = result$value
   #   ) |>
-  #   arrange(val)  |>
+  #select(-result) |>
+    #   arrange(val)  |>
   #   head(1)
   # 
   # print(summary(parameters))
@@ -865,6 +878,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(32)
   
@@ -891,6 +905,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(8)
   
@@ -915,6 +930,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(4)
   parameters <- rbind(parameters, colmeans(parameters))
@@ -938,6 +954,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(1)
   
@@ -961,6 +978,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
   #     par4 = result$par[4],
   #     val = result$value
   #   ) |>
+#    select(-result) |>
   #   arrange(val)  |>
   #   head(1)
   # 
@@ -1041,6 +1059,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(16)
   
@@ -1064,6 +1083,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(8)
   
@@ -1086,6 +1106,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(4)
   
@@ -1108,6 +1129,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(2) 
   
@@ -1130,6 +1152,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
       par4 = result$par[4],
       val = result$value
     ) |>
+    select(-result) |>
     arrange(val)  |>
     head(1)
   
