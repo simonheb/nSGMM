@@ -74,15 +74,10 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     altruism.diag().ones();
     int rounds_;
     bool converged_;
-    tic(1);
     mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
     eqtrans2.elem( find(eqtrans2) ).ones();
-    
-    tic(2);
     vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income);
-    tic(3);
-    
-    
+
     for(int mom=0;mom<13;mom++)
       finalMatrix(i,mom) = moments(mom);
     roundsc(i) = rounds_;
@@ -92,7 +87,6 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
     //Rcpp::Rcout << "" << floor(mean(converged)*100) <<"%" ;
     finalMatrix.zeros();
   }
-  tictoc(3);
   return(finalMatrix);
 }
 

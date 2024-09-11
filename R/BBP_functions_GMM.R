@@ -210,7 +210,7 @@ identify_dependent_columns_lm <- function(mat) {
 
 
 
-moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE) {
+moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE) {
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
@@ -226,9 +226,12 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (any(is.na(x))) browser()
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
-  
-  simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]),
+  if (sim_parallel)
+    simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]),
                                   distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+  else 
+    simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]),
+                           distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
