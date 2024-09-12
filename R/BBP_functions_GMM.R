@@ -226,10 +226,11 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (any(is.na(x))) browser()
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
-#  if (sim_parallel) {
+  if (sim_parallel) {
     simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
- # else 
-  #  simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+  } else {
+    simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+  }
 
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
