@@ -1240,7 +1240,7 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
   )
   par<-zz$par
   names(par)<-NULL
-  val <- fn(par, ..., prec=precision_factor*10000, noiseseed=noiseseed)
+  val <- zz$val
   # print par in blue
   if (debug)
     cat("\033[34m",par,"\033[0m\n")

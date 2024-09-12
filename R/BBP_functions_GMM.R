@@ -32,7 +32,6 @@ simulate_BBP<-function(n,delta0,delta1,sigma,distance,kinship,capacity,income,er
       diag(altruism)<-1
       if(mean(Rfast::upper_tri(altruism)>0.999)>0.5) cat("b")
       eq<-equilibrate_and_plot(altruism=altruism,income=income,capacity=capacity,computeR=computeR,computeCPP=!computeR,plotthis = plotthis)
-      browser()
       ret<-compute_moments(1*(eq$transfers>0),kinship,distance,income,theta=c(delta0,delta1,sigma))
       finalMatrix<-rbind(finalMatrix,ret)
     }
@@ -229,6 +228,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (sim_parallel) {
     simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   } else {
+    cat("simulating in non-parallel\n")
     simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   }
 
