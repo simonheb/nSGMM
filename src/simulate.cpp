@@ -180,7 +180,7 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
 
 
 // [[Rcpp::export]]
-mat simulate_BBP_cpp_doesnt(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+mat simulate_BBP_cpp1(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
   //if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   
   mat finalMatrix = zeros(reps,13);
