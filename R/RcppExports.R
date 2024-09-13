@@ -69,10 +69,6 @@ equilibrate_cpp_fast8_smarter <- function(altruism, income, capacity, startnet, 
     .Call(`_nSGMM_equilibrate_cpp_fast8_smarter`, altruism, income, capacity, startnet, maxrounds)
 }
 
-solve_BBP2 <- function(altruism, income) {
-    .Call(`_nSGMM_solve_BBP2`, altruism, income)
-}
-
 recip_cpp <- function(adj, radj) {
     .Call(`_nSGMM_recip_cpp`, adj, radj)
 }

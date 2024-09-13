@@ -250,18 +250,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// solve_BBP2
-arma::mat solve_BBP2(arma::mat& altruism, arma::vec& income);
-RcppExport SEXP _nSGMM_solve_BBP2(SEXP altruismSEXP, SEXP incomeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type altruism(altruismSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type income(incomeSEXP);
-    rcpp_result_gen = Rcpp::wrap(solve_BBP2(altruism, income));
-    return rcpp_result_gen;
-END_RCPP
-}
 // recip_cpp
 double recip_cpp(const mat& adj, const mat& radj);
 RcppExport SEXP _nSGMM_recip_cpp(SEXP adjSEXP, SEXP radjSEXP) {
@@ -549,7 +537,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_BBP_T_from_atY_plain_cpp", (DL_FUNC) &_nSGMM_BBP_T_from_atY_plain_cpp, 3},
     {"_nSGMM_equilibrate_cpp_fast8_debug", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_debug, 8},
     {"_nSGMM_equilibrate_cpp_fast8_smarter", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_smarter, 5},
-    {"_nSGMM_solve_BBP2", (DL_FUNC) &_nSGMM_solve_BBP2, 2},
     {"_nSGMM_recip_cpp", (DL_FUNC) &_nSGMM_recip_cpp, 2},
     {"_nSGMM_component_counts", (DL_FUNC) &_nSGMM_component_counts, 1},
     {"_nSGMM_Ccomponents", (DL_FUNC) &_nSGMM_Ccomponents, 5},
