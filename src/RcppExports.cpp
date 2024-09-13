@@ -476,9 +476,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// simulate_BBP_cpp_doesnt
-mat simulate_BBP_cpp_doesnt(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_doesnt(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
+// simulate_BBP_cpp1
+mat simulate_BBP_cpp1(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, int reps, int seed, int rounds);
+RcppExport SEXP _nSGMM_simulate_BBP_cpp1(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -493,7 +493,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_doesnt(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
+    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp1(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -701,7 +701,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_seedfromindex", (DL_FUNC) &_nSGMM_seedfromindex, 1},
     {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 11},
     {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 11},
-    {"_nSGMM_simulate_BBP_cpp_doesnt", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_doesnt, 11},
+    {"_nSGMM_simulate_BBP_cpp1", (DL_FUNC) &_nSGMM_simulate_BBP_cpp1, 11},
     {"_nSGMM_simulate_BBP_cpp2", (DL_FUNC) &_nSGMM_simulate_BBP_cpp2, 11},
     {"_nSGMM_simulate_BBP_cpp3", (DL_FUNC) &_nSGMM_simulate_BBP_cpp3, 11},
     {"_nSGMM_simulate_BBP_cpp4", (DL_FUNC) &_nSGMM_simulate_BBP_cpp4, 11},
