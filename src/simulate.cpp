@@ -179,39 +179,6 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
 
 
 
-// [[Rcpp::export]]
-mat simulate_BBP_cpp7(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat finalMatrix = zeros(1,13);
-  
-  mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed));
-  mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-  altruism.diag().ones();
-  
-  return(finalMatrix);
-}
-
-// [[Rcpp::export]]
-mat simulate_BBP_cpp70(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat finalMatrix = zeros(1,13);
-  mat error = zeros(n,n);
-  mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-  altruism.diag().ones();
-  return(finalMatrix);
-}
-// [[Rcpp::export]]
-mat simulate_BBP_cpp71(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat finalMatrix = zeros(1,13);
-  mat error = zeros(n,n);
-  mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-  return(finalMatrix);
-}
-
-// [[Rcpp::export]]
-mat simulate_BBP_cpp72(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat error = zeros(n,n);
-  mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-  return(error);
-}
 
 // [[Rcpp::export]]
 mat simulate_BBP_cpp73(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
@@ -221,17 +188,44 @@ mat simulate_BBP_cpp73(int n, double delta0,double delta1,double sigma, mat dist
 }
 
 // [[Rcpp::export]]
-mat simulate_BBP_cpp74(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+mat simulate_BBP_cpp_works(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
   mat error = zeros(n,n);
   return(error);
 }
 
-// [[Rcpp::export]]
-mat simulate_BBP_cpp_works(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat finalMatrix = zeros(1,13);
-  
-  mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed));
 
-  return(finalMatrix);
+// [[Rcpp::export]]
+mat test0() {
+  mat error = zeros(2,2);
+  mat altruism = 1/(1+exp(-(1+error)));
+  return(error);
+}
+
+// [[Rcpp::export]]
+mat test01() {
+  mat error = zeros(1,1);
+  mat altruism = 1/(1+exp(-(1+error)));
+  return(error);
+}
+// [[Rcpp::export]]
+double test02() {
+  double altruism = 1/(1+exp(-(1+0)));
+  return(1);
+}
+// [[Rcpp::export]]
+double test03() {
+  double altruism = (1+exp(-(1+0)));
+  return(1);
+}
+// [[Rcpp::export]]
+double test04() {
+  double altruism = exp(-1);
+  return(1);
+}
+
+// [[Rcpp::export]]
+mat test1() {
+  mat error = zeros(2,2);
+  return(error);
 }
 

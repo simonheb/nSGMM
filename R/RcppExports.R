@@ -137,31 +137,35 @@ simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinshi
     .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_cpp7 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp7`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp70 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp70`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp71 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp71`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp72 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp72`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
 simulate_BBP_cpp73 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp73`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_cpp74 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp74`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
 simulate_BBP_cpp_works <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp_works`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+test0 <- function() {
+    .Call(`_nSGMM_test0`)
+}
+
+test01 <- function() {
+    .Call(`_nSGMM_test01`)
+}
+
+test02 <- function() {
+    .Call(`_nSGMM_test02`)
+}
+
+test03 <- function() {
+    .Call(`_nSGMM_test03`)
+}
+
+test04 <- function() {
+    .Call(`_nSGMM_test04`)
+}
+
+test1 <- function() {
+    .Call(`_nSGMM_test1`)
 }
 
