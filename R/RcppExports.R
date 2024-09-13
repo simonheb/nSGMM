@@ -137,36 +137,28 @@ simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinshi
     .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_cpp1 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp1`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp2 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp2`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp3 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp3`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp4 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp4`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp5 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp5`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp6 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp6`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
 simulate_BBP_cpp7 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp7`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
-simulate_BBP_cpp8 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp8`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+simulate_BBP_cpp70 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp70`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp71 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp71`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp72 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp72`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp73 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp73`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+simulate_BBP_cpp74 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_simulate_BBP_cpp74`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 
 simulate_BBP_cpp_works <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
