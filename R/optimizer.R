@@ -156,7 +156,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:length(upper)), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 16, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -183,7 +183,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 50, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -208,7 +208,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.03, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10),
                             prec = precision_factor * 500, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -232,7 +232,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                             prec = precision_factor * 3000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -256,7 +256,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.005, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.005, triter = 10),
                             prec = precision_factor * 8000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -276,7 +276,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
   #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
   #             ...)
   # 
@@ -319,7 +319,6 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
-      #cat(floor(runif(1)*10),"\n")
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
@@ -341,7 +340,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                        control = list(maximize = FALSE, trace = F, eps = 0.1, triter),
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
@@ -365,7 +364,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                        control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                         prec = precision_factor * 50, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
@@ -385,7 +384,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = TRUE, eps = 0.03, triter = 10),
+                        control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10),
                         prec = precision_factor * 500, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
@@ -405,7 +404,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                        control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                         prec = precision_factor * 3000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
@@ -425,7 +424,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = TRUE, eps = 0.005, triter = 10),
+                        control = list(maximize = FALSE, trace = FALSE, eps = 0.005, triter = 10),
                         prec = precision_factor * 8000, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
@@ -441,7 +440,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
   #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
   #             ...)
   # 
@@ -506,7 +505,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 50, noiseseed = 1000 * noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -532,7 +531,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 5),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 5),
                             prec = precision_factor * 128, noiseseed = 1000 * noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -556,7 +555,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.05, triter = 5),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.05, triter = 5),
                             prec = precision_factor * 512, noiseseed = 1000 * noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -580,7 +579,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.02, triter = 5),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.02, triter = 5),
                             prec = precision_factor * 2000, noiseseed = 1000 * noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -604,7 +603,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
   #   mutate(
   #     result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
   #                           upper = upper, lower = lower,
-  #                           control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 5),
+  #                           control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 5),
   #                           prec = precision_factor * 8000, noiseseed = 1000 * noiseseed, ...)),
   #     par1 = result$par[1],
   #     par2 = result$par[2],
@@ -623,7 +622,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
   #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
   #             ...)
   # 
@@ -688,7 +687,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 50, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -715,7 +714,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 128, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -740,7 +739,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.03, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10),
                             prec = precision_factor * 512, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -764,7 +763,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                             prec = precision_factor * 2000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -788,7 +787,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   #   mutate(
   #     result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
   #                           upper = upper, lower = lower,
-  #                           control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+  #                           control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
   #                           prec = precision_factor * 8000, noiseseed = noiseseed, ...)),
   #     par1 = result$par[1],
   #     par2 = result$par[2],
@@ -808,7 +807,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
   #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
   #             ...)
   # 
@@ -872,7 +871,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 16, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -899,7 +898,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 128, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -924,7 +923,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.03, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10),
                             prec = precision_factor * 512, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -948,7 +947,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                             prec = precision_factor * 2000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -972,7 +971,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
   #   mutate(
   #     result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
   #                           upper = upper, lower = lower,
-  #                           control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+  #                           control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
   #                           prec = precision_factor * 8000, noiseseed = noiseseed, ...)),
   #     par1 = result$par[1],
   #     par2 = result$par[2],
@@ -992,7 +991,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
   #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
   #             ...)
   # 
@@ -1053,7 +1052,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 16, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -1077,7 +1076,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 128, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -1100,7 +1099,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.1, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
                             prec = precision_factor * 512, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -1123,7 +1122,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                             prec = precision_factor * 2000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -1146,7 +1145,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
     mutate(
       result = list(spg_fun(par = c_across(1:4), fn = fn, quiet = TRUE,
                             upper = upper, lower = lower,
-                            control = list(maximize = FALSE, trace = TRUE, eps = 0.01, triter = 10),
+                            control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
                             prec = precision_factor * 8000, noiseseed = noiseseed, ...)),
       par1 = result$par[1],
       par2 = result$par[2],
@@ -1166,7 +1165,7 @@ parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NU
   
   #optimizze again with prec 150000
   zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-              upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.01, triter=5),
+              upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
               prec=precision_factor*160000,noiseseed=1000*noiseseed,
               ...)
   
@@ -1218,7 +1217,7 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
       
       
     zz<-BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
-                upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.1),
+                upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.1),
                 prec=precision_factor*300,noiseseed=1000*noiseseed,
                 ...
     )
@@ -1235,7 +1234,7 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
   
   print("final_spg:")
   zz<-BB::spg(par=guess_par, fn=lfn, 
-              upper=upper,lower=lower,control=list(maximize=FALSE, trace=TRUE, eps=0.001),
+              upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.001),
               prec=precision_factor*7500,noiseseed=1000*noiseseed, ...
   )
   par<-zz$par
