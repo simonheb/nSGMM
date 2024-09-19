@@ -228,9 +228,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (sim_parallel) {
     simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   } else {
-    cat("<")
     simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
-    cat(">")
   }
 
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
@@ -261,18 +259,13 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   
   WW <- tryCatch(solve(vcv_to_be_used),error = function(e) NA)
   if (any(is.na(WW)))  {
-    #if (is.null(vcv) & recurse_if_non_invertible) {
-    #  cat("recursing")
-    #  ret <- moment_distance(theta = theta, vdata = vdata, prec = prec*10, noiseseed = noiseseed, maxrounds = maxrounds, verbose = verbose, vcv = vcv, keep = keep, kappa.log = kappa.log, kappa.factor = kappa.factor, recurse_if_non_invertible = FALSE)$value
-    #} else {
       ret <- Inf
-    #}
   }
   else 
     ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
-  #if (ret==Inf) browser()
+  cat("(")
   return(
     list(
       value=ret,#if this is actually 0, this is mostly due to empty networks being provided, e.g. in a bootstrap case
