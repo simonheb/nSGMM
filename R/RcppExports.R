@@ -69,6 +69,14 @@ equilibrate_cpp_fast8_smarter <- function(altruism, income, capacity, startnet, 
     .Call(`_nSGMM_equilibrate_cpp_fast8_smarter`, altruism, income, capacity, startnet, maxrounds)
 }
 
+berlin_mwe <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
+    .Call(`_nSGMM_berlin_mwe`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+}
+
+berlin_mwe2 <- function(n) {
+    .Call(`_nSGMM_berlin_mwe2`, n)
+}
+
 recip_cpp <- function(adj, radj) {
     .Call(`_nSGMM_recip_cpp`, adj, radj)
 }
@@ -139,33 +147,5 @@ simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinshi
 
 simulate_BBP_cpp73 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp73`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp_works <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp_works`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-test0 <- function() {
-    .Call(`_nSGMM_test0`)
-}
-
-test01 <- function() {
-    .Call(`_nSGMM_test01`)
-}
-
-test02 <- function() {
-    .Call(`_nSGMM_test02`)
-}
-
-test03 <- function() {
-    .Call(`_nSGMM_test03`)
-}
-
-test04 <- function() {
-    .Call(`_nSGMM_test04`)
-}
-
-test1 <- function() {
-    .Call(`_nSGMM_test1`)
 }
 

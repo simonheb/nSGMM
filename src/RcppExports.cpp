@@ -250,6 +250,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// berlin_mwe
+mat berlin_mwe(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, int reps, int seed, int rounds);
+RcppExport SEXP _nSGMM_berlin_mwe(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type delta0(delta0SEXP);
+    Rcpp::traits::input_parameter< double >::type delta1(delta1SEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< mat >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< mat >::type kinship(kinshipSEXP);
+    Rcpp::traits::input_parameter< mat >::type capacity(capacitySEXP);
+    Rcpp::traits::input_parameter< vec >::type income(incomeSEXP);
+    Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    rcpp_result_gen = Rcpp::wrap(berlin_mwe(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
+    return rcpp_result_gen;
+END_RCPP
+}
+// berlin_mwe2
+mat berlin_mwe2(int n);
+RcppExport SEXP _nSGMM_berlin_mwe2(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(berlin_mwe2(n));
+    return rcpp_result_gen;
+END_RCPP
+}
 // recip_cpp
 double recip_cpp(const mat& adj, const mat& radj);
 RcppExport SEXP _nSGMM_recip_cpp(SEXP adjSEXP, SEXP radjSEXP) {
@@ -497,87 +529,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// simulate_BBP_cpp_works
-mat simulate_BBP_cpp_works(int n, double delta0, double delta1, double sigma, mat distance, mat kinship, mat capacity, vec income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_works(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type delta0(delta0SEXP);
-    Rcpp::traits::input_parameter< double >::type delta1(delta1SEXP);
-    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< mat >::type distance(distanceSEXP);
-    Rcpp::traits::input_parameter< mat >::type kinship(kinshipSEXP);
-    Rcpp::traits::input_parameter< mat >::type capacity(capacitySEXP);
-    Rcpp::traits::input_parameter< vec >::type income(incomeSEXP);
-    Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_works(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test0
-mat test0();
-RcppExport SEXP _nSGMM_test0() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test0());
-    return rcpp_result_gen;
-END_RCPP
-}
-// test01
-mat test01();
-RcppExport SEXP _nSGMM_test01() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test01());
-    return rcpp_result_gen;
-END_RCPP
-}
-// test02
-double test02();
-RcppExport SEXP _nSGMM_test02() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test02());
-    return rcpp_result_gen;
-END_RCPP
-}
-// test03
-double test03();
-RcppExport SEXP _nSGMM_test03() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test03());
-    return rcpp_result_gen;
-END_RCPP
-}
-// test04
-double test04();
-RcppExport SEXP _nSGMM_test04() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test04());
-    return rcpp_result_gen;
-END_RCPP
-}
-// test1
-mat test1();
-RcppExport SEXP _nSGMM_test1() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test1());
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_Fln_cpp_fast", (DL_FUNC) &_nSGMM_Fln_cpp_fast, 1},
@@ -597,6 +548,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_BBP_T_from_atY_plain_cpp", (DL_FUNC) &_nSGMM_BBP_T_from_atY_plain_cpp, 3},
     {"_nSGMM_equilibrate_cpp_fast8_debug", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_debug, 8},
     {"_nSGMM_equilibrate_cpp_fast8_smarter", (DL_FUNC) &_nSGMM_equilibrate_cpp_fast8_smarter, 5},
+    {"_nSGMM_berlin_mwe", (DL_FUNC) &_nSGMM_berlin_mwe, 11},
+    {"_nSGMM_berlin_mwe2", (DL_FUNC) &_nSGMM_berlin_mwe2, 1},
     {"_nSGMM_recip_cpp", (DL_FUNC) &_nSGMM_recip_cpp, 2},
     {"_nSGMM_component_counts", (DL_FUNC) &_nSGMM_component_counts, 1},
     {"_nSGMM_Ccomponents", (DL_FUNC) &_nSGMM_Ccomponents, 5},
@@ -615,13 +568,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 11},
     {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 11},
     {"_nSGMM_simulate_BBP_cpp73", (DL_FUNC) &_nSGMM_simulate_BBP_cpp73, 11},
-    {"_nSGMM_simulate_BBP_cpp_works", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_works, 11},
-    {"_nSGMM_test0", (DL_FUNC) &_nSGMM_test0, 0},
-    {"_nSGMM_test01", (DL_FUNC) &_nSGMM_test01, 0},
-    {"_nSGMM_test02", (DL_FUNC) &_nSGMM_test02, 0},
-    {"_nSGMM_test03", (DL_FUNC) &_nSGMM_test03, 0},
-    {"_nSGMM_test04", (DL_FUNC) &_nSGMM_test04, 0},
-    {"_nSGMM_test1", (DL_FUNC) &_nSGMM_test1, 0},
     {NULL, NULL, 0}
 };
 
