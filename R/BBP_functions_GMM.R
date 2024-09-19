@@ -228,8 +228,9 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (sim_parallel) {
     simx<-simulate_BBP_cpp_parallel(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
   } else {
-    cat("simulating in non-parallel\n")
+    cat("<")
     simx<-simulate_BBP_cpp(nrow(kinship),theta[1],theta[2],exp(theta[3]), distance,kinship,capacity,income,prec,noiseseed,maxrounds)
+    cat(">")
   }
 
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
