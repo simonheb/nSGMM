@@ -335,7 +335,6 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   
   start_time <- Sys.time()
   # now loop through the 16 points and optimize with spg again
-  summary(parameters)
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
@@ -346,7 +345,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) 
-  summary(parameters)
+  print(summary(parameters))
   
   parameters <- parameters |> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
