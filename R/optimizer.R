@@ -340,14 +340,11 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
       theta <- c(x1, x2, x3, x4)
       result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
                         upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = F, eps = 0.1, triter),
+                        control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
                         prec = precision_factor * 16, noiseseed = noiseseed, ...)
       return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
     },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) 
-  print(summary(parameters))
-  
-  parameters <- parameters |> bind_rows()  |> as.data.frame() |> 
+    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(50) 
   
