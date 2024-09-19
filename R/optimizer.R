@@ -17,28 +17,24 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
     eps <- control$eps
   }
   control$eps <- eps*10
-  cat("\033[1;31m")
   zz <- BB::spg(
     par = par,
     ...,
     control = control
   )
   control$eps <- eps
-  cat("\033[1;33m")
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
   control$eps <- eps/10
-  cat("\033[1;32m")
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
   
-  cat("\033[0m")
   return(zz)
 }
 
@@ -85,21 +81,18 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
     eps <- control$eps
   }
   control$eps <- eps*5
-  cat("\033[1;33m")
   zz <- BB::spg(
     par = par,
     ...,
     control = control
   )
   control$eps <- eps/5
-  cat("\033[1;32m")
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
   
-  cat("\033[0m")
   return(zz)
 }
 
