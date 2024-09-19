@@ -189,3 +189,104 @@ mat simulate_BBP_cpp73(int n, double delta0,double delta1,double sigma, mat dist
 }
 
 
+
+// [[Rcpp::export]]
+mat simulate_BBP_cpp1(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
+    altruism.diag().ones();
+    int rounds_;
+    bool converged_;
+    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
+    eqtrans2.elem( find(eqtrans2) ).ones();
+    vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income);
+  }    
+  return(finalMatrix);
+}
+
+
+
+
+// [[Rcpp::export]]
+mat simulate_BBP_cpp2(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
+    altruism.diag().ones();
+    int rounds_;
+    bool converged_;
+    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
+    eqtrans2.elem( find(eqtrans2) ).ones();
+  }    
+  return(finalMatrix);
+}
+
+// [[Rcpp::export]]
+mat simulate_BBP_cpp3(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
+    altruism.diag().ones();
+  }    
+  return(finalMatrix);
+}
+// [[Rcpp::export]]
+mat simulate_BBP_cpp4(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+  }    
+  return(finalMatrix);
+}
+// [[Rcpp::export]]
+mat simulate_BBP_cpp5(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  for (int i=0; i<reps;i++) {
+    //std::cout << "s:" <<i;
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+  }    
+  return(finalMatrix);
+}
+// [[Rcpp::export]]
+mat simulate_BBP_cpp6(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  
+  mat finalMatrix = zeros(reps,13);
+  vec converged(reps);
+  vec roundsc(reps);
+  
+  return(finalMatrix);
+}
