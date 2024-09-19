@@ -182,7 +182,7 @@ target_function<-function(theta,vdata,...,prec,maxrounds=NULL, verbose=F){
   if (is.null(maxrounds))
     maxrounds <- 300+prec/5
   ret<-c(moment_distance(theta=theta,vdata,...,maxrounds=maxrounds,prec=max(2,prec))$value)
-
+  cat("[")
   if (length(ret)==0) { return(Inf)}
   return(ret)
 }
@@ -265,7 +265,6 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
     ret<-mean(apply(diff,1,function(x) {return(x%*%WW%*%x)}))
   if (is.null(ret)) browser()
   if (is.na(ret)) browser()
-  cat("(")
   return(
     list(
       value=ret,#if this is actually 0, this is mostly due to empty networks being provided, e.g. in a bootstrap case
