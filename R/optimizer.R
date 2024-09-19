@@ -131,7 +131,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
   start_time <- Sys.time()
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-                           cat("inside ",       cat(floor(runif(1)*10)), "\n")
+                           #cat("inside ",       cat(floor(runif(1)*10)), "\n")
                            theta <- c(x1, x2, x3, x4)
                            val <- fn(theta, prec = 1, noiseseed = noiseseed, ...)
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
@@ -319,7 +319,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
     function(x1, x2, x3, x4) {
       theta <- c(x1, x2, x3, x4)
       val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
-      cat(floor(runif(1)*10),"\n")
+      #cat(floor(runif(1)*10),"\n")
       return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
     },
     parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
@@ -662,7 +662,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   cat("going int mcmapply")
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-                           cat("_",floor(runif(1)*10),"_\n")
+                           #cat("_",floor(runif(1)*10),"_\n")
                            theta <- c(x1, x2, x3, x4)
                            val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
