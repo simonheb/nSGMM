@@ -59,7 +59,114 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
   return(zz)
 }
 
-parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
+sumprogress <- function(round, parameters, start_time) {
+  cat("round", round, "took ", floor(100*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/100, " minutes\n")
+  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
+  cat("best par is:", paste0(round(parameters[1,1:4]*100)/100 |> unlist(), collapse=", "), "\n")
+}
+
+
+parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+                             maxit = 1500,
+                             schedule =
+                               data.frame(round = c(1,    2,    3,    4,     5,    6),
+                                          eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
+                                          keepn = c(150, 50,    10,    3,    2,    1),
+                                          precs = c(4,    16,   50,  500,  3000, 8000)),
+                             recompute_vals_with_prec_16000 = FALSE,
+                             initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
+  cat("function: parallel_unified\n")
+  print(schedule)
+  
+  tic()
+  if (is.null(seed)) {
+    noiseseed <- as.integer(runif(1, 1, 1e6))
+  } else {
+    noiseseed <- seed
+  } 
+  # draw 1024 points on a grid spanned by lower and upper
+  sequences <- lapply(1:length(lower), function(i) {
+    seq(lower[i], upper[i], length.out = initialrounds)
+  })
+  parameters <- expand.grid(sequences)
+  
+  # loop over grid lines and keep only those with a finite value
+  cat("initial grid size:", nrow(parameters), "\n")
+  
+  start_time <- Sys.time()
+  
+  colnames(parameters) <- c(paste0("par", 1:length(upper)))
+  
+  parameters <- mcmapply(mc.cores=mc.cores,
+                         function(x1, x2, x3, x4) {
+                           theta <- c(x1, x2, x3, x4)
+                           val <- fn(theta, prec = schedule$precs, noiseseed = noiseseed, ...)
+                           return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+    arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
+    head(schedule$keepn[1]) 
+  
+  parameters <- rbind(parameters, colmeans(parameters))
+  
+  sumprogress(1, parameters, start_time)
+  
+  
+  for (round in 2:nrow(schedule)) {
+    start_time <- Sys.time()
+    # now loop through the 16 points and optimize with spg again
+    parameters <- mcmapply(mc.cores=mc.cores,
+                           function(x1, x2, x3, x4) {
+                             theta <- c(x1, x2, x3, x4)
+                             result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                               control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
+                                               prec = precision_factor * schedule$eps[round], noiseseed = noiseseed, ...)
+                             return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                           },
+                           parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
+    
+    if (recompute_vals_with_prec_16000) {
+      parameters$val <- mcmapply(mc.cores=mc.cores,
+                                 function(x1, x2, x3, x4) {
+                                   theta <- c(x1, x2, x3, x4)
+                                   val <- fn(theta, prec = 16000, noiseseed = noiseseed, ...)
+                                   return(val)
+                                 },
+                                 parameters$par1, parameters$par2, parameters$par3, parameters$par4, SIMPLIFY = T)
+    }
+    
+    parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
+    
+    parameters <- rbind(parameters, colmeans(parameters))
+    
+    sumprogress(round, parameters, start_time)
+  }
+  
+  
+  # start_time <- Sys.time()
+  # #optimizze again with prec 150000
+  # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
+  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
+  #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
+  #             ...)
+  # 
+  par <- parameters[1,1:4] |> unlist()
+  names(par)<-NULL
+  val <- min(parameters$val) 
+  # print par in blue
+  
+  sumprogress("final", parameters, start_time)
+  cat("\033[34m",par,"\033[0m\n")
+  
+  return(list(par=par,
+              val=val,
+              tictoc=toc()$callback_msg))   
+}
+
+
+parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+                                                    maxit = 1500,
+                                                    initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_broad_and_fast_mapplymc")  # print the name of the function that is being exectuted
   tic()
   if (is.null(seed)) {
@@ -81,126 +188,111 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
   parameters <- mcmapply(mc.cores=mc.cores,
-    function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
-      return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
+                         function(x1, x2, x3, x4) {
+                           theta <- c(x1, x2, x3, x4)
+                           val <- fn(theta, prec = 4, noiseseed = noiseseed, ...)
+                           return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(150) 
   
   parameters <- rbind(parameters, colmeans(parameters))
   
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 1 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  sumprogress(1,parameters, start_time)
   
   start_time <- Sys.time()
   # now loop through the 16 points and optimize with spg again
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                        upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
-                        prec = precision_factor * 16, noiseseed = noiseseed, ...)
-      return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
+                           theta <- c(x1, x2, x3, x4)
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
+                                             upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10, maxit = maxit),
+                                             prec = precision_factor * 16, noiseseed = noiseseed, ...)
+                           return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(50) 
   
   
   parameters <- rbind(parameters, colmeans(parameters))
   
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 2 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  sumprogress(2,parameters, start_time)
   
   
   start_time <- Sys.time()
   # now loop through the 16 points and optimize with spg again
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                        upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10),
-                        prec = precision_factor * 50, noiseseed = noiseseed, ...)
-      return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                           theta <- c(x1, x2, x3, x4)
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
+                                             upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = FALSE, eps = 0.1, triter = 10, maxit = maxit),
+                                             prec = precision_factor * 50, noiseseed = noiseseed, ...)
+                           return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(10)
   
   parameters <- rbind(parameters, colmeans(parameters))
   
+  sumprogress(3,parameters, start_time)
   
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 3 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
   start_time <- Sys.time()
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                        upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10),
-                        prec = precision_factor * 500, noiseseed = noiseseed, ...)
-      return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                           theta <- c(x1, x2, x3, x4)
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
+                                             upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = FALSE, eps = 0.03, triter = 10, maxit = maxit),
+                                             prec = precision_factor * 500, noiseseed = noiseseed, ...)
+                           return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(3) 
   parameters <- rbind(parameters, colmeans(parameters))
   
+  sumprogress(4,parameters, start_time)
   
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 4 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
   start_time <- Sys.time()
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                        upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10),
-                        prec = precision_factor * 3000, noiseseed = noiseseed, ...)
-      return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                           theta <- c(x1, x2, x3, x4)
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
+                                             upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = FALSE, eps = 0.01, triter = 10, maxit = maxit),
+                                             prec = precision_factor * 3000, noiseseed = noiseseed, ...)
+                           return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(2)
   parameters <- rbind(parameters, colmeans(parameters))
   
+  sumprogress(5, parameters, start_time)
   
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 5 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
   start_time <- Sys.time()
   
   parameters <- mcmapply(mc.cores=mc.cores,
-    function(x1, x2, x3, x4) {
-      theta <- c(x1, x2, x3, x4)
-      result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                        upper = upper, lower = lower,
-                        control = list(maximize = FALSE, trace = FALSE, eps = 0.005, triter = 10),
-                        prec = precision_factor * 8000, noiseseed = noiseseed, ...)
-      return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
-    },
-    parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                         function(x1, x2, x3, x4) {
+                           theta <- c(x1, x2, x3, x4)
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
+                                             upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = FALSE, eps = 0.005, triter = 10, maxit = maxit),
+                                             prec = precision_factor * 8000, noiseseed = noiseseed, ...)
+                           return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
+                         },
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |>
     head(1)
   
   # 
-  # cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  # cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  # cat("round 6 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  #   sumprogress(6,parameters, start_time)
   # start_time <- Sys.time()
   # 
   # #optimizze again with prec 150000
@@ -213,15 +305,17 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
   names(par)<-NULL
   val <- min(parameters$val) 
   # print par in blue
-  cat("\033[34m",par,"\033[0m\n")
-  cat("round 7 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  
+  #sumprogress(7,parameters, start_time)
   
   return(list(par=par,
               val=val,
               tictoc=toc()$callback_msg))   
 }
 
-parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
+parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+                                           maxit = 1500,
+                                           initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_drop_the_last2")
   tic()
   if (is.null(seed)) {
@@ -250,120 +344,78 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
     bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(100) 
-  
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 1 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-  
+  sumprogress(1,parameters, start_time)
   start_time <- Sys.time()
-  # now loop through the 16 points and optimize with spg again
-  
+
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10, maxit = maxit),
                                              prec = precision_factor * 50, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(32) 
-  
-  
+    arrange(val) |> head(32)
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 2 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-  
-  
+  sumprogress(2, parameters, start_time)
   start_time <- Sys.time()
-  # now loop through the 16 points and optimize with spg again
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10, maxit = maxit),
                                              prec = precision_factor * 128, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(8)
-  
+    arrange(val) |> head(8)
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 3 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  sumprogress(3, parameters, start_time)
   start_time <- Sys.time()
+  
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.03, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.03, triter = 10, maxit = maxit),
                                              prec = precision_factor * 512, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(4) 
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 4 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+    arrange(val)  |> head(4) 
+  parameters <- rbind(parameters, colmeans(parameters))
+  sumprogress(4, parameters, start_time)
   start_time <- Sys.time()
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10, maxit = maxit),
                                              prec = precision_factor * 2000, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(1)
-  
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 5 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+    arrange(val)  |> head(2)
+  parameters <- rbind(parameters, colmeans(parameters))
+  sumprogress(5, parameters, start_time)
   start_time <- Sys.time()
-  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10, maxit = maxit),
                                              prec = precision_factor * 8000, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(1)
-   
-   
-   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-   cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-   cat("round 6 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-   start_time <- Sys.time()
+    arrange(val)  |> head(1)
+  sumprogress(6, parameters, start_time) 
+  start_time <- Sys.time()
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
@@ -383,7 +435,9 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
               tictoc=toc()$callback_msg))   
 }
 
-parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
+parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+                                                maxit = 1500,
+                                                initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_drop_the_last2_flat")
   tic()
   if (is.null(seed)) {
@@ -413,121 +467,81 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(100) 
-  
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 1 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-  
+  sumprogress(1, parameters, start_time)
   start_time <- Sys.time()
-  # now loop through the 16 points and optimize with spg again
-  
+
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10, maxit = maxit),
                                              prec = precision_factor * 16, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(32) 
-
+    arrange(val) |> head(32) 
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 2 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-  
-  
+  sumprogress(2, parameters, start_time)
   start_time <- Sys.time()
-  # now loop through the 16 points and optimize with spg again
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.1, triter = 10, maxit = maxit),
                                              prec = precision_factor * 128, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(8)
-  
+    arrange(val) |> head(8)
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 3 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  sumprogress(3, parameters, start_time)
   start_time <- Sys.time()
-  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.03, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.03, triter = 10, maxit = maxit),
                                              prec = precision_factor * 512, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(4)
+    arrange(val)  |> head(4)
   parameters <- rbind(parameters, colmeans(parameters))
-  
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 4 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+  sumprogress(4, parameters, start_time)
   start_time <- Sys.time()
-  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10, maxit = maxit),
                                              prec = precision_factor * 2000, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(1)
-  
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-  cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-  cat("round 5 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
+    arrange(val)  |> head(2)
+  parameters <- rbind(parameters, colmeans(parameters))
+  sumprogress(5, parameters, start_time)
   start_time <- Sys.time()
-  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE,
-                                             upper = upper, lower = lower,
-                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10),
+                           result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                                             control = list(maximize = FALSE, trace = F, eps = 0.01, triter = 10, maxit = maxit),
                                              prec = precision_factor * 8000, noiseseed = noiseseed, ...)
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |>
-    head(1) 
-   
-   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
-   cat("best par is:", paste0(parameters[1,1:4] |> unlist(), collapse=", "), "\n")
-   cat("round 6 took ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
-   start_time <- Sys.time()
+    arrange(val) |> head(1) 
+  
+  sumprogress(6, parameters, start_time)
+  
+  
+  start_time <- Sys.time()
   # 
   # #optimizze again with prec 150000
   # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
@@ -567,24 +581,24 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
   for (i in 1:initialrounds) {
     set.seed(noiseseed+i)
     if (is.null(par)) 
-        z<-hydroPSO::hydroPSO(fn=lfn, lower=lower, upper=upper,
-                              control=list(maxit=100,write2disk=FALSE,verbose=FALSE), 
-                              prec=precision_factor*4, noiseseed=1000*noiseseed+i, 
-                              ...
-        )
+      z<-hydroPSO::hydroPSO(fn=lfn, lower=lower, upper=upper,
+                            control=list(maxit=100,write2disk=FALSE,verbose=FALSE), 
+                            prec=precision_factor*4, noiseseed=1000*noiseseed+i, 
+                            ...
+      )
     else
       z<-hydroPSO::hydroPSO(par=par, fn=lfn, lower=lower, upper=upper,
                             control=list(maxit=100,write2disk=FALSE,verbose=FALSE), 
                             prec=precision_factor*4, noiseseed=1000*noiseseed+i, 
                             ...
       )
-      
+    
     if (debug) {
       #print in color orange, number of it, and the parameters given by hydropsp
       cat("\033[1;33m", "iteration ", i, " z$par: ", z$par, "\n", "\033[0m")
     }
-      
-      
+    
+    
     zz<-BB::spg(par=z$par, fn=lfn,  quiet=TRUE,
                 upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.1),
                 prec=precision_factor*300,noiseseed=1000*noiseseed,
