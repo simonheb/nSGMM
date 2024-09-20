@@ -16,24 +16,35 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   if (is.null(eps)) {
     eps <- control$eps
   }
+  time1 <- Sys.time()
   control$eps <- eps*10
   zz <- BB::spg(
     par = par,
     ...,
     control = control
   )
+  iter2 <- zz$iter
+  time2 <- Sys.time()
   control$eps <- eps
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
+  iter3 <- zz$iter
+  time3 <- Sys.time()
   control$eps <- eps/10
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
+  iter4 <- zz$iter
+  time4 <- Sys.time()
+  
+  cat("spg_eps_decreasing:\t", "*10:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
+      "1:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\t",
+      "*0.1:", iter4, "in", as.numeric(difftime(time4, time3, units = "mins")), "mins\n"
   
   return(zz)
 }
@@ -44,17 +55,25 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
     eps <- control$eps
   }
   control$eps <- eps*5
+  time1 <- Sys.time()
   zz <- BB::spg(
     par = par,
     ...,
     control = control
   )
+  iter2 <- zz$iter
+  time2 <- Sys.time()
   control$eps <- eps/5
   zz <- BB::spg(
     par = zz$par,
     ...,
     control = control
   )
+  iter3 <- zz$iter
+  time3 <- Sys.time()
+  
+  cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
+      "*0.2:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\n"
   
   return(zz)
 }
