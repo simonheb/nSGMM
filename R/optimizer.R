@@ -44,7 +44,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   
   cat("spg_eps_decreasing:\t", "*10:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
       "1:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\t",
-      "*0.1:", iter4, "in", as.numeric(difftime(time4, time3, units = "mins")), "mins\n"
+      "*0.1:", iter4, "in", as.numeric(difftime(time4, time3, units = "mins")), "mins\n")
   
   return(zz)
 }
@@ -73,7 +73,7 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
   time3 <- Sys.time()
   
   cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
-      "*0.2:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\n"
+      "*0.2:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\n")
   
   return(zz)
 }
