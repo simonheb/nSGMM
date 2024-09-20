@@ -313,6 +313,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
               tictoc=toc()$callback_msg))   
 }
 
+
 parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
                                            maxit = 1500,
                                            initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
@@ -348,6 +349,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   sumprogress(1,parameters, start_time)
   start_time <- Sys.time()
 
+  
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
@@ -361,6 +363,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   parameters <- rbind(parameters, colmeans(parameters))
   sumprogress(2, parameters, start_time)
   start_time <- Sys.time()
+  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
@@ -404,6 +407,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
   sumprogress(5, parameters, start_time)
   start_time <- Sys.time()
   
+  
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
@@ -434,6 +438,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
               val=val,
               tictoc=toc()$callback_msg))   
 }
+
 
 parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
                                                 maxit = 1500,
@@ -484,6 +489,8 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
   parameters <- rbind(parameters, colmeans(parameters))
   sumprogress(2, parameters, start_time)
   start_time <- Sys.time()
+  
+  
   
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
