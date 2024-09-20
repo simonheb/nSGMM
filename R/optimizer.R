@@ -48,44 +48,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
 }
 
 
-spg_eps_decreasing_ftol_dyn <- function(par, control, eps=NULL, noiseseed, fn,
-                                        upper,lower,quiet,
-                                        ...) {
-  cat("starting to compute ftol\n")
-  fsd <- sapply(1:30, function(x) fn(theta = par, noiseseed=noiseseed+x, ...)) |> sd()
-  control$ftol <-  min(max(fsd/1000,1e-10),1)
-  cat("ftol:", control$ftol, "\n")
-  if (is.null(eps)) {
-    eps <- control$eps
-  }
-  control$eps <- eps*10
-  cat("\033[1;31m")
-  zz <- BB::spg(fn = fn,
-    par = par,
-    ..., noiseseed=noiseseed,
-    upper=upper,lower=lower,quiet=quiet,
-    control = control
-  )
-  control$eps <- eps
-  cat("\033[1;33m")
-  zz <- BB::spg(fn = fn,
-    par = zz$par,
-    ...,noiseseed=noiseseed,
-    upper=upper,lower=lower,quiet=quiet,
-    control = control
-  )
-  control$eps <- eps/10
-  cat("\033[1;32m")
-  zz <- BB::spg(fn = fn,
-    par = zz$par,
-    ...,noiseseed=noiseseed,
-    upper=upper,lower=lower,quiet=quiet,
-    control = control
-  )
-  
-  cat("\033[0m")
-  return(zz)
-}
+
 spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
   if (is.null(eps)) {
     eps <- control$eps
@@ -111,7 +74,7 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
 
 
 
-parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
+parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_broad_and_fast")
   tic()
   if (is.null(seed)) {
@@ -294,7 +257,7 @@ parallel_manual_broad_and_fast <- function(fn, spg_fun=BB::spg, lower, upper, se
 
 
 
-parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
+parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_broad_and_fast_mapplymc")  # print the name of the function that is being exectuted
   tic()
   if (is.null(seed)) {
@@ -456,7 +419,7 @@ parallel_manual_broad_and_fast_mapplymc <- function(fn, spg_fun=BB::spg, lower, 
               val=val,
               tictoc=toc()$callback_msg))   
 }
-worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
+worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function worked_nicely_once\n")
   tic()
   if (is.null(seed)) {
@@ -640,7 +603,7 @@ worked_nicely_once <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par
 }
 
 
-parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
+parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_drop_the_last2")
   tic()
   if (is.null(seed)) {
@@ -826,7 +789,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
 
 
 
-parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores=25) {
+parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_manual_drop_the_last2_flat")
   tic()
   if (is.null(seed)) {
@@ -1007,7 +970,7 @@ parallel_manual_drop_the_last2_flat <- function(fn, spg_fun=BB::spg, lower, uppe
               val=val,
               tictoc=toc()$callback_msg))   
 }
-parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e6, mc.cores=25) {
+parallel_manual <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e6, mc.cores = 50) {
   tic()
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
