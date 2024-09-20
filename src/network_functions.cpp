@@ -1,3 +1,5 @@
+#define ARMA_DONT_USE_OPENMP
+
 #include <RcppArmadillo.h>
 #include <iostream>
 #include <tictoc.h>

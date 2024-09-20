@@ -16,11 +16,5 @@ double logpotential_fast_cpp(const vec& transfers,const mat& logaltruism, const 
 mat gr_logpotential_cpp(const mat& transfers,const mat& logaltruism, const vec& income);
 double logpotential_cpp(const mat& transfers,const mat& logaltruism, const vec& income);
 
-
-    
-    
-
         
 #endif
-
-    
