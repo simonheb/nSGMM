@@ -150,7 +150,7 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
                              theta <- c(x1, x2, x3, x4)
                              result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
-                                               prec = precision_factor * schedule$eps[round], noiseseed = noiseseed, ...)
+                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ...)
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
                            parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
