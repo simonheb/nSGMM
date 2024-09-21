@@ -42,10 +42,11 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   iter4 <- zz$iter
   time4 <- Sys.time()
   
-  cat("spg_eps_decreasing:\t", "*10:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
-      "1:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\t",
-      "*0.1:", iter4, "in", as.numeric(difftime(time4, time3, units = "mins")), "mins\n")
-  
+  zz$step_iter <- c(iter2, iter3,iter4)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")),
+                       as.numeric(difftime(time3, time2, units = "mins")),
+                       as.numeric(difftime(time4, time3, units = "mins")))
+
   return(zz)
 }
 
@@ -72,14 +73,15 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
   iter3 <- zz$iter
   time3 <- Sys.time()
   
-  cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
-      "*0.2:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\n")
+  zz$step_iter <- c(iter1, iter2)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")),
+                       as.numeric(difftime(time3, time2, units = "mins")))
   
   return(zz)
 }
 
 sumprogress <- function(round, parameters, start_time) {
-  cat("round", round, "took ", floor(100*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/100, " minutes\n")
+  cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " minutes\n")
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
   cat("best par is:", paste0(round(parameters[1,1:4]*100)/100 |> unlist(), collapse=", "), "\n")
 }
