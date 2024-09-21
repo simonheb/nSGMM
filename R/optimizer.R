@@ -119,10 +119,11 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           val <- fn(theta, prec = schedule$precs, noiseseed = noiseseed, ...)
+                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ...)
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
                          },
-                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> 
+    bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(schedule$keepn[1]) 
   
