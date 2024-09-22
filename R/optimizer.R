@@ -52,7 +52,30 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   cat("spg_eps_decreasing:\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       "1:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\t",
       "*0.1:", iter4, "in", round(as.numeric(difftime(time4, time3, units = "mins")),2), "mins\n")
+  
+  return(zz)
+}
 
+
+
+spg_plain <- function(par, control, eps=NULL, ...) {
+  if (is.null(eps)) {
+    eps <- control$eps
+  }
+  time1 <- Sys.time()
+  control$eps <- eps
+  zz <- BB::spg(
+    par = par,
+    ...,
+    control = control
+  )
+  iter2 <- zz$iter
+  time2 <- Sys.time()
+  zz$step_iter <- c(iter2)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
+  
+  cat("spg_plain:\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\n")
+  
   return(zz)
 }
 
@@ -95,7 +118,7 @@ sumprogress <- function(round, parameters, start_time) {
 }
 
 
-parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
