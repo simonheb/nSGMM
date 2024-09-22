@@ -102,7 +102,7 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
                                           keepn = c(150, 50,    10,    3,    2,    1),
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
-                             recompute_vals_with_prec_16000 = FALSE,
+                             recompute_vals_with_next_prec = FALSE,
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_unified\n")
   print(schedule)
@@ -155,11 +155,12 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
                            },
                            parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
     
-    if (recompute_vals_with_prec_16000) {
+    if (recompute_vals_with_next_prec) {
+      nextprec <- schedule$precs[min(round,nrow(schedule))]
       parameters$val <- mcmapply(mc.cores=mc.cores,
                                  function(x1, x2, x3, x4) {
                                    theta <- c(x1, x2, x3, x4)
-                                   val <- fn(theta, prec = 16000, noiseseed = noiseseed, ...)
+                                   val <- fn(theta, prec = precision_factor * nextprec, noiseseed = noiseseed, ...)
                                    return(val)
                                  },
                                  parameters$par1, parameters$par2, parameters$par3, parameters$par4, SIMPLIFY = T)
