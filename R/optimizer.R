@@ -186,7 +186,7 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
   val <- min(parameters$val) 
   # print par in blue
   
-  sumprogress("final", parameters, start_time)
+  sumprogress("99", parameters, start_time)
   cat("\033[34m",par,"\033[0m\n")
   
   return(list(par=par,
