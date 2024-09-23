@@ -42,9 +42,39 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   iter4 <- zz$iter
   time4 <- Sys.time()
   
-  cat("spg_eps_decreasing:\t", "*10:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
-      "1:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\t",
-      "*0.1:", iter4, "in", as.numeric(difftime(time4, time3, units = "mins")), "mins\n")
+  
+  zz$step_iter <- c(iter2, iter3,iter4)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")),
+                       as.numeric(difftime(time3, time2, units = "mins")),
+                       as.numeric(difftime(time4, time3, units = "mins")))
+  
+  
+  cat("spg_eps_decreasing:\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
+      "1:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\t",
+      "*0.1:", iter4, "in", round(as.numeric(difftime(time4, time3, units = "mins")),2), "mins\n")
+  
+  return(zz)
+}
+
+
+
+spg_plain <- function(par, control, eps=NULL, ...) {
+  if (is.null(eps)) {
+    eps <- control$eps
+  }
+  time1 <- Sys.time()
+  control$eps <- eps
+  zz <- BB::spg(
+    par = par,
+    ...,
+    control = control
+  )
+  iter2 <- zz$iter
+  time2 <- Sys.time()
+  zz$step_iter <- c(iter2)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
+  
+  cat("spg_plain:\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\n")
   
   return(zz)
 }
@@ -72,27 +102,29 @@ spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
   iter3 <- zz$iter
   time3 <- Sys.time()
   
-  cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", as.numeric(difftime(time2, time1, units = "mins")), "mins\t",
-      "*0.2:", iter3, "in", as.numeric(difftime(time3, time2, units = "mins")), "mins\n")
+  zz$step_iter <- c(iter2, iter3)
+  zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")), as.numeric(difftime(time3, time2, units = "mins")))
+  cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", 
+      round(as.numeric(difftime(time2, time1, units = "mins")),digits = 2), "mins\t",
+      "*0.2:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\n")
   
   return(zz)
 }
 
 sumprogress <- function(round, parameters, start_time) {
-  cat("round", round, "took ", floor(100*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/100, " minutes\n")
+  cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " minutes\n")
   cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
   cat("best par is:", paste0(round(parameters[1,1:4]*100)/100 |> unlist(), collapse=", "), "\n")
 }
 
 
-parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=NULL, ... ,
+parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
                                           keepn = c(150, 50,    10,    3,    2,    1),
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
-                             recompute_vals_with_prec_16000 = FALSE,
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
   cat("function: parallel_unified\n")
   print(schedule)
@@ -119,10 +151,11 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
   parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           val <- fn(theta, prec = schedule$precs, noiseseed = noiseseed, ...)
+                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ...)
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
                          },
-                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F)|> bind_rows()  |> as.data.frame() |> 
+                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> 
+    bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(schedule$keepn[1]) 
   
@@ -139,20 +172,10 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
                              theta <- c(x1, x2, x3, x4)
                              result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
-                                               prec = precision_factor * schedule$eps[round], noiseseed = noiseseed, ...)
+                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ...)
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
                            parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
-    
-    if (recompute_vals_with_prec_16000) {
-      parameters$val <- mcmapply(mc.cores=mc.cores,
-                                 function(x1, x2, x3, x4) {
-                                   theta <- c(x1, x2, x3, x4)
-                                   val <- fn(theta, prec = 16000, noiseseed = noiseseed, ...)
-                                   return(val)
-                                 },
-                                 parameters$par1, parameters$par2, parameters$par3, parameters$par4, SIMPLIFY = T)
-    }
     
     parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
     
@@ -161,20 +184,12 @@ parallel_unified <- function(fn, spg_fun=BB::spg, lower, upper, seed=NULL, par=N
     sumprogress(round, parameters, start_time)
   }
   
-  
-  # start_time <- Sys.time()
-  # #optimizze again with prec 150000
-  # zz<-spg_fun(par=unlist(parameters[,1:length(lower)]), fn=fn,  quiet=TRUE,
-  #             upper=upper,lower=lower,control=list(maximize=FALSE, trace = FALSE, eps=0.01, triter=5),
-  #             prec=precision_factor*160000,noiseseed=1000*noiseseed,
-  #             ...)
-  # 
   par <- parameters[1,1:4] |> unlist()
   names(par)<-NULL
   val <- min(parameters$val) 
   # print par in blue
   
-  sumprogress("final", parameters, start_time)
+  sumprogress("99", parameters, start_time)
   cat("\033[34m",par,"\033[0m\n")
   
   return(list(par=par,
@@ -407,7 +422,7 @@ parallel_manual_drop_the_last2 <- function(fn, spg_fun=BB::spg, lower, upper, se
                            return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |> head(4) 
+    arrange(val)  |> head(4)
   parameters <- rbind(parameters, colmeans(parameters))
   sumprogress(4, parameters, start_time)
   start_time <- Sys.time()
