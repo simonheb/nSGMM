@@ -12,7 +12,7 @@ plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
 }
 
 
-spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
+spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id) {
   if (is.null(eps)) {
     eps <- control$eps
   }
@@ -52,7 +52,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
                        as.numeric(difftime(time4, time3, units = "mins")))
   
   
-  cat("spg_eps_decreasing:\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
+  cat("spg_eps_decreasing (",output_id,"):\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       "1:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\t",
       "*0.1:", iter4, "in", round(as.numeric(difftime(time4, time3, units = "mins")),2), "mins\t",
       zz$value+reduction4+reduction3+reduction2,"=(",reduction2,reduction3,reduction4,")>", zz$value,
@@ -63,7 +63,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
 
 
 
-spg_plain <- function(par, control, eps=NULL, ...) {
+spg_plain <- function(par, control, eps=NULL, ...,output_id) {
   if (is.null(eps)) {
     eps <- control$eps
   }
@@ -79,7 +79,7 @@ spg_plain <- function(par, control, eps=NULL, ...) {
   zz$step_iter <- c(iter2)
   zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
   
-  cat("spg_plain:\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
+  cat("spg_plain (",output_id,"):\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       zz$value+zz$fn.reduction, "=>", zz$value, "\n")
   
   return(zz)
@@ -175,14 +175,15 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     start_time <- Sys.time()
     # now loop through the 16 points and optimize with spg again
     parameters <- mcmapply(mc.cores=mc.cores,
-                           function(x1, x2, x3, x4) {
+                           function(x1, x2, x3, x4, i) {
                              theta <- c(x1, x2, x3, x4)
                              result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
-                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ...)
+                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = i)
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
-                           parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
+                           parameters[,1], parameters[,2], parameters[,3], parameters[,4], 1:nrow(parameters),
+                           SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
     
     parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
     
