@@ -1,7 +1,7 @@
 Package: nSGMM
 Type: Package
 Title: Tools to simulate networks and perform simulation-based inference
-Version: 1.1.3
+Version: 1.1.4
 Date: 2024-1-1
 Author: Simon HeSS;
 Maintainer: S.H. <simon@hesss.org>
