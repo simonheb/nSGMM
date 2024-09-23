@@ -119,7 +119,7 @@ spg_plain <- function(par, control, eps=NULL, ...,output_id) {
 
 sumprogress <- function(round, parameters, start_time) {
   cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " minutes\n")
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "points with finite values, doing next iteration\n")
+  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "pars\n")
   cat("best par is:", paste0(round(parameters[1,1:4]*100)/100 |> unlist(), collapse=", "), "\n")
 }
 
@@ -132,11 +132,13 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
                                           keepn = c(150, 50,    10,    3,    2,    1),
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
-                             initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5, mc.cores = 50) {
+                             initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
+                             mc.cores = 50, mc.preschedule = TRUE) {
   cat("function: parallel_unified\n")
   print(schedule)
   
-  tic()
+  start_time_biggi <- Sys.time()
+  
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
   } else {
@@ -182,6 +184,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = i)
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
+                           mc.preschedule = mc.preschedule,
                            parameters[,1], parameters[,2], parameters[,3], parameters[,4], 1:nrow(parameters),
                            SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
     
@@ -206,10 +209,12 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   sumprogress("99", parameters, start_time)
   cat("\033[34m",par,"\033[0m\n")
+  cat("finalvalue:", val, "\n")
   
+  cat("took overall:", floor(10*as.numeric(difftime(Sys.time(), start_time_biggi, units = "mins")))/10, " minutes\n")
   return(list(par=par,
               val=val,
-              tictoc=toc()$callback_msg))   
+              tictoc=floor(10*as.numeric(difftime(Sys.time(), start_time_biggi, units = "mins")))/10))   
 }
 
 
