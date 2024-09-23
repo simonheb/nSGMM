@@ -55,7 +55,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ...) {
   cat("spg_eps_decreasing:\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       "1:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\t",
       "*0.1:", iter4, "in", round(as.numeric(difftime(time4, time3, units = "mins")),2), "mins\t",
-      zz$val-reduction4-reduction3,-reduction2,"=(",reduction2,reduction3,reduction4,")>", zz$val,
+      zz$value-reduction4-reduction3,-reduction2,"=(",reduction2,reduction3,reduction4,")>", zz$value,
       "\n")
   
   return(zz)
@@ -80,7 +80,7 @@ spg_plain <- function(par, control, eps=NULL, ...) {
   zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
   
   cat("spg_plain:\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
-      zz$val-zz$fn.reduction, "=>", zz$fn.reduction, "\n")
+      zz$value-zz$fn.reduction, "=>", zz$fn.reduction, "\n")
   
   return(zz)
 }
@@ -677,7 +677,7 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
   )
   par<-zz$par
   names(par)<-NULL
-  val <- zz$val
+  val <- zz$value
   # print par in blue
   if (debug)
     cat("\033[34m",par,"\033[0m\n")
