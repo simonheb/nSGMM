@@ -3,6 +3,7 @@
 library(nSGMM)
 library(tictoc)
 library(igraph)
+library(parallel)
 set.seed(12)
   n<-40
   b<-as.matrix(as_adjacency_matrix(erdos.renyi.game(n,0.1+(0.4*runif(1))^2)))
