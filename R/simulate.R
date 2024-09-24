@@ -3,7 +3,7 @@ library(dplyr)
 library(parallel)
 
 simulate_BBP_mc<-#function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,seed=1,reps=2,rounds=1000,theta,parallel=FALSE,computeR=FALSE,plotthis=FALSE,kappa.log) {
-  function(..., reps=2,mc.cores=7) {
+  function(..., reps, mc.cores=detectCores()-1) {
   finalMatrix <- mclapply(
     FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
     X=1:reps,
