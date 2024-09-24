@@ -4,8 +4,8 @@ library(parallel)
 
 simulate_BBP_mc<-function(..., reps, mc.cores=detectCores()-1) {
     finalMatrix <-
-    #mclapply(mc.cores=mc.cores,
-    lapply(#for debugging
+    mclapply(mc.cores=mc.cores,
+    #lapply(#for debugging
     FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
     X=1:reps
   ) |> do.call(what=rbind)
