@@ -33,16 +33,23 @@ set.seed(12)
                    income=income,
                    reps=5, rounds=1000,seed=1) 
   
-  
+  th1<-th1+99.1
   tic()
-  for (z in 1:5)
-    a<-simulate_BBP_mc(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4000)  
+  for (z in 1:1)
+    a<-simulate_BBP_mc(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4)  
   toc()
   
   tic()
-  for (z in 1:5)
-    b<-simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4000)  
+  for (z in 1:1)
+    b<-simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4)  
   toc()
   
+  tic()
+  for (z in 1:1)
+    c<-simulate_BBP_cpp(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4)  
+  toc()
   
+  print(a)
+  print(b)
+  print(c)
   

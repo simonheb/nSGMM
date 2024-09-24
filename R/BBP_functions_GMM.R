@@ -211,7 +211,6 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
                          reps = prec,
                          seed = noiseseed,
                          rounds = maxrounds)
-
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   

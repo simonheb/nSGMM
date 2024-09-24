@@ -2,15 +2,18 @@ library(dplyr)
 
 library(parallel)
 
-simulate_BBP_mc<-#function(n,delta0,delta1,sigma,distance,kinship,capacity,income,errors=NULL,seed=1,reps=2,rounds=1000,theta,parallel=FALSE,computeR=FALSE,plotthis=FALSE,kappa.log) {
-  function(..., reps, mc.cores=detectCores()-1) {
-  finalMatrix <-
-    mclapply(mc.cores=mc.cores,
-    #lapply(#for debugging
+simulate_BBP_mc<-function(..., reps, mc.cores=detectCores()-1) {
+    finalMatrix <-
+    #mclapply(mc.cores=mc.cores,
+    lapply(#for debugging
     FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
     X=1:reps
   ) |> do.call(what=rbind)
-  return(finalMatrix)
+  
+  if (mean(finalMatrix[,14])<0.20) {
+      return(matrix(0,reps,13))
+  }
+  return(finalMatrix[,1:13]) 
 }
 
 

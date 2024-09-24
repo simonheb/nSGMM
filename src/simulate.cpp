@@ -61,10 +61,17 @@ int seedfromindex(int index) {
 }
 
 // [[Rcpp::export]]
-mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds, int indexoffset = 0) {
+mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds, int indexoffset = -1) {
   if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-  
-  mat finalMatrix = zeros(reps,13);
+  bool report_convergence = false;
+  mat finalMatrix;
+  if (indexoffset==-1) {
+    indexoffset = 0;
+    finalMatrix = zeros(reps,13);
+  } else {
+    report_convergence = true;
+    finalMatrix = zeros(reps,14);
+  }
   int rounds_;
   bool converged_;
   
@@ -79,6 +86,10 @@ mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distan
 
     for(int mom=0;mom<13;mom++)
       finalMatrix(i,mom) = moments(mom);
+  }
+  if (report_convergence) {
+    finalMatrix(0,13) = converged_;
+    return(finalMatrix);
   }
   return(finalMatrix);
 }

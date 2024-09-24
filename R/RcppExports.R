@@ -137,7 +137,7 @@ seedfromindex <- function(index) {
     .Call(`_nSGMM_seedfromindex`, index)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset = 0L) {
+simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset = -1L) {
     .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset)
 }
 
