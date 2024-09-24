@@ -16,15 +16,32 @@ set.seed(12)
   th4<- 20
   capacity<-matrix(0,n,n)+th4
   zdata<-NULL
-  #simulate_BBP_cpp(n, -0.2,0.2,0.2,0.2, distance, kinship, capacity,income,20,1) 
-  for(j in 1:100) {
-    for(i in seq(1,18,1)) {
-    tic()
-      for (z in 1:10)
-        simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=i)  
-    a<-toc()
-    zdata<-rbind(zdata,c(i,a$toc-a$tic))
-    }
-  }
+  simulate_BBP_cpp(n = n,
+                   delta0 = -0.2, delta1 = 0.2, sigma = 0.2, 
+                   distance = distance, 
+                   kinship = kinship, 
+                   capacity=capacity,
+                   income=income,
+                   reps=5, rounds=1000,seed=1)
+  
+  simulate_BBP_mc(n = n,
+                   delta0 = -0.2, delta1 = 0.2, sigma = 0.2, 
+                   distance = distance, 
+                   kinship = kinship, 
+                   capacity=capacity,
+                   income=income,
+                   reps=5, rounds=1000,seed=1) 
+  
+  
+  tic()
+  for (z in 1:5)
+    a<-simulate_BBP_mc(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4000)  
+  toc()
+  
+  tic()
+  for (z in 1:5)
+    b<-simulate_BBP_cpp_parallel(n=n, delta0=th1,delta1=th2,sigma=th3, distance=distance, kinship=kinship, capacity=capacity,income=income, rounds=1000,seed=1,reps=4000)  
+  toc()
+  
   
   

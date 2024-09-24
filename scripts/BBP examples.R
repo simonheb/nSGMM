@@ -1,9 +1,4 @@
-rm(list=ls())
-library(Rcpp)
-library(foreach)
-library(doParallel)
-library(nSGMM)
-library(mlrMBO)
+
 
 setwd("C:/Users/shess/Dropbox/Gambia/working folder/Marcel Allocation/nSGMM")
 source('R/BBP_functions_GMM.R')
