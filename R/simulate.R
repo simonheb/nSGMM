@@ -2,9 +2,9 @@ library(dplyr)
 
 library(parallel)
 
-simulate_BBP_mc<-function(..., reps, mc.cores=detectCores()-1) {
+simulate_BBP_mc<-function(..., reps, mc.preschedule.simulate=TRUE, mc.cores.simulate=detectCores()-1) {
     finalMatrix <-
-    mclapply(mc.cores=mc.cores,
+    mclapply(mc.cores=mc.cores.simulate, mc.preschedule = mc.preschedule.simulate,
     #lapply(#for debugging
     FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
     X=1:reps
