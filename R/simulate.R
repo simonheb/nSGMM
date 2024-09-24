@@ -9,7 +9,6 @@ simulate_BBP_mc<-function(..., reps, mc.cores=detectCores()-1) {
     FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
     X=1:reps
   ) |> do.call(what=rbind)
-  
   if (mean(finalMatrix[,14])<0.20) {
       return(matrix(0,reps,13))
   }

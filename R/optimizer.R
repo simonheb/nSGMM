@@ -161,7 +161,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                 #mapply(#for debugging
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ...)
+                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, maxrounds = 2000, ...)
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> 
