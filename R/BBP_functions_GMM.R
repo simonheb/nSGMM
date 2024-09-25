@@ -182,7 +182,7 @@ identify_dependent_columns_lm <- function(mat) {
 
 
 
-moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE) {
+moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ...) {
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
@@ -210,7 +210,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
                          distance = distance, kinship = kinship, capacity = capacity, income = income,
                          reps = prec,
                          seed = noiseseed,
-                         rounds = maxrounds)
+                         rounds = maxrounds, ...)
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   
