@@ -154,8 +154,13 @@ target_function<-function(theta,vdata,...,prec,maxrounds=NULL, verbose=F){
   if (verbose)
     cat("theta=",theta,"\n")
   if (is.null(maxrounds))
-    maxrounds <- 1000+prec/3
-  ret<-c(moment_distance(theta=theta,vdata,...,maxrounds=maxrounds,prec=max(2,prec))$value)
+    maxrounds <- 1000 + prec / 3
+  ret<-c(moment_distance(
+    theta=theta,
+    vdata=vdata,
+    ...,
+    maxrounds = maxrounds,
+    prec=max(2,prec))$value)
   if (length(ret)==0) { return(Inf)}
   return(ret)
 }
