@@ -52,7 +52,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id) {
                        as.numeric(difftime(time4, time3, units = "mins")))
   
   
-  cat("spg_eps_decreasing (",output_id,"):\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
+  cat("spg_eps_decreasing ",output_id,"\t", "*10:", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       "1:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\t",
       "*0.1:", iter4, "in", round(as.numeric(difftime(time4, time3, units = "mins")),2), "mins\t",
       zz$value+reduction4+reduction3+reduction2,"=(",reduction2,reduction3,reduction4,")>", zz$value,
@@ -79,7 +79,7 @@ spg_plain <- function(par, control, eps=NULL, ...,output_id) {
   zz$step_iter <- c(iter2)
   zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
   
-  cat("spg_plain (",output_id,"):\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
+  cat("spg_plain ",output_id,"\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
       zz$value+zz$fn.reduction, "=>", zz$value, "\n")
   
   return(zz)
