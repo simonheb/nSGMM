@@ -137,23 +137,11 @@ seedfromindex <- function(index) {
     .Call(`_nSGMM_seedfromindex`, index)
 }
 
-simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset = -1L) {
+    .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset)
 }
 
 simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
     .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp73 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp73`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp1 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp1`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
-}
-
-simulate_BBP_cpp2 <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp2`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
 }
 

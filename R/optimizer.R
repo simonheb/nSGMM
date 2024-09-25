@@ -133,7 +133,9 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                           keepn = c(150, 50,    10,    3,    2,    1),
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
-                             mc.cores = 50, mc.preschedule = TRUE) {
+                             mc.cores = 50,
+                             mc.preschedule = TRUE
+                             ) {
   cat("function: parallel_unified\n")
   print(schedule)
   
@@ -158,6 +160,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
   parameters <- mcmapply(mc.cores=mc.cores,
+                #mapply(#for debugging
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
                            val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ...)

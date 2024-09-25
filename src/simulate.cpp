@@ -54,39 +54,42 @@ mat normal_error_matrix(int n, double mean, double sd, int seed) {
 //this is to ensure that consecutive indices don't result in consecutive seeds
 // [[Rcpp::export]]
 int seedfromindex(int index) {
-  for (int i=0; i<10; ++i) {
+  //for (int i=0; i<10; ++i) {
   std::mt19937 mt_rand(index);
   return(mt_rand());
-  }
+  //}
 }
 
 // [[Rcpp::export]]
-mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
+mat simulate_BBP_cpp(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds, int indexoffset = -1) {
   if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-  
-  mat finalMatrix = zeros(reps,13);
-  vec converged(reps);
-  vec roundsc(reps);
+  bool report_convergence = false;
+  mat finalMatrix;
+  if (indexoffset==-1) {
+    indexoffset = 0;
+    finalMatrix = zeros(reps,13);
+  } else {
+    report_convergence = true;
+    finalMatrix = zeros(reps,14);
+  }
+  int rounds_;
+  bool converged_;
   
   for (int i=0; i<reps;i++) {
     //std::cout << "s:" <<i;
-    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
+    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i+indexoffset);
     mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
     altruism.diag().ones();
-    int rounds_;
-    bool converged_;
     mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
     eqtrans2.elem( find(eqtrans2) ).ones();
     vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income);
 
     for(int mom=0;mom<13;mom++)
       finalMatrix(i,mom) = moments(mom);
-    roundsc(i) = rounds_;
-    converged(i) = converged_;
   }
-  if (mean(converged)<0.9) {
-    //Rcpp::Rcout << "" << floor(mean(converged)*100) <<"%" ;
-    finalMatrix.zeros();
+  if (report_convergence) {
+    finalMatrix(0,13) = converged_;
+    return(finalMatrix);
   }
   return(finalMatrix);
 }
@@ -180,58 +183,3 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
 
 
 
-
-// [[Rcpp::export]]
-mat simulate_BBP_cpp73(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  mat error = zeros(n,n);
-  mat altruism = 1/(1+exp(-(1+error)));
-  return(error);
-}
-
-
-
-// [[Rcpp::export]]
-mat simulate_BBP_cpp1(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-  
-  mat finalMatrix = zeros(reps,13);
-  vec converged(reps);
-  vec roundsc(reps);
-  
-  for (int i=0; i<reps;i++) {
-    //std::cout << "s:" <<i;
-    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
-    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-    altruism.diag().ones();
-    int rounds_;
-    bool converged_;
-    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
-    eqtrans2.elem( find(eqtrans2) ).ones();
-    vec moments = compute_moments_cpp(eqtrans2,kinship,distance,income);
-  }    
-  return(finalMatrix);
-}
-
-
-
-
-// [[Rcpp::export]]
-mat simulate_BBP_cpp2(int n, double delta0,double delta1,double sigma, mat distance, mat kinship,  mat capacity, vec income,int reps,int seed,int rounds) {
-  if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-  
-  mat finalMatrix = zeros(reps,13);
-  vec converged(reps);
-  vec roundsc(reps);
-  
-  for (int i=0; i<reps;i++) {
-    //std::cout << "s:" <<i;
-    mat error = normal_error_matrix(n,0,sigma,seedfromindex(seed)+i);
-    mat altruism = 1/(1+exp(-(delta0+delta1*kinship+error)));
-    altruism.diag().ones();
-    int rounds_;
-    bool converged_;
-    mat eqtrans2=equilibrate_cpp_fast8_debug(altruism,income,capacity,zeros(income.n_elem,income.n_elem),true, rounds_,converged_,rounds);
-    eqtrans2.elem( find(eqtrans2) ).ones();
-  }    
-  return(finalMatrix);
-}
