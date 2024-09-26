@@ -187,7 +187,10 @@ identify_dependent_columns_lm <- function(mat) {
 
 
 
-moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ...) {
+moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, 
+                            regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ...,
+                            mc.preschedule = TRUE, mc.cores=120
+                            ) {
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
@@ -202,20 +205,27 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (any(is.na(x))) browser()
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
-  if (sim_parallel==1) {
-    simfun <-simulate_BBP_cpp_parallel
-  } else if (sim_parallel==2) {
-    simfun <-simulate_BBP_mc
+  if (sim_parallel==2) {
+    simx <- simulate_BBP_mc(          n=nrow(kinship),
+                                        delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
+                                        distance = distance, kinship = kinship, capacity = capacity, income = income,
+                                        reps = prec,
+                                        seed = noiseseed,
+                                        rounds = maxrounds, ..., mc.preschedule = mc.preschedule, mc.cores = mc.cores)
   } else {
-    simfun <-simulate_BBP_cpp
+    if (sim_parallel==1) {
+      simfun <- simulate_BBP_cpp_parallel
+    } else {
+      simfun <- simulate_BBP_cpp
+    }
+    simx<-simfun(          n=nrow(kinship),
+                           delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
+                           distance = distance, kinship = kinship, capacity = capacity, income = income,
+                           reps = prec,
+                           seed = noiseseed,
+                           rounds = maxrounds, ...)
   }
-  #browser()
-  simx<-simfun(n=nrow(kinship),
-                         delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
-                         distance = distance, kinship = kinship, capacity = capacity, income = income,
-                         reps = prec,
-                         seed = noiseseed,
-                         rounds = maxrounds, ...)
+  
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()
   

@@ -178,8 +178,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
-  parameters <- lapply(#mc.cores = mc.cores, 
-    ...,
+  parameters <- mclapply(mc.cores = mc.cores, mc.preschedule = mc.preschedule, ...,
                          FUN = function(theta, ...) {
                            val <- fn(as.numeric(theta), prec = schedule$precs[1], noiseseed = noiseseed, ...)
                            return(c(theta, val = val))
