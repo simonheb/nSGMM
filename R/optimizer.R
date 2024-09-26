@@ -127,8 +127,8 @@ spg_plain <- function(par, control, eps=NULL, ...,output_id) {
 # }
 
 sumprogress <- function(round, parameters, start_time) {
-  cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " minutes\n")
-  cat("best value is:", min(parameters$val), "\nkept", nrow(parameters), "pars\n")
+  cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " mins\t")
+  cat("best value is:", min(parameters$val), "\tkept", nrow(parameters), "pars\n")
   cat("best par is:", paste0(round(parameters[1,1:4]*100)/100 |> unlist(), collapse=", "), "\n")
 }
 
