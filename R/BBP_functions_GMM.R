@@ -198,21 +198,18 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
     prec <- max(prec,sum(keep)+1)
   }
   
-  
   x<-tryCatch(compute_moments_cpp(1*(transfers>0),kinship,distance,income), error=function(cond) {return(NA)})
   if (any(is.na(x))) browser()
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
   if (sim_parallel==1) {
-    print("Rcpp parallel simulation")
     simfun <-simulate_BBP_cpp_parallel
   } else if (sim_parallel==2) {
-    print("parallel:: mclapply simulation")
     simfun <-simulate_BBP_mc
   } else {
-    print("Rcpp (non-parralle) simulation")
     simfun <-simulate_BBP_cpp
   }
+  #browser()
   simx<-simfun(n=nrow(kinship),
                          delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
                          distance = distance, kinship = kinship, capacity = capacity, income = income,

@@ -2,31 +2,27 @@ library(dplyr)
 
 library(parallel)
 
-simulate_BBP_mc<-function(..., reps, mc.cores=1) {
-  if (mc.cores==1) {
-    cat("would paralelize zim")
-    mc.cores <- 1
+if (osVersion |> grepl(pattern="Win") |> any()) {
+  mclapply <- function(..., mc.cores, mc.preschedule) {
+      print("windows so using lapply") 
+      return(lapply(...))
   }
+}
+
+simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
+  
   if (mc.cores==1) {
     finalMatrix <-
       lapply(
-        X=1:reps,
-        FUN = simulate_BBP_cpp,
-        ...,
-        reps=1,
-        indexoffset=x-1, 
-        mc.cores = mc.cores
+               FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
+               X=1:reps
       ) |> do.call(what=rbind)
   } else {
     finalMatrix <-
-      mclapply(
-        X=1:reps,
-        FUN = simulate_BBP_cpp,
-        ...,
-        reps=1,
-        indexoffset=x-1, 
-        mc.cores = mc.cores
-    ) |> do.call(what=rbind)
+      mclapply(mc.cores=mc.cores, mc.preschedule = mc.preschedule,
+               FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
+               X=1:reps
+      ) |> do.call(what=rbind)
   }
   if (mean(finalMatrix[,14])<0.20) {
       return(matrix(0,reps,13))

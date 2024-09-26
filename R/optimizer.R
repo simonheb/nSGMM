@@ -11,6 +11,15 @@ plot_partial<-function(theta,param=1,minoffset=-1,maxoffset=1,fun,steps=4,...){
   plot(x,lapply(xs,fun,...))
 }
 
+if (osVersion |> grepl(pattern="Win") |> any())
+  mcmapply <- function(..., mc.cores, mc.preschedule) {
+    if (osVersion |> grepl(pattern="Win") |> any()) {
+      print("windows so using mapply") 
+      return(mapply(...))
+    }
+    else
+      return(mcmapply(..., mc.cores=mc.cores, mc.preschedule=mc.preschedule))
+  }
 
 spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id) {
   if (is.null(eps)) {
@@ -125,7 +134,7 @@ sumprogress <- function(round, parameters, start_time) {
 
 
 parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
-                             maxit = 1500,
+                             maxit = 1500, 
                              cutoff_factor = NULL,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
@@ -133,8 +142,9 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                           keepn = c(150, 50,    10,    3,    2,    1),
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
-                             mc.cores = 50,
-                             parallelize_sim_instead_of_rounds = rep(FALSE, nrow(schedule)),
+                             mc.cores = 120,
+                             sim_parallel = 1,
+                             parallelize_inner = rep(FALSE, nrow(schedule)),
                              mc.preschedule = TRUE
                              ) {
   
@@ -168,16 +178,13 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
-  if (osVersion |> grepl(pattern="Win") |> any())
-    mc.cores <- 1
-  
-  parameters <- mcmapply(mc.cores=mc.cores,
-                         function(x1, x2, x3, x4) {
-                           theta <- c(x1, x2, x3, x4)
-                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ..., )
-                           return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
+  parameters <- mclapply(mc.cores = mc.cores, ...,
+                         FUN = function(theta, ...) {
+                           val <- fn(as.numeric(theta), prec = schedule$precs[1], noiseseed = noiseseed, ...)
+                           return(c(theta, val = val))
                          },
-                         parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> 
+                         X = split(parameters[,1:4],1:nrow(parameters))
+                         ) |> 
     bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(schedule$keepn[1]) 
@@ -190,25 +197,22 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   for (round in 2:nrow(schedule)) {
     start_time <- Sys.time()
     
-    if (parallelize_sim_instead_of_rounds[round]) {
-      print("not parallelizing the outer loop")
-      applyfun <- mapply
+    if (parallelize_inner[round]) {
+      print("parallelizing the inner loop")
+      applyfun <- lapply
     } else {
       print("parallelizing the outer loop")
-      applyfun <- mcmapply
+      applyfun <- mclapply
     }
-    
-    parameters <- applyfun(
-                           function(x1, x2, x3, x4, i) {
-                             theta <- c(x1, x2, x3, x4)
-                             result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
+    parameters <- applyfun(mc.preschedule = mc.preschedule, mc.cores=mc.cores, ...,
+                           FUN= function(theta, ...) {
+                             result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
-                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = i)
+                                               prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = rownames(theta))
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
-                           mc.preschedule = mc.preschedule, mc.cores=mc.cores,
-                           parameters[,1], parameters[,2], parameters[,3], parameters[,4], 1:nrow(parameters),
-                           SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
+                           X = split(parameters[,1:4],1:nrow(parameters))
+                           ) |> bind_rows()  |> as.data.frame()
     
     parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
     
