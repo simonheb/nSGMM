@@ -206,6 +206,11 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     }
     parameters <- applyfun(mc.preschedule = mc.preschedule, mc.cores=mc.cores, ...,
                            FUN= function(theta, ...) {
+                             if ("mc.cores" %in% names(list(...))) {
+                               cat("passing mc.cores:")
+                             } else {
+                               cat("not passing mc.cores:")
+                             }
                              result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = rownames(theta))
