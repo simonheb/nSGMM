@@ -204,10 +204,13 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
   if (sim_parallel==1) {
+    print("Rcpp parallel simulation")
     simfun <-simulate_BBP_cpp_parallel
   } else if (sim_parallel==2) {
+    print("parallel:: mclapply simulation")
     simfun <-simulate_BBP_mc
   } else {
+    print("Rcpp (non-parralle) simulation")
     simfun <-simulate_BBP_cpp
   }
   simx<-simfun(n=nrow(kinship),

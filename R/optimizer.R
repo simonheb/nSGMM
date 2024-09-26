@@ -168,9 +168,10 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
-
+  if (osVersion |> grepl(pattern="Win") |> any())
+    mc.cores <- 1
   
-  parameters <- applyfun(mc.cores=mc.cores,
+  parameters <- mcmapply(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
                            val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ..., )
