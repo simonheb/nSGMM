@@ -136,8 +136,16 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                              mc.cores = 50,
                              mc.preschedule = TRUE
                              ) {
+  
   cat("function: parallel_unified\n")
   print(schedule)
+  
+  print("performance benchmark:")
+  tic()
+  for (i in 1:10)
+    target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
+  toc()$callback_msg |> print()
+  
   
   start_time_biggi <- Sys.time()
   
