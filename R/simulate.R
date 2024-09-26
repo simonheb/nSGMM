@@ -3,7 +3,11 @@ library(dplyr)
 library(parallel)
 
 simulate_BBP_mc<-function(..., reps, mc.cores=1) {
-  if (mc.cores.simulate==1) {
+  if (mc.cores==1) {
+    cat("would paralelize zim")
+    mc.cores <- 1
+  }
+  if (mc.cores==1) {
     finalMatrix <-
       lapply(
         X=1:reps,
