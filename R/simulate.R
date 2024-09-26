@@ -2,13 +2,28 @@ library(dplyr)
 
 library(parallel)
 
-simulate_BBP_mc<-function(..., reps, mc.preschedule.simulate=TRUE, mc.cores.simulate=detectCores()-1) {
+simulate_BBP_mc<-function(..., reps, mc.cores=1) {
+  if (mc.cores.simulate==1) {
     finalMatrix <-
-    mclapply(mc.cores=mc.cores.simulate, mc.preschedule = mc.preschedule.simulate,
-    #lapply(#for debugging
-    FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
-    X=1:reps
-  ) |> do.call(what=rbind)
+      lapply(
+        X=1:reps,
+        FUN = simulate_BBP_cpp,
+        ...,
+        reps=1,
+        indexoffset=x-1, 
+        mc.cores = mc.cores
+      ) |> do.call(what=rbind)
+  } else {
+    finalMatrix <-
+      mclapply(
+        X=1:reps,
+        FUN = simulate_BBP_cpp,
+        ...,
+        reps=1,
+        indexoffset=x-1, 
+        mc.cores = mc.cores
+    ) |> do.call(what=rbind)
+  }
   if (mean(finalMatrix[,14])<0.20) {
       return(matrix(0,reps,13))
   }

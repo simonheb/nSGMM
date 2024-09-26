@@ -134,6 +134,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                           precs = c(4,    16,   50,  500,  3000, 8000)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
                              mc.cores = 50,
+                             parallelize_sim_instead_of_rounds = rep(FALSE, nrow(schedule)),
                              mc.preschedule = TRUE
                              ) {
   
@@ -167,11 +168,12 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
-  parameters <- mcmapply(mc.cores=mc.cores,
-                #mapply(#for debugging
+
+  
+  parameters <- applyfun(mc.cores=mc.cores,
                          function(x1, x2, x3, x4) {
                            theta <- c(x1, x2, x3, x4)
-                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ...)
+                           val <- fn(theta, prec = schedule$precs[1], noiseseed = noiseseed, ..., )
                            return(list(par1 = x1, par2 = x2, par3 = x3, par4 = x4, val = val))
                          },
                          parameters[,1], parameters[,2], parameters[,3], parameters[,4], SIMPLIFY = F) |> 
@@ -186,8 +188,16 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   for (round in 2:nrow(schedule)) {
     start_time <- Sys.time()
-    # now loop through the 16 points and optimize with spg again
-    parameters <- mcmapply(mc.cores=mc.cores,
+    
+    if (parallelize_sim_instead_of_rounds[round]) {
+      print("not parallelizing the outer loop")
+      applyfun <- mapply
+    } else {
+      print("parallelizing the outer loop")
+      applyfun <- mcmapply
+    }
+    
+    parameters <- applyfun(
                            function(x1, x2, x3, x4, i) {
                              theta <- c(x1, x2, x3, x4)
                              result <- spg_fun(par = theta, fn = fn, quiet = TRUE, upper = upper, lower = lower,
@@ -195,7 +205,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = i)
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))
                            },
-                           mc.preschedule = mc.preschedule,
+                           mc.preschedule = mc.preschedule, mc.cores=mc.cores,
                            parameters[,1], parameters[,2], parameters[,3], parameters[,4], 1:nrow(parameters),
                            SIMPLIFY = F) |> bind_rows()  |> as.data.frame()
     
