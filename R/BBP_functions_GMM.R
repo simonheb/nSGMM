@@ -206,10 +206,10 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
   if (sim_parallel==2) {
-    simfun <- simulate_BBP_cpp_wrapper
+    simfun <- simulate_BBP_mc
   }
   else {
-    simfun <- simulate_BBP_cpp_parallel
+    simfun <- simulate_BBP_cpp_wrapper
     if (sim_parallel==0){
       mc.cores <- 0
     }
