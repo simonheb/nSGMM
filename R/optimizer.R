@@ -202,20 +202,23 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   for (round in 2:nrow(schedule)) {
     start_time <- Sys.time()
     
-    if (schedule$parallelize_inner[round]) {
+    if (schedule$parallelize_inner[round]==1) {
       print("parallelizing the inner loop")
-      applyfun <- lapply
-    } else {
+      applyfun <- lapply #this means that the mc.cores parameter will be just passed on to FUN by lapply
+    } else if (schedule$parallelize_inner[round]==0){
       print("parallelizing the outer loop")
+      applyfun <- mclapply #here the mc.cores parameter will not be passed on, instead the the default mc.cores.inner will be used
+      mc.cores.inner <- 1
+    } else if (schedule$parallelize_inner[round]==2){
+      print("parallelizing both ")
       applyfun <- mclapply
+      mc.cores.inner <- min(1,floor(mc.cores/nrows(parameters)))
+      mc.cores <- nrows(parameters)
+    } else {
+      stop("parallelize_inner must be 0, 1 or 2")
     }
     parameters <- applyfun(mc.preschedule = mc.preschedule, mc.cores=mc.cores, ...,
-                           FUN= function(theta, ...) {
-                             # if ("mc.cores" %in% names(list(...))) {
-                             #   cat("passing mc.cores:")
-                             # } else {
-                             #   cat("not passing mc.cores:")
-                             # }
+                           FUN= function(theta, ..., mc.cores=mc.cores.inner) {
                              result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = rownames(theta))
@@ -241,7 +244,6 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   val <- min(parameters$val) 
   # print par in blue
   
-  sumprogress("99", parameters, start_time)
   cat("\033[34m",par,"\033[0m\n")
   cat("finalvalue:", val, "\n")
   
