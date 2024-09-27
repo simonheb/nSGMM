@@ -212,8 +212,8 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     } else if (schedule$parallelize_inner[round]==2){
       print("parallelizing both ")
       applyfun <- mclapply
-      mc.cores.inner <- min(1,floor(mc.cores/nrows(parameters)))
-      mc.cores <- nrows(parameters)
+      mc.cores.inner <- min(1,floor(mc.cores/nrow(parameters)))
+      mc.cores <- nrow(parameters)
     } else {
       stop("parallelize_inner must be 0, 1 or 2")
     }
