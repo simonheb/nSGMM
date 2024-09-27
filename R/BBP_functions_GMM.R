@@ -206,25 +206,23 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   capacity<-matrix(kappatransformation(theta[4], log = kappa.log, factor = kappa.factor),nrow(kinship),nrow(kinship))
 
   if (sim_parallel==2) {
-    simx <- simulate_BBP_mc(          n=nrow(kinship),
-                                        delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
-                                        distance = distance, kinship = kinship, capacity = capacity, income = income,
-                                        reps = prec,
-                                        seed = noiseseed,
-                                        rounds = maxrounds, ..., mc.preschedule = mc.preschedule, mc.cores = mc.cores)
-  } else {
-    if (sim_parallel==1) {
-      simfun <- simulate_BBP_cpp_parallel
-    } else {
-      simfun <- simulate_BBP_cpp
-    }
-    simx<-simfun(          n=nrow(kinship),
-                           delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
-                           distance = distance, kinship = kinship, capacity = capacity, income = income,
-                           reps = prec,
-                           seed = noiseseed,
-                           rounds = maxrounds, ...)
+    simfun <- simulate_BBP_cpp_wrapper
   }
+  else {
+    simfun <- simulate_BBP_cpp_parallel
+    if (sim_parallel==0){
+      mc.cores <- 0
+    }
+  }
+  
+  simx <- simfun(
+    n=nrow(kinship),
+    delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
+    distance = distance, kinship = kinship, capacity = capacity, income = income,
+    reps = prec,
+    seed = noiseseed,
+    rounds = maxrounds, ..., mc.preschedule = mc.preschedule, mc.cores = mc.cores)
+
   
   diff<-tryCatch(sweep(simx,2,x), error=function(cond) {return(NA)})
   if (any(is.na(diff))) browser()

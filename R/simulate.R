@@ -14,8 +14,8 @@ simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
   if (mc.cores==1) {
     finalMatrix <-
       lapply(
-               FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
-               X=1:reps
+        FUN=function(x) {simulate_BBP_cpp(..., reps=1,indexoffset=x-1)},
+        X=1:reps
       ) |> do.call(what=rbind)
   } else {
     finalMatrix <-
@@ -25,7 +25,18 @@ simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
       ) |> do.call(what=rbind)
   }
   if (mean(finalMatrix[,14])<0.20) {
-      return(matrix(0,reps,13))
+    return(matrix(0,reps,13))
+  }
+  return(finalMatrix[,1:13]) 
+}
+
+
+simulate_BBP_cpp_wrapper<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
+  
+  if (reps==1 | mc.cores==1) {
+    finalMatrix <- simulate_BBP_cpp(..., reps=reps)
+  } else {
+    finalMatrix <- simulate_BBP_cpp_parallel(..., reps=reps)
   }
   return(finalMatrix[,1:13]) 
 }

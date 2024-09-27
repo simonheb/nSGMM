@@ -135,16 +135,18 @@ sumprogress <- function(round, parameters, start_time) {
 
 parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500, 
-                             cutoff_factor = NULL,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
                                           keepn = c(150, 50,    10,    3,    2,    1),
-                                          precs = c(4,    16,   50,  500,  3000, 8000)),
+                                          precs = c(4,    16,   50,  500,  3000, 8000),
+                                          parallelize_inner 
+                                                = c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE),
+                                          cutoff_factor
+                                                = c(Inf, Inf, Inf, Inf, Inf, Inf)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
                              mc.cores = 120,
                              sim_parallel = 1,
-                             parallelize_inner = rep(FALSE, nrow(schedule)),
                              mc.preschedule = TRUE
                              ) {
   
@@ -189,6 +191,9 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
     head(schedule$keepn[1]) 
   
+  cutoff_val <- min(parameters$val) * schedule$cutoff_factor[1]
+  parameters <- parameters |> filter(val < cutoff_val)
+  
   parameters <- rbind(parameters, colmeans(parameters))
   
   sumprogress(1, parameters, start_time)
@@ -197,7 +202,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   for (round in 2:nrow(schedule)) {
     start_time <- Sys.time()
     
-    if (parallelize_inner[round]) {
+    if (schedule$parallelize_inner[round]) {
       print("parallelizing the inner loop")
       applyfun <- lapply
     } else {
@@ -206,11 +211,11 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     }
     parameters <- applyfun(mc.preschedule = mc.preschedule, mc.cores=mc.cores, ...,
                            FUN= function(theta, ...) {
-                             if ("mc.cores" %in% names(list(...))) {
-                               cat("passing mc.cores:")
-                             } else {
-                               cat("not passing mc.cores:")
-                             }
+                             # if ("mc.cores" %in% names(list(...))) {
+                             #   cat("passing mc.cores:")
+                             # } else {
+                             #   cat("not passing mc.cores:")
+                             # }
                              result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = rownames(theta))
@@ -221,11 +226,9 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     
     parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
     
-    if (!is.null(cutoff_factor)) {
-      cutoff_val <- min(parameters$val) * cutoff_factor
-      parameters <- parameters |> filter(val < cutoff_val)
-    }
-    
+    cutoff_val <- min(parameters$val) * schedule$cutoff_factor[round]
+    parameters <- parameters |> filter(val < cutoff_val)
+
     if (nrow(parameters)>1) {
       parameters <- rbind(parameters, colmeans(parameters))
     }
