@@ -21,12 +21,12 @@ if (osVersion |> grepl(pattern="Win") |> any())
       return(mcmapply(..., mc.cores=mc.cores, mc.preschedule=mc.preschedule))
   }
 
-spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id) {
+spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_factor = 10) {
   if (is.null(eps)) {
     eps <- control$eps
   }
   time1 <- Sys.time()
-  control$eps <- eps*10
+  control$eps <- eps * spg_eps_factor
   zz <- BB::spg(
     par = par,
     ...,
@@ -44,7 +44,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id) {
   iter3 <- zz$iter
   time3 <- Sys.time()
   reduction3 <- zz$fn.reduction
-  control$eps <- eps/10
+  control$eps <- eps / spg_eps_factor
   zz <- BB::spg(
     par = zz$par,
     ...,
@@ -135,6 +135,7 @@ sumprogress <- function(round, parameters, start_time) {
 
 parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500, 
+                             omit_mean_par = FALSE,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
@@ -194,7 +195,8 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   cutoff_val <- min(parameters$val) * schedule$cutoff_factor[1]
   parameters <- parameters |> filter(val < cutoff_val)
   
-  parameters <- rbind(parameters, colmeans(parameters))
+  if (!omit_mean_par)
+    parameters <- rbind(parameters, colmeans(parameters))
   
   sumprogress(1, parameters, start_time)
   
@@ -232,7 +234,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     cutoff_val <- min(parameters$val) * schedule$cutoff_factor[round]
     parameters <- parameters |> filter(val < cutoff_val)
 
-    if (nrow(parameters)>1) {
+    if (nrow(parameters)>1 & !omit_mean_par) {
       parameters <- rbind(parameters, colmeans(parameters))
     }
     
