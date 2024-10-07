@@ -147,6 +147,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                                 = c(Inf, Inf, Inf, Inf, Inf, Inf)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
                              mc.cores = 120,
+                             spg_eps_factor = 10,
                              sim_parallel = 1,
                              mc.preschedule = TRUE
                              ) {
@@ -181,6 +182,10 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
+  if (osVersion |> grepl(pattern="Windows")) {
+    mc.cores <- 1
+    mc.preschedule <- FALSE
+  }
   parameters <- mclapply(mc.cores = mc.cores, mc.preschedule = mc.preschedule, ...,
                          FUN = function(theta, ...) {
                            val <- fn(as.numeric(theta), prec = schedule$precs[1], noiseseed = noiseseed, ...)
@@ -221,7 +226,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     }
     parameters <- applyfun(mc.preschedule = mc.preschedule, mc.cores=mc.cores, ...,
                            FUN= function(theta, ..., mc.cores=mc.cores.inner) {
-                             result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower,
+                             result <- spg_fun(par = as.numeric(theta), fn = fn, quiet = TRUE, upper = upper, lower = lower, spg_eps_factor,
                                                control = list(maximize = FALSE, trace = F, eps = schedule$eps[round], triter = 10, maxit = maxit),
                                                prec = precision_factor * schedule$precs[round], noiseseed = noiseseed, ..., output_id = rownames(theta))
                              return(list(par1 = result$par[1], par2 = result$par[2], par3 = result$par[3], par4 = result$par[4], val = result$value))

@@ -9,7 +9,7 @@ if (osVersion |> grepl(pattern="Win") |> any()) {
   }
 }
 
-simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
+simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE, check_convergence = TRUE) {
   
   if (mc.cores==1) {
     finalMatrix <-
@@ -24,8 +24,10 @@ simulate_BBP_mc<-function(..., reps, mc.cores=1, mc.preschedule=TRUE) {
                X=1:reps
       ) |> do.call(what=rbind)
   }
-  if (mean(finalMatrix[,14])<0.20) {
-    return(matrix(0,reps,13))
+  if (check_convergence) {
+    if (mean(finalMatrix[,14])<0.20) {
+      return(matrix(0,reps,13))
+    }
   }
   return(finalMatrix[,1:13]) 
 }
