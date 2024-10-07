@@ -145,7 +145,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                                 = c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE),
                                           cutoff_factor
                                                 = c(Inf, Inf, Inf, Inf, Inf, Inf)),
-                             regularization = rep(1e-14,6),
+                             regularization = rep(1e-14,nrow(schedule)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
                              mc.cores = 120,
                              spg_eps_factor = 10,
