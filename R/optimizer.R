@@ -194,7 +194,12 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                          X = split(parameters[,1:4],1:nrow(parameters))
                          ) |> 
     bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |> filter(is.finite(val) & val<init_cutoff) |> 
+    arrange(val)  |> filter(is.finite(val)) 
+  
+  cat("initial grid size after filtering:", nrow(parameters), ", best value is:", min(parameters$val), "\n")
+  
+  
+  parameters <- parameters |>
     head(schedule$keepn[1]) 
   
   cutoff_val <- min(parameters$val) * schedule$cutoff_factor[1]
