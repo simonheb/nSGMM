@@ -141,7 +141,7 @@ simulate_BBP_cpp <- function(n, delta0, delta1, sigma, distance, kinship, capaci
     .Call(`_nSGMM_simulate_BBP_cpp`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, indexoffset)
 }
 
-simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds) {
-    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds)
+simulate_BBP_cpp_parallel <- function(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, check_convergence) {
+    .Call(`_nSGMM_simulate_BBP_cpp_parallel`, n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, check_convergence)
 }
 

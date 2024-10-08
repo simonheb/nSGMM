@@ -489,8 +489,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simulate_BBP_cpp_parallel
-Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0, double delta1, double sigma, const mat& distance, const mat& kinship, const mat& capacity, const vec& income, int reps, int seed, int rounds);
-RcppExport SEXP _nSGMM_simulate_BBP_cpp_parallel(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP) {
+Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0, double delta1, double sigma, const mat& distance, const mat& kinship, const mat& capacity, const vec& income, int reps, int seed, int rounds, bool check_convergence);
+RcppExport SEXP _nSGMM_simulate_BBP_cpp_parallel(SEXP nSEXP, SEXP delta0SEXP, SEXP delta1SEXP, SEXP sigmaSEXP, SEXP distanceSEXP, SEXP kinshipSEXP, SEXP capacitySEXP, SEXP incomeSEXP, SEXP repsSEXP, SEXP seedSEXP, SEXP roundsSEXP, SEXP check_convergenceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -505,7 +505,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type reps(repsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_parallel(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds));
+    Rcpp::traits::input_parameter< bool >::type check_convergence(check_convergenceSEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_BBP_cpp_parallel(n, delta0, delta1, sigma, distance, kinship, capacity, income, reps, seed, rounds, check_convergence));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -546,7 +547,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_nSGMM_normal_error_matrix", (DL_FUNC) &_nSGMM_normal_error_matrix, 4},
     {"_nSGMM_seedfromindex", (DL_FUNC) &_nSGMM_seedfromindex, 1},
     {"_nSGMM_simulate_BBP_cpp", (DL_FUNC) &_nSGMM_simulate_BBP_cpp, 12},
-    {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 11},
+    {"_nSGMM_simulate_BBP_cpp_parallel", (DL_FUNC) &_nSGMM_simulate_BBP_cpp_parallel, 12},
     {NULL, NULL, 0}
 };
 
