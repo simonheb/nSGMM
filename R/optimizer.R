@@ -145,7 +145,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                                 = c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE),
                                           cutoff_factor
                                                 = c(Inf, Inf, Inf, Inf, Inf, Inf)),
-                             regularization = rep(1e-14,nrow(schedule)),
+                             regularization = c(1e-3,1e-7,rep(1e-14,nrow(schedule)-2)),
                              initialrounds=11,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
                              mc.cores = 120,
                              spg_eps_factor = 10,
@@ -154,13 +154,12 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                              ) {
   
   cat("function: parallel_unified\n")
-  print(schedule)
-  
-  print("performance benchmark:")
+
+  cat("performance benchmark:")
   tic()
   for (i in 1:10)
     target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
-  toc()$callback_msg |> print()
+  toc()$callback_msg |> cat()
   
   
   start_time_biggi <- Sys.time()
