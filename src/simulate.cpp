@@ -150,7 +150,7 @@ struct simulate_BBP_worker_smart : public RcppParallel::Worker
 };
 
 // [[Rcpp::export]]
-Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1,double sigma, const mat& distance, const mat& kinship, const mat& capacity,const vec& income,int reps,int seed,int rounds)  {
+Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1,double sigma, const mat& distance, const mat& kinship, const mat& capacity,const vec& income,int reps,int seed,int rounds, bool check_convergence)  {
   if (seed==0) seed=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   
   
@@ -165,13 +165,15 @@ Rcpp::NumericMatrix simulate_BBP_cpp_parallel(int n, double delta0,double delta1
   
   // call parallelFor to do the work
   parallelFor(0, reps, sim);
-  
-  if (mean(convergance)<0.85) {
-    //Rcpp::Rcout  << "" << floor(mean(convergance)*100) <<"%";
-  }
-  if (mean(convergance)<0.20) {
-    Rcpp::NumericMatrix z(reps,13);
-    return z;
+  // 
+  // if (mean(convergance)<0.85) {
+  //   //Rcpp::Rcout  << "" << floor(mean(convergance)*100) <<"%";
+  // }
+  if (check_convergence) {
+    if (mean(convergance)<0.20) {
+      Rcpp::NumericMatrix z(reps,13);
+      return z;
+    }
   }
   
   // return the output matrix
