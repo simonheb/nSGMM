@@ -188,7 +188,7 @@ identify_dependent_columns_lm <- function(mat) {
 
 
 moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, 
-                            regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ...,
+                            regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ..., check_convergence=TRUE,
                             mc.preschedule = TRUE, mc.cores=120
                             ) {
   kinship<-vdata$kinship
@@ -217,6 +217,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   
   simx <- simfun(
     n=nrow(kinship),
+    check_convergence = check_convergence,
     delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
     distance = distance, kinship = kinship, capacity = capacity, income = income,
     reps = prec,
