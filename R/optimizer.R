@@ -70,7 +70,55 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
   return(zz)
 }
 
-
+shrinking_adaptive_grid <- function(fn, lower, upper,
+                                    startpoint=NULL, depth=10, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10) {
+  cat("function: shrinking_adaptive_grid\n")
+  
+  cat("performance benchmark:")
+  tic()
+  for (i in 1:10)
+    target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
+  toc()$callback_msg |> cat()
+  
+  
+  start_time_biggi <- Sys.time()
+  
+  if (is.null(seed)) {
+    noiseseed <- as.integer(runif(1, 1, 1e6))
+  } else {
+    noiseseed <- seed
+  } 
+  # draw 1024 points on a grid spanned by lower and upper
+  if (is.null(startpoint))
+    gdfgsdfgsdg
+  
+  sequences <- lapply(1:length(lower), function(i) {
+    seq(lower[i], upper[i], length.out = initialrounds)
+  })
+  parameters <- expand.grid(sequences)
+  
+  # loop over grid lines and keep only those with a finite value
+  cat("grid size:", nrow(parameters), "\n")
+  
+  start_time <- Sys.time()
+  
+  colnames(parameters) <- c(paste0("par", 1:length(upper)))
+  
+  if (osVersion |> grepl(pattern="Windows")) {
+    mc.cores <- 1
+    mc.preschedule <- FALSE
+  }
+  parameters <- mclapply(mc.cores = mc.cores, mc.preschedule = mc.preschedule, ...,
+                         FUN = function(theta, ...) {
+                           val <- fn(as.numeric(theta), prec = schedule$precs[1], regularization_lambda = regularization[1], noiseseed = noiseseed, ...)
+                           return(c(theta, val = val))
+                         },
+                         X = split(parameters[,1:4],1:nrow(parameters))
+  ) |> 
+    bind_rows()  |> as.data.frame() |> 
+    arrange(val)  |> filter(is.finite(val)) 
+  
+}
 
 spg_plain <- function(par, control, eps=NULL, ...,output_id) {
   if (is.null(eps)) {
@@ -691,13 +739,13 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
     if (is.null(par)) 
       z<-hydroPSO::hydroPSO(fn=lfn, lower=lower, upper=upper,
                             control=list(maxit=100,write2disk=FALSE,verbose=FALSE), 
-                            prec=precision_factor*4, noiseseed=1000*noiseseed+i, 
+                            prec=precision_factor*7, noiseseed=1000*noiseseed+i, 
                             ...
       )
     else
       z<-hydroPSO::hydroPSO(par=par, fn=lfn, lower=lower, upper=upper,
                             control=list(maxit=100,write2disk=FALSE,verbose=FALSE), 
-                            prec=precision_factor*4, noiseseed=1000*noiseseed+i, 
+                            prec=precision_factor*7, noiseseed=1000*noiseseed+i, 
                             ...
       )
     

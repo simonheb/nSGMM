@@ -194,7 +194,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
-  income<-vdata$income
+  income<-vdata$income 
   
   # I need at least as many n as I have moments, for the continuous vcv case, otherwise the matrix is not invertible
   if (is.null(vcv) & regularization_lambda==0) {
