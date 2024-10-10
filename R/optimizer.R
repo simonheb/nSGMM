@@ -722,6 +722,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
 parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1) {
   print("parallel_one4")
   tic()
+  start_time <- Sys.time()
   if (logfn) {
     lfn <- function(...) log(fn(...))
   } else {
@@ -780,8 +781,10 @@ parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrou
   names(par)<-NULL
   val <- zz$value
   # print par in blue
-  if (debug)
-    cat("\033[34m",par,"\033[0m\n")
+  cat("final value:", val, "\n")
+
+  cat("\033[34m",par,"\033[0m\n")
+  cat("took overall ", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")), 0), " minutes\n")
   
   return(list(par=par,
               val=val,
