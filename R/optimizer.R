@@ -91,7 +91,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
     cat("performance benchmark:")
     tic()
     for (i in 1:10)
-      target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
+      target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.00001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
     toc()$callback_msg |> cat()
     startpoint <- (lower + upper) / 2
   }
