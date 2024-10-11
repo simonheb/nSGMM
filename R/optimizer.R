@@ -124,7 +124,8 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
     bind_rows()  |> as.data.frame() |> 
     arrange(val)  |> head(1)
   if (depth == 0) {
-    cat("final:", parameters)
+    cat("final:")
+    print(parameters)
     cat("took overall:", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")),2), "mins\n")
     return(parameters)
   }
