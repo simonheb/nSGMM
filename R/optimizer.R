@@ -72,7 +72,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
 
 shrinking_adaptive_grid <- function(fn, lower, upper,
                                     seed=1, mc.cores=120,
-                                    start_time=Sys.time(),
+                                    start_time=Sys.time(), regularization_lambda=c(1e-3,1e-5,1e-6,1e-7,rep(1e-14,depth)),
                                     startpoint=NULL, depth=20, prec=4, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10,
                                     ...){
   
@@ -116,7 +116,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
   }
   parameters <- mclapply(mc.cores=mc.cores, ..., mc.preschedule=FALSE,
                          FUN = function(theta, ...) {
-                           val <- fn(as.numeric(theta), prec = prec, regularization_lambda = 1e-7, noiseseed = noiseseed, sim_parallel=FALSE,  ...)
+                           val <- fn(as.numeric(theta), prec = prec, regularization_lambda = regularization_lambda[1], noiseseed = noiseseed, sim_parallel=FALSE,  ...)
                            return(c(theta, val = val))
                          },
                          X = split(parameters[,1:4],1:nrow(parameters))
@@ -129,7 +129,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
     return(parameters)
   }
   cat("value:", parameters)
-  shrinking_adaptive_grid(fn, lower, upper, startpoint = parameters[,1:4], start_time=start_time, depth = depth-1, prec = pmin(16000,prec*1.5), shrinkrate = shrinkrate, radius = radius*shrinkrate, initialrounds = initialrounds, ...)
+  shrinking_adaptive_grid(fn, lower, upper, startpoint = parameters[,1:4], start_time=start_time, regularization_lambda=regularization_lambda[2:depth], depth = depth-1, prec = pmin(16000,prec*1.5), shrinkrate = shrinkrate, radius = radius*shrinkrate, initialrounds = initialrounds, ...)
   
 }
 
