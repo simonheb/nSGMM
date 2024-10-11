@@ -72,12 +72,13 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
 
 shrinking_adaptive_grid <- function(fn, lower, upper,
                                     seed=1, mc.cores=120,
-                                    start_time=Sys.time(), regularization_lambda=c(1e-3,1e-5,1e-6,1e-7,rep(1e-14,depth)),
+                                    start_time=Sys.time(), regularization_lambda=c(1e-3,1e-5,1e-6,1e-7,rep(1e-14,99)),
                                     startpoint=NULL, depth=20, prec=4, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10,
                                     ...){
   
   
   cat("prec:", prec, "\n")
+  cat("regularization_lambda:", regularization_lambda, "\n")
   
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
