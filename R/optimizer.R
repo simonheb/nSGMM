@@ -77,7 +77,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
                                     ...){
   
   
-  
+  cat("prec:", prec, "\n")
   
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -120,16 +120,22 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
                            return(c(theta, val = val))
                          },
                          X = split(parameters[,1:4],1:nrow(parameters))
-  ) |> 
-    bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |> head(1)
+  ) 
+  parameters <- parameters |> bind_rows()  |> as.data.frame() 
+  print(head(parameters,2))
+  parameters <- parameters |> arrange(val)  
+  parameters <- parameters |> head(1)
   if (depth == 0) {
-    cat("final:")
+    cat("final:\n")
     print(parameters)
     cat("took overall:", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")),2), "mins\n")
-    return(parameters)
+    return(
+      list(
+        par = parameters[,1:4],
+        value = parameters$val)
+    )
   }
-  cat("value:")
+  cat("value:\n")
   print(parameters)
   shrinking_adaptive_grid(fn, lower, upper, startpoint = parameters[,1:4], start_time=start_time, regularization_lambda=regularization_lambda[2:depth], depth = depth-1, prec = pmin(16000,prec*1.5), shrinkrate = shrinkrate, radius = radius*shrinkrate, initialrounds = initialrounds, ...)
   
