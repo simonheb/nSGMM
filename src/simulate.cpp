@@ -25,6 +25,7 @@ vec random_normal_seed(int n, double mean, double sd, int seed) {
   }
   return(ret);
 }
+
 //draws a symmetric random matrix of width n, where the off-diagonal elements are iid normal with mean an sd.
 // [[Rcpp::export]]
 mat symmetrix_normal_error_matrix(int n, double mean, double sd, int seed) {

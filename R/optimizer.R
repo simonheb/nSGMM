@@ -71,17 +71,13 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
 }
 
 shrinking_adaptive_grid <- function(fn, lower, upper,
-                                    startpoint=NULL, depth=10, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10) {
-  cat("function: shrinking_adaptive_grid\n")
-  
-  cat("performance benchmark:")
-  tic()
-  for (i in 1:10)
-    target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
-  toc()$callback_msg |> cat()
+                                    seed=1, mc.cores=120,
+                                    start_time=Sys.time(),
+                                    startpoint=NULL, depth=20, prec=4, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10,
+                                    ...){
   
   
-  start_time_biggi <- Sys.time()
+  
   
   if (is.null(seed)) {
     noiseseed <- as.integer(runif(1, 1, 1e6))
@@ -89,18 +85,28 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
     noiseseed <- seed
   } 
   # draw 1024 points on a grid spanned by lower and upper
-  if (is.null(startpoint))
-    gdfgsdfgsdg
+  if (is.null(startpoint)) {
+    cat("function: shrinking_adaptive_grid\n")
+    
+    cat("performance benchmark:")
+    tic()
+    for (i in 1:10)
+      target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
+    toc()$callback_msg |> cat()
+    startpoint <- (lower + upper) / 2
+  }
+  
+  grid_lower <- pmax(lower, startpoint - radius)
+  grid_upper <- pmin(upper, startpoint + radius)
+  cat("searching:\n")
+  print(rbind(grid_lower, grid_upper))
   
   sequences <- lapply(1:length(lower), function(i) {
-    seq(lower[i], upper[i], length.out = initialrounds)
+    seq(grid_lower[i], grid_upper[i], length.out = initialrounds)
   })
   parameters <- expand.grid(sequences)
   
-  # loop over grid lines and keep only those with a finite value
-  cat("grid size:", nrow(parameters), "\n")
-  
-  start_time <- Sys.time()
+  # loop over grid lines and 
   
   colnames(parameters) <- c(paste0("par", 1:length(upper)))
   
@@ -108,15 +114,22 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
     mc.cores <- 1
     mc.preschedule <- FALSE
   }
-  parameters <- mclapply(mc.cores = mc.cores, mc.preschedule = mc.preschedule, ...,
+  parameters <- mclapply(mc.cores=mc.cores, ..., mc.preschedule=FALSE,
                          FUN = function(theta, ...) {
-                           val <- fn(as.numeric(theta), prec = schedule$precs[1], regularization_lambda = regularization[1], noiseseed = noiseseed, ...)
+                           val <- fn(as.numeric(theta), prec = prec, regularization_lambda = 1e-7, noiseseed = noiseseed, sim_parallel=FALSE,  ...)
                            return(c(theta, val = val))
                          },
                          X = split(parameters[,1:4],1:nrow(parameters))
   ) |> 
     bind_rows()  |> as.data.frame() |> 
-    arrange(val)  |> filter(is.finite(val)) 
+    arrange(val)  |> head(1)
+  if (depth == 0) {
+    cat("final:", parameters)
+    cat("took overall:", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")),2), "mins\n")
+    return(parameters)
+  }
+  cat("value:", parameters)
+  shrinking_adaptive_grid(fn, lower, upper, startpoint = parameters[,1:4], start_time=start_time, depth = depth-1, prec = pmin(16000,prec*1.5), shrinkrate = shrinkrate, radius = radius*shrinkrate, initialrounds = initialrounds, ...)
   
 }
 
