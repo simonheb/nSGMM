@@ -76,6 +76,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
                                     startpoint=NULL, depth=20, prec=4, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10,
                                     ...){
   
+  cat("depth:", depth, "\n")
   
   cat("prec:", prec, "\n")
   cat("regularization_lambda:", regularization_lambda[1], "\n")
@@ -126,7 +127,7 @@ shrinking_adaptive_grid <- function(fn, lower, upper,
   print(head(parameters,2))
   parameters <- parameters |> arrange(val)  
   parameters <- parameters |> head(1)
-  if (depth == 1) {
+  if (depth < 1) {
     cat("final:\n")
     print(parameters)
     cat("took overall:", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")),2), "mins\n")
