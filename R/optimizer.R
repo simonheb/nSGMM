@@ -315,7 +315,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     cutoff_val <- min(parameters$val) * schedule$cutoff_factor[round]
     parameters <- parameters |> filter(val < cutoff_val)
 
-    if (nrow(parameters)>1 & !omit_mean_par) {
+    if (nrow(parameters)>1 & keep_mean_par) {
       parameters <- rbind(parameters, colmeans(parameters))
     }
     
