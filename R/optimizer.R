@@ -207,7 +207,7 @@ sumprogress <- function(round, parameters, start_time) {
 
 parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500, 
-                             omit_mean_par = FALSE,
+                             keep_mean_par = TRUE,
                              schedule =
                                data.frame(round = c(1,    2,    3,    4,     5,    6),
                                           eps   = c(NA,  0.1,  0.1, 0.03,  0.01, 0.005),
@@ -276,7 +276,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   cutoff_val <- min(parameters$val) * schedule$cutoff_factor[1]
   parameters <- parameters |> filter(val < cutoff_val)
   
-  if (!omit_mean_par)
+  if (keep_mean_par)
     parameters <- rbind(parameters, colmeans(parameters))
   
   sumprogress(1, parameters, start_time)
