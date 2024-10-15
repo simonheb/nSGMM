@@ -244,7 +244,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                              mc.cores = 120,
                              spg_eps_factor = 10,
                              sim_parallel = 1,
-                             mc.preschedule = TRUE
+                             mc.preschedule = FALSE
                              ) {
   
   cat("function: parallel_unified\n")
