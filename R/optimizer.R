@@ -75,7 +75,7 @@ spg_eps_decreasing_compact <- function(par, control, eps=control$eps, ..., outpu
   times <- iters <- reductins<-c()
   for (step in steps) {
     starttime <- Sys.time()
-    control$eps <- step * spg_eps_factor
+    control$eps <- eps * step
     zz <- BB::spg(
       par = par,
       ...,
