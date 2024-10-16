@@ -72,7 +72,8 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
 
 spg_eps_decreasing_compact <- function(par, control, eps=control$eps, ..., output_id, spg_eps_factor = c(10,1,0.1)) {
 
-  times <- iters <- reductions <- c()
+  times <- reductions <- c()
+  cat("spg_eps_decreasing ",output_id,"\t")
   for (step in spg_eps_factor) {
     starttime <- Sys.time()
     control$eps <- eps * step
@@ -82,15 +83,11 @@ spg_eps_decreasing_compact <- function(par, control, eps=control$eps, ..., outpu
       control = control
     )
     par <- zz$par
-    iters<-c(iters,zz$iter)
-    times<-c(times,as.numeric(difftime(Sys.time(), starttime, units = "mins")))
+
+    cat("*", step, ":", zz$iter, "in", as.numeric(difftime(Sys.time(), starttime, units = "mins")), "mins\t")
     reductions<-c(reductions,zz$fn.reduction)
   }
-  cat("spg_eps_decreasing ",output_id,"\t", "*", spg_eps_factor[1], ":", iters[1], "in", times[1], "mins\t",
-      spg_eps_factor[2], ":", iters[2], "in", times[2], "mins\t",
-      "*", spg_eps_factor[3], ":", iters[3], "in", times[3], "mins\t",
-      zz$value+sum(reductions),"=(",reductions,")>", zz$value,
-      "\n")
+  cat(zz$value+sum(reductions),"=(",reductions,")>", zz$value, "\n")
 
   return(zz)
 }
