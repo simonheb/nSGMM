@@ -227,29 +227,29 @@ sumprogress <- function(round, parameters, start_time) {
 }
 
 
-parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par=NULL, ... ,
+parallel_unified <- function(fn, spg_fun=spg_eps_decreasing_compact, lower, upper, seed=NULL, par=NULL, ... ,
                              maxit = 1500, 
                              schedule =
-                               data.frame(round = c(1,    2,    3,     4,     5,    6,  7),
-                                          eps   = c(NA,   0.1,  0.1,  0.1,  0.07,  0.03, 0.01),
-                                          keepn = c(240,  50,  25,    12,     6,     3,  1),
-                                          precs = c(4,    16,   120, 400,   2000, 4000, 8000),
-                                          parallelize_inner = c(F,F,T,T,T,T,T)),
+                               data.frame(round = c(1,    2,    3,     4,     5,    6,  7, 8),
+                                          eps   = c(NA,   0.1,  0.1,  0.1,  0.07,  0.03, 0.01, 0.01),
+                                          keepn = c(240,  50,  25,    12,     6,     3,  1, 1),
+                                          precs = c(4,    16,   120, 400,   2000, 4000, 8000,16000),
+                                          parallelize_inner = c(F,F,T,T,T,T,T,T)),
                              regularization = c(1e-3,1e-7,rep(1e-14,nrow(schedule)-2)),
                              initialrounds=14,debug=FALSE,logfn=FALSE, precision_factor=1,   
                              mc.cores = 120,
-                             spg_eps_factor = 10,
+                             spg_eps_factor = c(10,1,0.1),
                              sim_parallel = 1,
                              mc.preschedule = FALSE
                              ) {
   
   cat("function: parallel_unified\n")
-
-  cat("performance benchmark:")
-  tic()
-  for (i in 1:10)
-    target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
-  toc()$callback_msg |> cat()
+# 
+#   cat("performance benchmark:")
+#   tic()
+#   for (i in 1:10)
+#     target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.0001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
+#   toc()$callback_msg |> cat()
   
   
   start_time_biggi <- Sys.time()
