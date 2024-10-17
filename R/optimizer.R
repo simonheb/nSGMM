@@ -72,7 +72,7 @@ spg_eps_decreasing <- function(par, control, eps=NULL, ..., output_id, spg_eps_f
 
 spg_eps_decreasing_compact <- function(par, control, eps=control$eps, ..., output_id, spg_eps_factor = c(10,1,0.1)) {
 
-  times <- reductions <- c()
+  reductions <- c()
   cat("spg_eps_decreasing ",output_id,"\t")
   for (step in spg_eps_factor) {
     starttime <- Sys.time()
@@ -234,10 +234,9 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
                                           eps   = c(NA,   0.1,  0.1,  0.1,  0.07,  0.03, 0.01),
                                           keepn = c(240,  50,  25,    12,     6,     3,  1),
                                           precs = c(4,    16,   120, 400,   2000, 4000, 8000),
-                                          cutoff_factor = c(Inf, Inf, Inf, Inf, Inf, Inf, Inf),
                                           parallelize_inner = c(F,F,T,T,T,T,T)),
                              regularization = c(1e-3,1e-7,rep(1e-14,nrow(schedule)-2)),
-                             initialrounds=14,debug=FALSE,logfn=FALSE, precision_factor=1,   init_cutoff = 1e5,
+                             initialrounds=14,debug=FALSE,logfn=FALSE, precision_factor=1,   
                              mc.cores = 120,
                              spg_eps_factor = 10,
                              sim_parallel = 1,
@@ -280,6 +279,7 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   parameters <- mclapply(mc.cores = mc.cores, mc.preschedule = mc.preschedule, ...,
                          FUN = function(theta, ...) {
                            val <- fn(as.numeric(theta), prec = schedule$precs[1], regularization_lambda = regularization[1], noiseseed = noiseseed, ...)
+                           print(val)
                            return(c(theta, val = val))
                          },
                          X = split(parameters[,1:4],1:nrow(parameters))
@@ -291,9 +291,6 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
   
   parameters <- parameters |>
     head(schedule$keepn[1]) 
-  
-  cutoff_val <- min(parameters$val) * schedule$cutoff_factor[1]
-  parameters <- parameters |> filter(val < cutoff_val)
   
   
   
@@ -330,9 +327,8 @@ parallel_unified <- function(fn, spg_fun=spg_plain, lower, upper, seed=NULL, par
     
     parameters <- parameters |> arrange(val)  |>  head(schedule$keepn[round]) 
     
-    cutoff_val <- min(parameters$val) * schedule$cutoff_factor[round]
-    parameters <- parameters |> filter(val < cutoff_val)
 
+    
     
     sumprogress(round, parameters, start_time)
   }
