@@ -91,134 +91,7 @@ spg_eps_decreasing_compact <- function(par, control, eps=control$eps, ..., outpu
 
   return(zz)
 }
-# 
-# shrinking_adaptive_grid <- function(fn, lower, upper,
-#                                     seed=1, mc.cores=120,
-#                                     start_time=Sys.time(), regularization_lambda=c(1e-3,1e-5,1e-6,1e-7,rep(1e-14,99)),
-#                                     startpoint=NULL, depth=20, prec=4, shrinkrate=0.8, radius=(upper-lower)/2,initialrounds=10,
-#                                     ...){
-#   
-#   cat("depth:", depth, "\n")
-#   
-#   cat("prec:", prec, "\n")
-#   cat("regularization_lambda:", regularization_lambda, "\n")
-#   cat("how many?", length(regularization_lambda), "\n")
-#   
-#   if (is.null(seed)) {
-#     noiseseed <- as.integer(runif(1, 1, 1e6))
-#   } else {
-#     noiseseed <- seed
-#   } 
-#   # draw 1024 points on a grid spanned by lower and upper
-#   if (is.null(startpoint)) {
-#     cat("function: shrinking_adaptive_grid\n")
-#     
-#     cat("performance benchmark:")
-#     tic()
-#     for (i in 1:10)
-#       target_function(c(-1,1,1,1), prec = 100, noiseseed = 1, regularization_lambda=0.00001, vdata=vdata, keep=keepsd, maxrounds = 2000, sim_parallel=1 )
-#     toc()$callback_msg |> cat()
-#     startpoint <- (lower + upper) / 2
-#   }
-#   
-#   grid_lower <- pmax(lower, startpoint - radius)
-#   grid_upper <- pmin(upper, startpoint + radius)
-#   cat("searching:\n")
-#   print(rbind(grid_lower, grid_upper))
-#   
-#   sequences <- lapply(1:length(lower), function(i) {
-#     seq(grid_lower[i], grid_upper[i], length.out = initialrounds)
-#   })
-#   parameters <- expand.grid(sequences)
-#   
-#   # loop over grid lines and 
-#   
-#   colnames(parameters) <- c(paste0("par", 1:length(upper)))
-#   
-#   if (osVersion |> grepl(pattern="Windows")) {
-#     mc.cores <- 1
-#     mc.preschedule <- FALSE
-#   }
-#   parameters <- mclapply(mc.cores=mc.cores, ..., mc.preschedule=FALSE,
-#                          FUN = function(theta, ...) {
-#                            val <- fn(as.numeric(theta), prec = prec, regularization_lambda = regularization_lambda[1], noiseseed = noiseseed, sim_parallel=FALSE,  ...)
-#                            return(c(theta, val = val))
-#                          },
-#                          X = split(parameters[,1:4],1:nrow(parameters))
-#   ) 
-#   parameters <- parameters |> bind_rows()  |> as.data.frame() 
-#   print(head(parameters,2))
-#   parameters <- parameters |> arrange(val)  
-#   parameters <- parameters |> head(1)
-#   if (depth < 1) {
-#     cat("final:\n")
-#     print(parameters)
-#     cat("took overall:", round(as.numeric(difftime(Sys.time(), start_time, units = "mins")),2), "mins\n")
-#     return(
-#       list(
-#         par = parameters[,1:4],
-#         value = parameters$val)
-#     )
-#   }
-#   cat("value:\n")
-#   print(parameters)
-#   shrinking_adaptive_grid(fn = fn, lower=lower, upper=upper, startpoint = parameters[,1:4], start_time=start_time, regularization_lambda=regularization_lambda[2:length(regularization_lambda)], depth = depth-1, prec = pmin(16000,prec*1.5), shrinkrate = shrinkrate, radius = radius*shrinkrate, initialrounds = initialrounds, ...)
-#   
-# }
-# 
-# spg_plain <- function(par, control, eps=NULL, ...,output_id) {
-#   if (is.null(eps)) {
-#     eps <- control$eps
-#   }
-#   time1 <- Sys.time()
-#   control$eps <- eps
-#   zz <- BB::spg(
-#     par = par,
-#     ...,
-#     control = control
-#   )
-#   iter2 <- zz$iter
-#   time2 <- Sys.time()
-#   zz$step_iter <- c(iter2)
-#   zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")))
-#   
-#   cat("spg_plain ",output_id,"\t", iter2, "in", round(as.numeric(difftime(time2, time1, units = "mins")),2), "mins\t",
-#       zz$value+zz$fn.reduction, "=>", zz$value, "\n")
-#   
-#   return(zz)
-# }
 
-# 
-# spg_eps_decreasing_less <- function(par, control, eps=NULL, ...) {
-#   if (is.null(eps)) {
-#     eps <- control$eps
-#   }
-#   control$eps <- eps*5
-#   time1 <- Sys.time()
-#   zz <- BB::spg(
-#     par = par,
-#     ...,
-#     control = control
-#   )
-#   iter2 <- zz$iter
-#   time2 <- Sys.time()
-#   control$eps <- eps/5
-#   zz <- BB::spg(
-#     par = zz$par,
-#     ...,
-#     control = control
-#   )
-#   iter3 <- zz$iter
-#   time3 <- Sys.time()
-#   
-#   zz$step_iter <- c(iter2, iter3)
-#   zz$step_minutes <- c(as.numeric(difftime(time2, time1, units = "mins")), as.numeric(difftime(time3, time2, units = "mins")))
-#   cat("spg_eps_decreasing_less:\t", "*5:", iter2, "in", 
-#       round(as.numeric(difftime(time2, time1, units = "mins")),digits = 2), "mins\t",
-#       "*0.2:", iter3, "in", round(as.numeric(difftime(time3, time2, units = "mins")),2), "mins\n")
-#   
-#   return(zz)
-# }
 
 sumprogress <- function(round, parameters, start_time) {
   cat("round", round, "took ", floor(10*as.numeric(difftime(Sys.time(), start_time, units = "mins")))/10, " mins\t")
@@ -235,7 +108,7 @@ parallel_unified <- function(fn, spg_fun=spg_eps_decreasing_compact, lower, uppe
                                           keepn = c(240,  50,  25,    12,     6,     3,  1, 1),
                                           precs = c(4,    16,   120, 400,   2000, 4000, 8000,16000),
                                           parallelize_inner = c(F,F,T,T,T,T,T,T)),
-                             regularization = c(1e-3,1e-7,rep(1e-14,nrow(schedule)-2)),
+                             regularization = c(1e-1,1e-2,rep(1e-3,nrow(schedule)-2)),
                              initialrounds=14,debug=FALSE,logfn=FALSE, precision_factor=1,   
                              mc.cores = 120,
                              spg_eps_factor = c(10,1,0.1),
