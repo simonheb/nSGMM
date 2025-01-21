@@ -188,16 +188,17 @@ identify_dependent_columns_lm <- function(mat) {
 
 
 moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=FALSE,vcv=NULL,keep,kappa.log=TRUE,kappa.factor=10, recurse_if_non_invertible=TRUE, 
-                            regularization_lambda, drop_collinear_moments=FALSE, sim_parallel=TRUE, ...,
-                            mc.preschedule = TRUE, mc.cores=120
+                            regularization_lambda, sim_parallel=TRUE, ..., check_convergence=TRUE,
+                            mc.preschedule = TRUE, mc.cores=120,
+                            print_debug=FALSE
                             ) {
   kinship<-vdata$kinship
   transfers<-vdata$transfers
   distance<-vdata$distance
-  income<-vdata$income
+  income<-vdata$income 
   
   # I need at least as many n as I have moments, for the continuous vcv case, otherwise the matrix is not invertible
-  if (is.null(vcv)) {
+  if (is.null(vcv) & regularization_lambda==0) {
     prec <- max(prec,sum(keep)+1)
   }
   
@@ -217,6 +218,7 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   
   simx <- simfun(
     n=nrow(kinship),
+    check_convergence = check_convergence,
     delta0 = theta[1], delta1 = theta[2], sigma = exp(theta[3]),
     distance = distance, kinship = kinship, capacity = capacity, income = income,
     reps = prec,
@@ -238,16 +240,16 @@ moment_distance <- function(theta,vdata,prec,noiseseed=1,maxrounds=500,verbose=F
   if (regularization_lambda>0) {
     vcv_to_be_used<-vcv_to_be_used+regularization_lambda*diag(nrow(vcv_to_be_used))
   }
-  if (drop_collinear_moments) {
-    collinear_columns <- identify_dependent_columns_lm(vcv_to_be_used)
-    if (length(collinear_columns) > 0) {
-      cat("Dropping collinear columns: ", collinear_columns, "\n")
-      todrop <- collinear_columns[-1]
-      vcv_to_be_used <- vcv_to_be_used[-todrop, -todrop]
-      keep <- which(keep)[-todrop]
-    }
+  
+  if(print_debug) {
+    print(data.frame(
+      observed = x,
+      simulated = colMeans(simx),
+      variance = colVars(simx),
+      keep = keep
+    ))
   }
-      
+        
   diff<-diff[,keep]
   
   WW <- tryCatch(solve(vcv_to_be_used),error = function(e) NA)
