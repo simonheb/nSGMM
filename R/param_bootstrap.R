@@ -1,4 +1,4 @@
-
+library(tictoc)
 
 bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,drawcommand_control=list(),vdata,...,outcome="y") {
 
@@ -38,7 +38,7 @@ bootstrap_parameter_estimate<-function(par,bootstrapseed,optimizer,drawcommand,d
   vdata[[outcome]]<-
     do.call(drawcommand,c(list(par,vdata),drawcommand_control)) 
   #obtain estimates
-  bootest<-optimizer(vdata,...)
+  bootest<-optimizer(vdata=vdata,...)
   boostrapestimates[[callkey]]<-bootest
   boostrapestimates[[callkey]]$time<-round(as.numeric(Sys.time() - ptm,units="mins"))
   saveRDS(boostrapestimates,storedestimates_file_new)

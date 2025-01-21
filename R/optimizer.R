@@ -221,6 +221,7 @@ parallel_unified <- function(fn, spg_fun=spg_eps_decreasing_compact, lower, uppe
 
 
 parallel_one4 <- function(fn, lower, upper, seed=NULL, par=NULL, ... ,initialrounds=15,debug=FALSE,logfn=FALSE, precision_factor=1) {
+
   print("parallel_one4")
   tic()
   start_time <- Sys.time()
