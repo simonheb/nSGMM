@@ -28,7 +28,7 @@ invkappatransformation<-function(x,log=TRUE, factor=10) {
   else
     return( 1/((x+1)/factor) )
 }
-draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
+draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log = TRUE, kappa.factor = 10) {
   n<-length(vdata[["income"]])
   error <- matrix(0,nrow=n,ncol=n) #for now, "altruism" is Normal, which is not ideal, given that it is supposed to be in [0,1]
   error <- Rfast::upper_tri.assign(error,rnorm(n*(n-1)/2,sd=exp(par[3]))) #make symmetric
@@ -37,7 +37,7 @@ draw_transfernet_for_theta<-function(par,vdata,...,modelplot=FALSE,kappa.log) {
   diag(altruism)<-1
   if(any(is.nan(altruism))) browser()
   #########emprical vcv####
-  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(par[4],log=kappa.log),income=vdata[["income"]],plotthis = modelplot)
+  eq<-equilibrate_and_plot(altruism=altruism,capacity=kappatransformation(par[4],log=kappa.log, factor = kappa.factor),income=vdata[["income"]],plotthis = modelplot)
   return((eq$transfers>0)*1)
   #print(moments::skewness(degree(gg,mode = "all")))
   
